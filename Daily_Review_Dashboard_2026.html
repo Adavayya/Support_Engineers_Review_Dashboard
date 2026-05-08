@@ -2108,6 +2108,7 @@
                                                 <div class="kpi-value" id="kpi-email-resp-today" style="color:#D97706;">0</div>
                                                 <div class="kpi-recommendation" id="kpi-email-resp-today-rec">No client responses due today.</div>
                                             </div></div>
+											
                                             <div class="col-md-4"><div class="kpi-card" id="kpi-email-resp-tomorrow-card" style="border-left-color:#06B6D4;">
                                                 <span class="kpi-status-tag bg-info-tag" id="kpi-email-resp-tomorrow-tag">PROACTIVE</span>
                                                 <div class="kpi-title">Email Resp Due Tomorrow <span style="font-size:0.58rem;background:rgba(6,182,212,0.12);color:#0891B2;padding:1px 6px;border-radius:8px;margin-left:4px;">Plan Ahead</span></div>
@@ -5249,9 +5250,9 @@
 
         function parseExcel(data) {
             try {
-                const wb = XLSX.read(data, { type: 'binary' });
+                const wb = XLSX.read(data, { type: 'binary', cellDates: true });
                 const ws = wb.Sheets[wb.SheetNames[0]];
-                processExcelData(XLSX.utils.sheet_to_json(ws, { header: 1 }));
+                processExcelData(XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd hh:mm:ss' }));
             } catch (error) {
                 showLoading(false);
                 alert("Error parsing Excel file: " + error.message);
@@ -5463,22 +5464,25 @@
                 'Resolved - Pending for Confirmation', 'Customer Agreed', 'Deferred', 'Customer Deny', 'Closed'
             ]);
 
-            // Parse AK (Last Email Sent Time) - handles both Excel serial and date string
+            // Parse Last Email Sent Time — handles JS Date (from cellDates:true) or formatted string (from dateNF)
+            // IMPORTANT: Excel serial-to-UTC conversion is intentionally removed — with cellDates:true
+            // XLSX.js returns proper JS Date objects already adjusted for local time.
             const parseAKDate = (akVal) => {
                 if (!akVal && akVal !== 0) return null;
-                // XLSX.js may return a native JS Date object directly
+                // cellDates:true → XLSX returns a native JS Date (local-time correct)
                 if (akVal instanceof Date) {
                     return isNaN(akVal.getTime()) ? null : akVal;
                 }
-                if (typeof akVal === 'number') {
-                    // Excel serial datetime — preserve fractional part for time-of-day accuracy
-                    // Serial = days since 1899-12-30 (Excel epoch); fractional = time within day
-                    const ms = (akVal - 25569) * 86400 * 1000;
-                    const d = new Date(ms);
+                // raw:false + dateNF → XLSX returns a formatted string like "2026-05-07 10:59:38"
+                if (typeof akVal === 'string') {
+                    const s = akVal.trim();
+                    if (!s) return null;
+                    // Normalise "2026-05-07 10:59:38" → ISO "2026-05-07T10:59:38" (avoid UTC parse)
+                    const normalised = s.replace(' ', 'T');
+                    const d = new Date(normalised);
                     return isNaN(d.getTime()) ? null : d;
                 }
-                const d = new Date(akVal);
-                return isNaN(d.getTime()) ? null : d;
+                return null;
             };
 
             // Classify a date vs today: 'missed' | 'today' | 'tomorrow' | 'future' | null
@@ -5516,21 +5520,36 @@
                 return '';
             };
 
-            // Email Response compliance: for all other open statuses
-            // Last email NOT from sapphireims → classify AK date
+            // Email Response compliance: ALL open & closed statuses (excl. Cancel/Duplicate)
+            // Rule: last email NOT from sapphireims.com + hours elapsed since AK datetime
+            // Card 1 – Missed       : last email > 20 hrs ago            (already past response window)
+            // Card 2 – Due Today    : last email ≤ 20 hrs ago AND sent on today's calendar date
+            // Card 3 – Due Tomorrow : last email ≤ 20 hrs ago AND sent on tomorrow's calendar date
+            //                         (after-hours / pre-dated email rolling into next day)
             const computeEmailResponseCompliance = (currentStatus, lastEmailFrom, lastEmailSentTime) => {
+                // Skip only truly excluded statuses; all open & closed statuses are eligible
+                if (EXCLUDED_STATUSES.has(currentStatus)) return '';
                 const isOpenStatus   = OPEN_STATUSES.has(currentStatus);
                 const isClosedStatus = CLOSED_STATUSES.has(currentStatus);
                 if (!isOpenStatus && !isClosedStatus) return '';
-                if (!EMAIL_RESPONSE_STATUSES.has(currentStatus) && !isClosedStatus) return '';
                 const ajVal = (lastEmailFrom || '').toString().trim();
                 if (!ajVal) return '';
-                if (ajVal.toLowerCase().includes('@sapphireims.com')) return 'Responded'; // already responded
+                // If last email is FROM sapphireims → already responded, not a compliance gap
+                if (ajVal.toLowerCase().includes('@sapphireims.com')) return 'Responded';
                 const akDate = parseAKDate(lastEmailSentTime);
-                const cls = classifyDate(akDate);
-                if (cls === 'missed') return 'Email Response Missed';
-                if (cls === 'today')  return 'Email Resp Due Today';
-                if (cls === 'tomorrow') return 'Email Resp Due Tomorrow';
+                if (!akDate) return '';
+                const now = new Date();
+                const diffHrs = (now - akDate) / (1000 * 60 * 60);
+                // Card 1: more than 20 hrs since client's email → response window already missed
+                if (diffHrs > 20) return 'Email Response Missed';
+                // Within 20 hrs — check which calendar day the email landed on
+                const akDay = new Date(akDate); akDay.setHours(0, 0, 0, 0);
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+                // Card 2: client emailed today and still within 20 hrs → respond same day
+                if (akDay.getTime() === today.getTime()) return 'Email Resp Due Today';
+                // Card 3: client emailed on tomorrow's date (after-hours / pre-dated) and within 20 hrs
+                if (akDay.getTime() === tomorrow.getTime()) return 'Email Resp Due Tomorrow';
                 return '';
             };
 
@@ -5541,23 +5560,38 @@
                 return computeEmailResponseCompliance(currentStatus, lastEmailFrom, lastEmailSentTime);
             };
 
-            // Excel serial date to JS Date helper (for numeric date values from xlsx)
+            // With cellDates:true + raw:false, XLSX returns formatted strings (dateNF) or JS Date objects.
+            // Numeric serials are no longer returned, but keep the helper for any edge-case fallback.
             const excelSerialToDate = (serial) => {
                 if (!serial || isNaN(serial)) return null;
                 const num = parseFloat(serial);
                 if (isNaN(num) || num < 1) return null;
-                // Excel serial datetime — preserve fractional part for time-of-day accuracy
-                const ms = (num - 25569) * 86400 * 1000;
-                return new Date(ms);
+                // Treat as local time: decompose serial into date+time parts to avoid UTC shift
+                const totalDays = num - 25569; // days since 1970-01-01 in local time
+                const ms = totalDays * 86400 * 1000;
+                const utcDate = new Date(ms);
+                // Re-express as local by using UTC getters to build a local Date
+                return new Date(
+                    utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate(),
+                    utcDate.getUTCHours(), utcDate.getUTCMinutes(), utcDate.getUTCSeconds()
+                );
             };
 
-            // Parse a date value that could be serial number or date string
+            // Parse a date value: JS Date (cellDates), formatted string (dateNF), or legacy serial
             const parseFlexDate = (val) => {
                 if (!val && val !== 0) return null;
+                if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
                 if (typeof val === 'number') return excelSerialToDate(val);
                 if (typeof val === 'string') {
-                    const d = new Date(val);
+                    const s = val.trim();
+                    if (!s) return null;
+                    // Normalise "2026-05-07 10:59:38" → "2026-05-07T10:59:38" so JS parses as local, not UTC
+                    const normalised = s.replace(' ', 'T');
+                    const d = new Date(normalised);
                     if (!isNaN(d.getTime())) return d;
+                    // Fallback: try direct parse (handles other string formats)
+                    const d2 = new Date(s);
+                    if (!isNaN(d2.getTime())) return d2;
                 }
                 return null;
             };
@@ -5877,12 +5911,11 @@
                     supportCategory: (row[colMap.supportCategory] || '').toString().trim() || 'Uncategorized',
                     feature:         (row[colMap.feature]         || '').toString().trim() || 'N/A',
                     subFeature:      (row[colMap.subFeature]      || '').toString().trim() || 'N/A',
-                    // Resolution fields (Cols AG, Z, AE, AF, AH)
+                    // Resolution fields (Cols AG, Z, AE, AF)
                     resolutionCode:     (row[colMap.resolutionCode]    || '').toString().trim() || 'Not Specified',
                     wasKBReferred:      (row[colMap.wasKBReferred]     || '').toString().trim(),
                     problemStatement:   (row[colMap.problemStatement]  || '').toString().trim(),
                     resolutionSteps:    (row[colMap.resolutionSteps]   || '').toString().trim(),
-                    rca:                (row[colMap.rca]               || '').toString().trim(),
                     // L1 Feedback fields (Cols AA, AB)
                     feedbackTo:         (row[colMap.feedbackTo]        || '').toString().trim(),
                     feedback:           (row[colMap.feedback]          || '').toString().trim(),
@@ -13023,7 +13056,6 @@ ${bodyHTML}
             { key: 'resolutionCode',   label: 'Resolution Code' },
             { key: 'problemStatement', label: 'Requirement / Problem Statement' },
             { key: 'resolutionSteps',  label: 'Resolution Steps' },
-            { key: 'rca',              label: 'RCA' },
             { key: 'resolvedDateDisplay', label: 'Resolved Date' },
             { key: 'closedAgingDisplay',  label: 'Resolution Time' }
         ];
@@ -13278,15 +13310,12 @@ ${bodyHTML}
                         if (col.key === 'problemStatement' || col.key === 'resolutionSteps') {
                             cls = _rqIsFilled(val) ? 'text-success fw-bold' : 'text-danger';
                         }
-                        if (col.key === 'rca') {
-                            cls = _rqIsFilled(val) ? 'text-success fw-bold' : 'text-warning';
-                        }
                         const display = val.length > 60 ? val.substring(0, 60) + '…' : val;
                         return `<td class="${cls}" title="${val.replace(/"/g,"'")}">${display || '<span class="text-muted fst-italic">— missing —</span>'}</td>`;
                     }).join('');
                     return `<tr onclick="viewCaseDetail(${globalIndex})" style="cursor:pointer;">${cells}</tr>`;
                 }).join('')
-                : '<tr><td colspan="15" class="text-center text-muted py-3">No cases found.</td></tr>';
+                : '<tr><td colspan="14" class="text-center text-muted py-3">No cases found.</td></tr>';
             new bootstrap.Modal(document.getElementById('drillDownModal')).show();
         }
 
@@ -13448,7 +13477,6 @@ ${bodyHTML}
                 'PS Filled': _rqIsFilled(d.problemStatement) ? 'Yes' : 'No',
                 'Resolution Steps': d.resolutionSteps || '',
                 'RS Filled': _rqIsFilled(d.resolutionSteps) ? 'Yes' : 'No',
-                'RCA': d.rca || '',
                 'Both Fields OK': (_rqIsFilled(d.problemStatement) && _rqIsFilled(d.resolutionSteps)) ? 'Yes' : 'No',
                 'Both Missing': (!_rqIsFilled(d.problemStatement) && !_rqIsFilled(d.resolutionSteps)) ? 'Yes' : 'No',
                 'Resolved Date': d.resolvedDateDisplay || '',
@@ -13461,7 +13489,6 @@ ${bodyHTML}
                 'Case ID': d.incidentId, 'Title': d.title, 'Engineer': d.owner,
                 'Resolution Code': d.resolutionCode, 'Resolution Steps': d.resolutionSteps||'',
                 'RS Filled': _rqIsFilled(d.resolutionSteps)?'Yes':'No',
-                'RCA': d.rca || '',
                 'Resolved Date': d.resolvedDateDisplay||''
             }));
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(psMissing.length?psMissing:[{}]), 'Missing Problem Statement');
@@ -13471,7 +13498,6 @@ ${bodyHTML}
                 'Case ID': d.incidentId, 'Title': d.title, 'Engineer': d.owner,
                 'Resolution Code': d.resolutionCode, 'Problem Statement': d.problemStatement||'',
                 'PS Filled': _rqIsFilled(d.problemStatement)?'Yes':'No',
-                'RCA': d.rca || '',
                 'Resolved Date': d.resolvedDateDisplay||''
             }));
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rsMissing.length?rsMissing:[{}]), 'Missing Resolution Steps');
