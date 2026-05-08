@@ -2096,24 +2096,17 @@
                                             <span class="badge ms-2" style="background:var(--secondary-soft);color:#0891B2;font-size:0.68rem;">All other open statuses — last email NOT from sapphireims.com</span>
                                         </div>
                                         <div class="row g-2">
-                                            <div class="col-md-4"><div class="kpi-card" id="kpi-email-resp-missed-card" style="border-left-color:#EF4444;">
+                                            <div class="col-md-6"><div class="kpi-card" id="kpi-email-resp-missed-card" style="border-left-color:#EF4444;">
                                                 <span class="kpi-status-tag bg-good" id="kpi-email-resp-missed-tag">GOOD</span>
                                                 <div class="kpi-title">Email Response Missed <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Already Missed</span></div>
                                                 <div class="kpi-value" id="kpi-email-resp-missed">0</div>
                                                 <div class="kpi-recommendation" id="kpi-email-resp-missed-rec">No missed client email responses.</div>
                                             </div></div>
-                                            <div class="col-md-4"><div class="kpi-card" id="kpi-email-resp-today-card" style="border-left-color:#F59E0B;">
+                                            <div class="col-md-6"><div class="kpi-card" id="kpi-email-resp-today-card" style="border-left-color:#F59E0B;">
                                                 <span class="kpi-status-tag" id="kpi-email-resp-today-tag" style="background:linear-gradient(135deg,#F59E0B,#FCD34D);color:#431407;">PROACTIVE</span>
                                                 <div class="kpi-title">Email Resp Due Today <span style="font-size:0.58rem;background:rgba(245,158,11,0.12);color:#B45309;padding:1px 6px;border-radius:8px;margin-left:4px;">Act Now</span></div>
                                                 <div class="kpi-value" id="kpi-email-resp-today" style="color:#D97706;">0</div>
                                                 <div class="kpi-recommendation" id="kpi-email-resp-today-rec">No client responses due today.</div>
-                                            </div></div>
-											
-                                            <div class="col-md-4"><div class="kpi-card" id="kpi-email-resp-tomorrow-card" style="border-left-color:#06B6D4;">
-                                                <span class="kpi-status-tag bg-info-tag" id="kpi-email-resp-tomorrow-tag">PROACTIVE</span>
-                                                <div class="kpi-title">Email Resp Due Tomorrow <span style="font-size:0.58rem;background:rgba(6,182,212,0.12);color:#0891B2;padding:1px 6px;border-radius:8px;margin-left:4px;">Plan Ahead</span></div>
-                                                <div class="kpi-value" id="kpi-email-resp-tomorrow" style="color:#0891B2;">0</div>
-                                                <div class="kpi-recommendation" id="kpi-email-resp-tomorrow-rec">No client responses due tomorrow.</div>
                                             </div></div>
                                         </div>
                                         <!-- Legacy hidden card for backward compat -->
@@ -2298,13 +2291,12 @@
                                         <th>Email F/Up Tomorrow</th>
                                         <th>Email Resp Missed</th>
                                         <th>Email Resp Today</th>
-                                        <th>Email Resp Tomorrow</th>
                                         <th>SR EDOC Breach</th>
                                         <th>SR EDOC Missing</th>
                                     </tr>
                                 </thead>
                                 <tbody id="owner-scorecard-body">
-                                    <tr><td colspan="18" class="text-center text-muted py-3">Processing data...</td></tr>
+                                    <tr><td colspan="17" class="text-center text-muted py-3">Processing data...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -4678,21 +4670,6 @@
                 { key: 'updateTimeDisplay', label: 'Update Time' },
                 { key: 'slaStatus', label: 'SLA Status' }
             ],
-            'emailRespTomorrow': [
-                { key: 'incidentId', label: 'Incident ID' },
-                { key: 'title', label: 'Title' },
-                { key: 'customerName', label: 'Customer Name' },
-                { key: 'currentStatus', label: 'CurrentStatus' },
-                { key: 'service', label: 'Service' },
-                { key: 'owner', label: 'Owner' },
-                { key: 'agingRoundoff', label: 'Aging(Roundoff)' },
-                { key: 'emailCompliance', label: 'Email Response Compliance' },
-                { key: 'lastEmailFrom', label: 'Last Email From' },
-                { key: 'lastEmailSentTimeDisplay', label: 'Last Email Sent Time' },
-                { key: 'creationTimeDisplay', label: 'Creation Time' },
-                { key: 'updateTimeDisplay', label: 'Update Time' },
-                { key: 'slaStatus', label: 'SLA Status' }
-            ],
             'slaINC': [
                 { key: 'incidentId', label: 'Incident ID' },
                 { key: 'title', label: 'Title' },
@@ -5367,70 +5344,75 @@
                 return possibleNames[0];
             };
 
-            // Column structure — SR EDOC is at column BE (index 56) in actual uploaded file
-            // A-SLNO B-Record ID C-Title D-Owner E-Submitted By F-Customer Name
-            // G-Update Time H-Creation Time I-Creation Date J-Modified Date K-Current Status
-            // L-Submitter Name M-Submitter Email N-Submitter Phone O-Service P-Urgency Q-Priority
-            // R-Severity S-Support Category T-Feature U-Sub Feature V-Assignment Level
-            // W-SR EDOC (original layout) — actual file has SR EDOC at BE (index 56)
-            // AA-Feedback To AB-Feedback AC-SR Hours Deducted AD-OOP Applied
-            // AE-Requirement/Problem Statement AF-Resolution Steps AG-Resolution Code AH-RCA
-            // AI-Source AJ-Last Email From AK-Last Email Sent Time
-            // Find SR EDOC by index 56 (BE) first, fall back to header name match
+            // Column structure per official spec (A–CN). Always resolved by header name, never by index.
+            // findColExact: exact match first, partial fallback second — safe against column reordering.
             const _srEDOCColIndex = (() => {
-                // Try to find by header name first
-                const byName = headers.findIndex(h => h && (h.toString().trim().toUpperCase() === 'SR EDOC' || h.toString().trim().toUpperCase() === 'EDOC'));
-                if (byName !== -1) return byName;
-                // Fall back to column BE = index 56
-                return 56;
+                const byName = headers.findIndex(h => h && h.toString().trim() === 'SR EDOC');
+                return byName !== -1 ? byName : -1; // -1 = not found; never fall back to a hardcoded index
             })();
             const colMap = {
-                incidentId: findCol(['Record ID', 'Incident ID', 'Ticket ID', 'Case ID']),
-                title: findCol(['Title', 'Subject', 'Description']),
-                submittedBy: findCol(['Customer Name', 'SubmittedBy', 'Submitted By', 'Reporter']),
-                customerName: findCol(['Customer Name', 'Submitted By', 'Customer']),
-                currentStatus: findCol(['Current Status', 'CurrentStatus', 'Status', 'State']),
-                service: findCol(['Service', 'Service Type', 'Type']),
-                owner: findCol(['Owner', 'Assign To', 'Engineer']),
-                assignmentLevel: findCol(['Assign To', 'Assignment Level', 'Assign Level', 'Level']),
-                creationDate: findCol(['Creation Time', 'Creation Date', 'Created Date', 'Created On']),
-                modifiedDate: findCol(['Update Time', 'Modified Date', 'Last Modified Date']),
-                lastModifiedTime: findCol(['Update Time', 'Last Modified Time', 'Modified Time']),
-                urgency: findCol(['Urgency', 'Priority Level']),
-                priority: findCol(['Priority', 'Ticket Priority']),
-                severity: findCol(['Severity', 'Severity Level']),
-                srEDOC: findCol(['SR EDOC', 'EDOC', 'Expected Date of Closure']),
-                srService: findCol(['SR Service', 'SR Service Type']),
-                internalRefId: findCol(['Internal Reference ID', 'Internal Ref']),
-                wasKBReferred: findCol(['Was KB Referred', 'KB Referred']),
-                feedbackTo: findColExact(['Feedback To', 'FeedbackTo', 'Feedback Recipient'], ['Feedback To', 'Feedback Recipient']),
-                feedback:   findColExact(['Feedback', 'Feedback Comment', 'FeedbackComment'], ['Feedback Comment', 'Customer Feedback']),
-                srHoursDeducted: findCol(['SR Hours Deducted', 'Hours Deducted']),
-                oopApplied: findCol(['OOP Applied', 'OOP']),
-                problemStatement: findCol(['Requirement / Problem Statement', 'Problem Statement', 'Requirement']),
-                resolutionSteps: findCol(['Resolution Steps', 'Steps to be followed', 'Steps']),
-                resolutionCode: findCol(['Resolution Code', 'Resolution']),
-                rca: findCol(['RCA', 'Root Cause Analysis']),
-                source: findCol(['Source', 'Ticket Source']),
-                lastEmailFrom: findCol(['Last Email From', 'Last Email', 'Email From']),
-                lastEmailSentTime: findCol(['Last Email Sent Time', 'Last Email Time', 'Email Sent Time']),
-                // SLA columns - no data currently, kept for future use
-                slaStatus: findCol(['SLA Status', 'SLA']),
-                slaViolationStatus: findCol(['SLA Violation Status', 'Violation Status']),
-                aging15Status: findCol(['Aging >15 days Status', 'Aging Status', 'Aging >15']),
-                agingRoundoff: findCol(['Aging(Roundoff)', 'Aging', 'Age (Days)']),
-                nextFollowUpDate: findCol(['Next Follow-up Date', 'Follow-up Date', 'Next Followup']),
-                expectedResponseTime: findCol(['Expected Response Time', 'Response Time']),
-                expectedResolutionTime: findCol(['Expected Resolution Time', 'Resolution Time']),
-                expectedSLAClosureTime: findCol(['Expected SLA Closure Time', 'SLA Closure']),
-                updatePendingSupportCounter: findCol(['Update Pending From Support Counter', 'Pending Counter']),
-                ageingLastModified: findCol(['Ageing from Last modified time', 'Last Modified Aging']),
-                steps: findCol(['Resolution Steps', 'Steps to be followed', 'Steps']),
-                resolvedTime: findCol(['Resolved Time', 'Resolve Time', 'Resolution Time', 'Closure Time', 'Closed Time', 'Resolved Date']),
-                assignL1Time: findCol(['Assign L1 Time', 'AssignL1Time', 'L1 Assign Time', 'Assign Time L1']),
-                supportCategory: findCol(['Support Category', 'SupportCategory', 'Category']),
-                feature: findCol(['Feature', 'Feature Name']),
-                subFeature: findCol(['Sub Feature', 'SubFeature', 'Sub-Feature'])
+                // A  SLNO                        (not used in processing)
+                incidentId:                   findColExact(['Record ID'],                               ['Record ID', 'Incident ID', 'Ticket ID', 'Case ID']),
+                title:                        findColExact(['Title'],                                   ['Title', 'Subject']),
+                owner:                        findColExact(['Owner'],                                   ['Owner', 'Engineer']),
+                submittedBy:                  findColExact(['Submitted By'],                            ['Submitted By', 'Reporter']),
+                customerName:                 findColExact(['Customer Name'],                           ['Customer Name', 'Customer']),
+                creationDate:                 findColExact(['Creation Time'],                           ['Creation Time', 'Created Date', 'Created On']),
+                modifiedDate:                 findColExact(['Update Time'],                             ['Update Time', 'Modified Date', 'Last Modified Date']),
+                lastModifiedTime:             findColExact(['Update Time'],                             ['Update Time', 'Last Modified Time']),
+                currentStatus:                findColExact(['Current Status'],                          ['Current Status', 'Status', 'State']),
+                // J  Name  K  Email ID  L  Phone Number  M  Description  N  On Behalf
+                // O  Country  P  Additional Email IDs
+                source:                       findColExact(['Source'],                                  ['Source', 'Ticket Source']),
+                service:                      findColExact(['Service'],                                 ['Service', 'Service Type']),
+                urgency:                      findColExact(['Urgency'],                                 ['Urgency', 'Priority Level']),
+                severity:                     findColExact(['Severity'],                                ['Severity', 'Severity Level']),
+                supportCategory:              findColExact(['Support Category'],                        ['Support Category', 'Category']),
+                feature:                      findColExact(['Support Feature'],                         ['Support Feature', 'Feature', 'Feature Name']),
+                subFeature:                   findColExact(['Support Sub Feature'],                     ['Support Sub Feature', 'Sub Feature', 'SubFeature']),
+                priority:                     findColExact(['Priority'],                                ['Priority', 'Ticket Priority']),
+                // Y  Customer Master Status  Z  AMC Status  AA  Remaining SR Hours
+                // AB  Priority (Classification)  AC  Support Older Reference ID
+                srService:                    findColExact(['SR Service'],                              ['SR Service', 'SR Service Type']),
+                // AE  Classification Time  AF  Assign To  AG  Assign Owner Name
+                assignmentLevel:              findColExact(['Assign To'],                               ['Assign To', 'Assignment Level']),
+                // AH  Assign Time
+                assignL1Time:                 findColExact(['Assign L1 Time'],                          ['Assign L1 Time', 'L1 Assign Time']),
+                // AK  Assign To L2 Engineer  AL  Assign L2 Time  AM  Assign To SME  AN  Assign SME Time
+                // AO–AT  Duration/TAT columns  AU–AX  Effort columns
+                // AY  Company Name  AZ–BF  Effort allocation columns
+                // BG  Pending for Effort Approval Time
+                internalRefId:                findColExact(['Internal Reference ID'],                   ['Internal Reference ID', 'Internal Ref']),
+                srEDOC:                       findColExact(['SR EDOC'],                                 ['SR EDOC', 'EDOC', 'Expected Date of Closure']),
+                // BJ  SR EDOC Update Time  BK  Work In Progress Time
+                wasKBReferred:                findColExact(['Was KB Referred'],                         ['Was KB Referred', 'KB Referred']),
+                feedbackTo:                   findColExact(['Feedback To'],                             ['Feedback To', 'Feedback Recipient']),
+                feedback:                     findColExact(['Feedback'],                                ['Feedback', 'Feedback Comment']),
+                srHoursDeducted:              findColExact(['SR Hours Deducted'],                       ['SR Hours Deducted', 'Hours Deducted']),
+                oopApplied:                   findColExact(['OOP Applied'],                             ['OOP Applied', 'OOP']),
+                // BQ  OOP Reference
+                problemStatement:             findColExact(['Requirement / Problem Statement'],         ['Requirement / Problem Statement', 'Problem Statement']),
+                resolutionCode:               findColExact(['Resolution Code'],                         ['Resolution Code', 'Resolution']),
+                resolutionSteps:              findColExact(['Resolution Steps'],                        ['Resolution Steps', 'Steps']),
+                rca:                          findColExact(['RCA'],                                     ['RCA', 'Root Cause Analysis']),
+                resolvedTime:                 findColExact(['Resolve Time'],                            ['Resolve Time', 'Resolved Time', 'Closure Time', 'Closed Time']),
+                // BW  Rating  BX  Customer Agreed Time  BY  Closed Time  BZ  Acknowledged Time
+                // CA–CK  Status timestamp columns
+                // CL  Deferred Time  CM  Last Email From  CN  Last Email Sent Time
+                lastEmailFrom:                findColExact(['Last Email From'],                         ['Last Email From', 'Email From']),
+                lastEmailSentTime:            findColExact(['Last Email Sent Time'],                    ['Last Email Sent Time', 'Email Sent Time']),
+                // Legacy / derived columns (may not exist in all uploads — partial match only)
+                slaStatus:                    findCol(['SLA Status', 'SLA']),
+                slaViolationStatus:           findCol(['SLA Violation Status', 'Violation Status']),
+                aging15Status:                findCol(['Aging >15 days Status', 'Aging Status', 'Aging >15']),
+                agingRoundoff:                findCol(['Aging(Roundoff)', 'Aging', 'Age (Days)']),
+                nextFollowUpDate:             findCol(['Next Follow-up Date', 'Follow-up Date', 'Next Followup']),
+                expectedResponseTime:         findCol(['Expected Response Time', 'Response Time']),
+                expectedResolutionTime:       findCol(['Expected Resolution Time', 'Resolution Time']),
+                expectedSLAClosureTime:       findCol(['Expected SLA Closure Time', 'SLA Closure']),
+                updatePendingSupportCounter:  findCol(['Update Pending From Support Counter', 'Pending Counter']),
+                ageingLastModified:           findCol(['Ageing from Last modified time', 'Last Modified Aging']),
+                steps:                        findColExact(['Resolution Steps'],                        ['Resolution Steps', 'Steps']),
             };
 
             // Open statuses (include in open cases analysis)
@@ -5545,11 +5527,8 @@
                 // Within 20 hrs — check which calendar day the email landed on
                 const akDay = new Date(akDate); akDay.setHours(0, 0, 0, 0);
                 const today = new Date(); today.setHours(0, 0, 0, 0);
-                const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
                 // Card 2: client emailed today and still within 20 hrs → respond same day
                 if (akDay.getTime() === today.getTime()) return 'Email Resp Due Today';
-                // Card 3: client emailed on tomorrow's date (after-hours / pre-dated) and within 20 hrs
-                if (akDay.getTime() === tomorrow.getTime()) return 'Email Resp Due Tomorrow';
                 return '';
             };
 
@@ -5779,7 +5758,6 @@
                 // Email Response flags
                 const isEmailRespMissed   = emailResponseCompliance === 'Email Response Missed';
                 const isEmailRespToday    = emailResponseCompliance === 'Email Resp Due Today';
-                const isEmailRespTomorrow = emailResponseCompliance === 'Email Resp Due Tomorrow';
 
                 return {
                     _creationDate: creationDateObj,
@@ -5860,7 +5838,7 @@
                     isEdocBreached, isEdocDueToday, isEdocDueTomorrow, isEdocMissing,
                     isOldest25, isIdle1, isIdle3,
                     isEmailFollowupMissed, isEmailFollowupToday, isEmailFollowupTomorrow,
-                    isEmailRespMissed, isEmailRespToday, isEmailRespTomorrow,
+                    isEmailRespMissed, isEmailRespToday,
                     // Assignment Aging fields
                     assignL1TimeDisplay: assignL1TimeObj
                         ? assignL1TimeObj.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})
@@ -7862,7 +7840,6 @@
                     case 'kpi-email-followup-tomorrow': drillDownKey = 'emailFollowupTomorrow'; break;
                     case 'kpi-email-resp-missed':   drillDownKey = 'emailRespMissed'; break;
                     case 'kpi-email-resp-today':    drillDownKey = 'emailRespToday'; break;
-                    case 'kpi-email-resp-tomorrow': drillDownKey = 'emailRespTomorrow'; break;
                     case 'kpi-email-followup': drillDownKey = 'emailFollowupMissed'; break;
                     case 'kpi-email-resp':     drillDownKey = 'emailRespMissed'; break;
                     case 'kpi-sub-resp':         drillDownKey = 'subsequentResponseMissed'; break;
@@ -7934,7 +7911,7 @@
                 document.querySelectorAll('.kpi-value').forEach(el => el.textContent = '0');
                 document.querySelectorAll('.kpi-recommendation').forEach(el => el.textContent = 'No data for the selected filters.');
                 document.querySelectorAll('.kpi-status-tag').forEach(el => { el.textContent = 'NO DATA'; el.className = 'kpi-status-tag bg-info-tag'; });
-                document.getElementById('owner-scorecard-body').innerHTML = '<tr><td colspan="18" class="text-center text-muted py-3">No data found for selected filters.</td></tr>';
+                document.getElementById('owner-scorecard-body').innerHTML = '<tr><td colspan="17" class="text-center text-muted py-3">No data found for selected filters.</td></tr>';
                 // Also clear charts/tables that may hold stale data
                 const lvlDiv = document.getElementById('assignment-level-stats');
                 if (lvlDiv) lvlDiv.innerHTML = '<div class="text-muted text-center py-3" style="font-size:0.82rem;">No data for selected filters.</div>';
@@ -7972,7 +7949,6 @@
                 // Section 4b: Email Response Compliance (other statuses, NOT from sapphire)
                 emailRespMissed:   filteredData.filter(d => d.isEmailRespMissed).length,
                 emailRespToday:    filteredData.filter(d => d.isEmailRespToday).length,
-                emailRespTomorrow: filteredData.filter(d => d.isEmailRespTomorrow).length,
                 // legacy aliases for older code paths
                 followUp: filteredData.filter(d => d.isFollowUpMissed).length,
                 followUpToday: filteredData.filter(d => d.isFollowUpDueToday).length,
@@ -8109,10 +8085,8 @@
             // Section 4b Email Response Compliance
             const erMissedRec   = m.emailRespMissed   > 0 ? {status:'URGENT',tag:'bg-urgent',rec:`${m.emailRespMissed} cases where client emailed but no response sent yet.`} : {status:'GOOD',tag:'bg-good',rec:'No missed client email responses.'};
             const erTodayRec    = m.emailRespToday    > 0 ? {status:'ACTION NEEDED',tag:'bg-action-needed',rec:`${m.emailRespToday} client email response(s) due today.`} : {status:'GOOD',tag:'bg-good',rec:'No client responses due today.'};
-            const erTomorrowRec = m.emailRespTomorrow > 0 ? {status:'MONITOR',tag:'bg-monitor',rec:`${m.emailRespTomorrow} client email response(s) due tomorrow.`} : {status:'INFO',tag:'bg-info-tag',rec:'No client responses due tomorrow.'};
             updateCard('kpi-email-resp-missed',   m.emailRespMissed,   erMissedRec);
             updateCard('kpi-email-resp-today',    m.emailRespToday,    erTodayRec);
-            updateCard('kpi-email-resp-tomorrow', m.emailRespTomorrow, erTomorrowRec);
 
             // keep legacy email-followup card in sync
             updateCard('kpi-email-followup', m.emailFollowupMissed, efuMissedRec);
@@ -8134,7 +8108,7 @@
             updateSectionRAGStatus(1, [infoRec, srRec, incRec]);
             updateSectionRAGStatus(2, [slaSRRec, slaINCRec]);
             updateSectionRAGStatus(3, [aging15Rec, oldest25Rec, agingLt15Rec, agingLt7Rec]);
-            updateSectionRAGStatus(4, [efuMissedRec, efuTodayRec, efuTomorrowRec, erMissedRec, erTodayRec, erTomorrowRec]);
+            updateSectionRAGStatus(4, [efuMissedRec, efuTodayRec, efuTomorrowRec, erMissedRec, erTodayRec]);
             updateSectionRAGStatus(5, [subRespRec, subRespTodayRec, subRespTomorrowRec, subSLARec]);
             updateSectionRAGStatus(6, [idle3Rec, edocRec, edocTodayRec, edocTomorrowRec]);
             
@@ -8250,7 +8224,7 @@
                     openCases: 0, sr: 0, inc: 0,
                     aging15: 0, oldest25: 0,
                     emailFollowupMissed: 0, emailFollowupToday: 0, emailFollowupTomorrow: 0,
-                    emailRespMissed: 0, emailRespToday: 0, emailRespTomorrow: 0,
+                    emailRespMissed: 0, emailRespToday: 0,
                     idle1: 0, idle3: 0, edocBreach: 0, edocMissing: 0,
                     levels: new Set()
                 };
@@ -8266,7 +8240,6 @@
                 if(d.isEmailFollowupTomorrow) counts[d.owner].emailFollowupTomorrow++;
                 if(d.isEmailRespMissed)       counts[d.owner].emailRespMissed++;
                 if(d.isEmailRespToday)        counts[d.owner].emailRespToday++;
-                if(d.isEmailRespTomorrow)     counts[d.owner].emailRespTomorrow++;
                 if(d.isIdle1) counts[d.owner].idle1++;
                 if(d.isIdle3) counts[d.owner].idle3++;
                 if(d.isEdocBreached) counts[d.owner].edocBreach++;
@@ -8286,7 +8259,7 @@
                     <th>Aging &gt;15 Days</th><th>Oldest &gt;25 Days</th>
                     <th>Idle &gt;1 Day</th><th>Idle &gt;3 Days</th>
                     <th>Email F/Up Missed</th><th>Email F/Up Today</th><th>Email F/Up Tomorrow</th>
-                    <th>Email Resp Missed</th><th>Email Resp Today</th><th>Email Resp Tomorrow</th>
+                    <th>Email Resp Missed</th><th>Email Resp Today</th>
                     <th>SR EDOC Breach</th><th>SR EDOC Missing</th>`;
             }
             // Update header labels for open mode
@@ -8300,7 +8273,7 @@
                 const stats = counts[o];
                 const levelStr = stats.levels.size > 0 ? [...stats.levels].sort().join(', ') : '—';
                 const issueColumns = [stats.emailFollowupMissed,stats.emailFollowupToday,stats.emailFollowupTomorrow,
-                    stats.emailRespMissed,stats.emailRespToday,stats.emailRespTomorrow,stats.edocBreach];
+                    stats.emailRespMissed,stats.emailRespToday,stats.edocBreach];
                 const hasAnyIssueColumn = issueColumns.some(v => v > 0);
                 let performanceScore;
                 if (!hasAnyIssueColumn || stats.openCases === 0) {
@@ -8309,7 +8282,7 @@
                     const ownerCases = filteredData.filter(d => d.owner === o && d.isOpenCase);
                     const casesWithIssue = ownerCases.filter(d =>
                         d.isEmailFollowupMissed||d.isEmailFollowupToday||d.isEmailFollowupTomorrow||
-                        d.isEmailRespMissed||d.isEmailRespToday||d.isEmailRespTomorrow||
+                        d.isEmailRespMissed||d.isEmailRespToday||
                         d.isEdocBreached).length;
                     performanceScore = ((stats.openCases - casesWithIssue) / stats.openCases * 100).toFixed(1);
                 }
@@ -8322,7 +8295,6 @@
                     'Email F/Up Missed': stats.emailFollowupMissed, 'Email F/Up Today': stats.emailFollowupToday,
                     'Email F/Up Tomorrow': stats.emailFollowupTomorrow,
                     'Email Resp Missed': stats.emailRespMissed, 'Email Resp Today': stats.emailRespToday,
-                    'Email Resp Tomorrow': stats.emailRespTomorrow,
                     'SR EDOC Breach': stats.edocBreach, 'SR EDOC Missing': stats.edocMissing,
                 });
                 const pct = parseFloat(performanceScore);
@@ -8343,14 +8315,13 @@
                     <td class="${stats.emailFollowupTomorrow>0?'high-cell':''}">${stats.emailFollowupTomorrow}</td>
                     <td class="${stats.emailRespMissed>0?'critical-cell':''}">${stats.emailRespMissed}</td>
                     <td class="${stats.emailRespToday>0?'high-cell':''}">${stats.emailRespToday}</td>
-                    <td class="${stats.emailRespTomorrow>0?'high-cell':''}">${stats.emailRespTomorrow}</td>
                     <td class="${stats.edocBreach>0?'critical-cell':''}">${stats.edocBreach}</td>
                     <td class="${stats.edocMissing>0?'high-cell':''}">${stats.edocMissing}</td>
                 </tr>`;
             }).join('');
 
             document.getElementById('owner-scorecard-body').innerHTML = scorecardHtml ||
-                '<tr><td colspan="18" class="text-center text-muted py-3">No data found for selected filters.</td></tr>';
+                '<tr><td colspan="17" class="text-center text-muted py-3">No data found for selected filters.</td></tr>';
             renderAssignmentLevelStats();
         }
 
@@ -8707,9 +8678,6 @@
                     break;
                 case 'emailRespToday':
                     drillDownData = filteredData.filter(d => d.isEmailRespToday);
-                    break;
-                case 'emailRespTomorrow':
-                    drillDownData = filteredData.filter(d => d.isEmailRespTomorrow);
                     break;
                 case 'edocMissing':
                     drillDownData = filteredData.filter(d => d.isEdocMissing);
