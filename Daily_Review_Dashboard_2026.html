@@ -4606,6 +4606,7 @@
                 { key: 'emailCompliance', label: 'Email Follow-up Compliance' },
                 { key: 'lastEmailFrom', label: 'Last Email From' },
                 { key: 'lastEmailSentTimeDisplay', label: 'Last Email Sent Time' },
+                { key: 'emailFollowupPendingSince', label: 'Pending Since' },
                 { key: 'creationTimeDisplay', label: 'Creation Time' },
                 { key: 'updateTimeDisplay', label: 'Update Time' },
                 { key: 'slaStatus', label: 'SLA Status' }
@@ -4651,6 +4652,7 @@
                 { key: 'emailCompliance', label: 'Email Response Compliance' },
                 { key: 'lastEmailFrom', label: 'Last Email From' },
                 { key: 'lastEmailSentTimeDisplay', label: 'Last Email Sent Time' },
+                { key: 'emailRespPendingSince', label: 'Email Resp Pending Since' },
                 { key: 'creationTimeDisplay', label: 'Creation Time' },
                 { key: 'updateTimeDisplay', label: 'Update Time' },
                 { key: 'slaStatus', label: 'SLA Status' }
@@ -5829,6 +5831,42 @@
                         if (!raw) return '';
                         const d = parseAKDate(raw);
                         return d ? d.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}) : raw.toString();
+                    })(),
+                    // "Pending Since" — human-readable elapsed time since last email sent (for Email Follow-up Missed)
+                    emailFollowupPendingSince: (() => {
+                        const raw = row[colMap.lastEmailSentTime];
+                        if (!raw) return '';
+                        const d = parseAKDate(raw);
+                        if (!d) return '';
+                        const diffMs = Date.now() - d.getTime();
+                        if (diffMs <= 0) return '< 1 Min';
+                        const totalMins = Math.floor(diffMs / 60000);
+                        const days = Math.floor(totalMins / 1440);
+                        const hrs  = Math.floor((totalMins % 1440) / 60);
+                        const mins = totalMins % 60;
+                        const parts = [];
+                        if (days > 0) parts.push(days + (days === 1 ? ' Day' : ' Days'));
+                        if (hrs > 0)  parts.push(hrs  + (hrs  === 1 ? ' Hr'  : ' Hrs'));
+                        if (mins > 0 && days === 0) parts.push(mins + ' Min' + (mins !== 1 ? 's' : ''));
+                        return parts.length ? parts.join(' ') : '< 1 Min';
+                    })(),
+                    // "Email Resp Pending Since" — human-readable elapsed time since client's email (for Email Response Missed)
+                    emailRespPendingSince: (() => {
+                        const raw = row[colMap.lastEmailSentTime];
+                        if (!raw) return '';
+                        const d = parseAKDate(raw);
+                        if (!d) return '';
+                        const diffMs = Date.now() - d.getTime();
+                        if (diffMs <= 0) return '< 1 Min';
+                        const totalMins = Math.floor(diffMs / 60000);
+                        const days = Math.floor(totalMins / 1440);
+                        const hrs  = Math.floor((totalMins % 1440) / 60);
+                        const mins = totalMins % 60;
+                        const parts = [];
+                        if (days > 0) parts.push(days + (days === 1 ? ' Day' : ' Days'));
+                        if (hrs > 0)  parts.push(hrs  + (hrs  === 1 ? ' Hr'  : ' Hrs'));
+                        if (mins > 0 && days === 0) parts.push(mins + ' Min' + (mins !== 1 ? 's' : ''));
+                        return parts.length ? parts.join(' ') : '< 1 Min';
                     })(),
                     isSR, isINC, isOpenCase, isClosedCase, isNew,
                     isSlaViolated, isAging15Violated,
