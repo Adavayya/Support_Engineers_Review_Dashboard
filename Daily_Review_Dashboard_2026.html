@@ -1850,6 +1850,68 @@
                     
                     <div class="accordion" id="kpiAccordion">
 
+                        <!-- ═══ ENGINEERS COMPLIANCE SECTION ═══ -->
+                        <div class="accordion-item" id="accordion-section-eng-compliance">
+                            <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEngCompliance">
+                                <i class="bi bi-person-check-fill me-2" style="color:#5B4FE9;"></i>Engineers Compliance
+                                <span class="badge ms-2" style="background:rgba(91,79,233,0.15);color:var(--primary);font-size:0.68rem;font-weight:700;border-radius:12px;padding:3px 10px;">Email Response &amp; Follow-up Audit</span>
+                            </button></h2>
+                            <div id="collapseEngCompliance" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="row g-3">
+                                        <!-- Card 1: Email Response Due -->
+                                        <div class="col-md-3">
+                                            <div class="kpi-card" id="kpi-ec-resp-due-card" style="border-left-color:#F59E0B;" onclick="openDrillDown('ecEmailRespDue','Email Response Due — Awaiting Reply (within 24 hrs)')">
+                                                <span class="kpi-status-tag" id="kpi-ec-resp-due-tag" style="background:linear-gradient(135deg,#F59E0B,#FCD34D);color:#431407;">PROACTIVE</span>
+                                                <div class="kpi-title">
+                                                    Email Response Due
+                                                    <span style="font-size:0.58rem;background:rgba(245,158,11,0.12);color:#B45309;padding:1px 6px;border-radius:8px;margin-left:4px;">Within 24 Hrs</span>
+                                                </div>
+                                                <div class="kpi-value" id="kpi-ec-resp-due" style="color:#D97706;">0</div>
+                                                <div class="kpi-recommendation" id="kpi-ec-resp-due-rec">Tickets awaiting engineer email response — customer emailed within 24 hrs with no reply yet.</div>
+                                            </div>
+                                        </div>
+                                        <!-- Card 2: Email Response Missed -->
+                                        <div class="col-md-3">
+                                            <div class="kpi-card" id="kpi-ec-resp-missed-card" style="border-left-color:#EF4444;" onclick="openDrillDown('ecEmailRespMissed','Email Response Missed — No Reply for ≥24 hrs')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-ec-resp-missed-tag">GOOD</span>
+                                                <div class="kpi-title">
+                                                    Email Response Missed
+                                                    <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">≥24 Hrs</span>
+                                                </div>
+                                                <div class="kpi-value" id="kpi-ec-resp-missed" style="color:#EF4444;">0</div>
+                                                <div class="kpi-recommendation" id="kpi-ec-resp-missed-rec">Tickets without engineer response for 24+ hrs since customer email or ticket creation.</div>
+                                            </div>
+                                        </div>
+                                        <!-- Card 3: Email Followup Missed -->
+                                        <div class="col-md-3">
+                                            <div class="kpi-card" id="kpi-ec-followup-missed-card" style="border-left-color:#EF4444;" onclick="openDrillDown('ecEmailFollowupMissed','Email Follow-up Missed — No Follow-up for ≥3 Days')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-ec-followup-missed-tag">GOOD</span>
+                                                <div class="kpi-title">
+                                                    Email Follow-up Missed
+                                                    <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">≥3 Days</span>
+                                                </div>
+                                                <div class="kpi-value" id="kpi-ec-followup-missed" style="color:#EF4444;">0</div>
+                                                <div class="kpi-recommendation" id="kpi-ec-followup-missed-rec">No follow-up sent by engineer — last email from sapphireims.com was 3+ days ago.</div>
+                                            </div>
+                                        </div>
+                                        <!-- Card 4: Email on Resolved Call -->
+                                        <div class="col-md-3">
+                                            <div class="kpi-card" id="kpi-ec-email-on-resolved-card" style="border-left-color:#06B6D4;" onclick="openDrillDown('ecEmailOnResolved','Email on Resolved Call — Customer Replied After Closure')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-ec-email-on-resolved-tag">GOOD</span>
+                                                <div class="kpi-title">
+                                                    Email on Resolved Call
+                                                    <span style="font-size:0.58rem;background:rgba(6,182,212,0.12);color:#0891B2;padding:1px 6px;border-radius:8px;margin-left:4px;">Customer Replied</span>
+                                                </div>
+                                                <div class="kpi-value" id="kpi-ec-email-on-resolved" style="color:#0891B2;">0</div>
+                                                <div class="kpi-recommendation" id="kpi-ec-email-on-resolved-rec">Closed tickets where the last email is NOT from sapphireims.com — customer replied after resolution.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- ═══ SECTION 1: Overall Case Volume ═══ -->
                         <div class="accordion-item" id="accordion-section-1">
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
@@ -2297,6 +2359,51 @@
                                 </thead>
                                 <tbody id="owner-scorecard-body">
                                     <tr><td colspan="17" class="text-center text-muted py-3">Processing data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <!-- ENGINEERS COMPLIANCE SCORECARD TABLE            -->
+                    <!-- ═══════════════════════════════════════════════ -->
+                    <div class="mt-4" id="eng-compliance-scorecard-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">
+                                <i class="bi bi-person-check-fill me-2" style="color:var(--primary);"></i>
+                                Engineers Compliance Scorecard
+                                <span class="badge ms-2" style="background:rgba(91,79,233,0.12);color:var(--primary);font-size:0.68rem;font-weight:700;border-radius:12px;padding:3px 10px;">Global Filters Applied</span>
+                            </h5>
+                            <div class="d-flex gap-2 align-items-center">
+                                <small class="text-muted">Incoming/Outgoing respect Timescale filter</small>
+                                <button class="btn btn-sm btn-success" onclick="exportEngComplianceScorecardToExcel()">
+                                    <i class="bi bi-download me-1"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card p-2 overflow-auto">
+                            <table class="table table-sm table-striped table-hover scorecard-table compact-view" id="eng-compliance-scorecard-table" style="min-width:1100px;">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width:36px;">#</th>
+                                        <th style="min-width:120px;">Engineer Name</th>
+                                        <th title="Total Open INC + SR">Total Open Calls</th>
+                                        <th title="Open Incident Management tickets">Open (INC)</th>
+                                        <th title="Open Service Request tickets">Open (SR)</th>
+                                        <th title="INC tickets created in selected timescale">Incoming (INC)</th>
+                                        <th title="SR tickets created in selected timescale">Incoming (SR)</th>
+                                        <th title="INC tickets resolved in selected timescale">Outgoing (INC)</th>
+                                        <th title="SR tickets resolved in selected timescale">Outgoing (SR)</th>
+                                        <th title="Awaiting reply &lt;24 hrs" style="color:#B45309;">Email Response Due</th>
+                                        <th title="No reply for ≥24 hrs" style="color:#DC2626;">Email Response Missed</th>
+                                        <th title="Last sapphire email ≥3 days ago" style="color:#DC2626;">Email Follow-up Missed</th>
+                                        <th title="Customer replied after closure" style="color:#0891B2;">Email on Resolved Call</th>
+                                        <th title="Open INC older than 15 days" style="color:#B45309;">Ageing &gt;15 (INC)</th>
+                                        <th title="Open SR older than 15 days" style="color:#B45309;">Ageing &gt;15 (SR)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="eng-compliance-scorecard-body">
+                                    <tr><td colspan="15" class="text-center text-muted py-3">Load data to see Engineers Compliance Scorecard.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -4672,6 +4779,67 @@
                 { key: 'updateTimeDisplay', label: 'Update Time' },
                 { key: 'slaStatus', label: 'SLA Status' }
             ],
+            // ── Engineers Compliance drill-down columns ──
+            'ecEmailRespDue': [
+                { key: 'incidentId', label: 'Incident ID' },
+                { key: 'title', label: 'Title' },
+                { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Current Status' },
+                { key: 'service', label: 'Service' },
+                { key: 'owner', label: 'Owner' },
+                { key: 'agingRoundoff', label: 'Aging (Days)' },
+                { key: 'lastEmailFrom', label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay', label: 'Last Email Sent Time' },
+                { key: 'emailRespPendingSince', label: 'Pending Since' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' },
+                { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'slaStatus', label: 'SLA Status' }
+            ],
+            'ecEmailRespMissed': [
+                { key: 'incidentId', label: 'Incident ID' },
+                { key: 'title', label: 'Title' },
+                { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Current Status' },
+                { key: 'service', label: 'Service' },
+                { key: 'owner', label: 'Owner' },
+                { key: 'agingRoundoff', label: 'Aging (Days)' },
+                { key: 'lastEmailFrom', label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay', label: 'Last Email Sent Time' },
+                { key: 'emailRespPendingSince', label: 'Pending Since' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' },
+                { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'slaStatus', label: 'SLA Status' }
+            ],
+            'ecEmailFollowupMissed': [
+                { key: 'incidentId', label: 'Incident ID' },
+                { key: 'title', label: 'Title' },
+                { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Current Status' },
+                { key: 'service', label: 'Service' },
+                { key: 'owner', label: 'Owner' },
+                { key: 'agingRoundoff', label: 'Aging (Days)' },
+                { key: 'lastEmailFrom', label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay', label: 'Last Email Sent Time' },
+                { key: 'emailFollowupPendingSince', label: 'Follow-up Pending Since' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' },
+                { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'slaStatus', label: 'SLA Status' }
+            ],
+            'ecEmailOnResolved': [
+                { key: 'incidentId', label: 'Incident ID' },
+                { key: 'title', label: 'Title' },
+                { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Current Status' },
+                { key: 'service', label: 'Service' },
+                { key: 'owner', label: 'Owner' },
+                { key: 'agingRoundoff', label: 'Aging (Days)' },
+                { key: 'lastEmailFrom', label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay', label: 'Last Email Sent Time' },
+                { key: 'emailRespPendingSince', label: 'Customer Reply Since' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' },
+                { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'slaStatus', label: 'SLA Status' }
+            ],
             'slaINC': [
                 { key: 'incidentId', label: 'Incident ID' },
                 { key: 'title', label: 'Title' },
@@ -5761,6 +5929,63 @@
                 const isEmailRespMissed   = emailResponseCompliance === 'Email Response Missed';
                 const isEmailRespToday    = emailResponseCompliance === 'Email Resp Due Today';
 
+                // ── Engineers Compliance flags ────────────────────────────────────
+                // Reusable helpers for Engineers Compliance cards
+                const _ajLower = (lastEmailFrom || '').toString().trim().toLowerCase();
+                const _isFromSapphire = _ajLower.includes('@sapphireims.com');
+                const _isFromCustomer = _ajLower.length > 0 && !_isFromSapphire;
+                const _akDateEC = parseAKDate(lastEmailSentTime);
+                const _nowEC = new Date();
+                const _diffHrsEC = _akDateEC ? (_nowEC - _akDateEC) / 3600000 : null;
+
+                // EC Card 1 — Email Response Due:
+                //   Customer emailed recently (<24 hrs) and engineer has NOT yet replied (from sapphireims.com)
+                //   OR no customer email exists and engineer has not responded since ticket creation
+                const isEcEmailRespDue = (() => {
+                    if (!isOpenCase) return false;
+                    // Case A: customer emailed, within 24 hrs, no sapphire reply yet
+                    if (_isFromCustomer && _diffHrsEC !== null && _diffHrsEC < 24) return true;
+                    // Case B: no last email at all, and ticket was created > 0 hrs ago (no response ever sent)
+                    if (!_ajLower && creationDateObj) {
+                        const ageHrs = (_nowEC - creationDateObj) / 3600000;
+                        if (ageHrs < 24) return true;
+                    }
+                    return false;
+                })();
+
+                // EC Card 2 — Email Response Missed:
+                //   Customer emailed (>=24 hrs ago) and engineer has NOT replied
+                //   OR no customer email exists and engineer has not responded since ticket creation (>=24 hrs)
+                const isEcEmailRespMissed = (() => {
+                    if (!isOpenCase) return false;
+                    // Case A: customer emailed >= 24 hrs ago, no sapphire reply yet
+                    if (_isFromCustomer && _diffHrsEC !== null && _diffHrsEC >= 24) return true;
+                    // Case B: no last email at all, ticket created >= 24 hrs ago
+                    if (!_ajLower && creationDateObj) {
+                        const ageHrs = (_nowEC - creationDateObj) / 3600000;
+                        if (ageHrs >= 24) return true;
+                    }
+                    return false;
+                })();
+
+                // EC Card 3 — Email Follow-up Missed:
+                //   Last email sent FROM sapphireims.com >= 3 days ago (72 hrs)
+                const isEcEmailFollowupMissed = (() => {
+                    if (!isOpenCase) return false;
+                    if (!_isFromSapphire) return false;
+                    if (_diffHrsEC === null) return false;
+                    return _diffHrsEC >= 72;
+                })();
+
+                // EC Card 4 — Email on Resolved Call:
+                //   Customer emailed on a ticket that is SPECIFICALLY in "Resolved - Pending for Confirmation" status.
+                //   Last email must be from the customer side (NOT from sapphireims.com).
+                const isEcEmailOnResolved = (() => {
+                    if (currentStatus !== 'Resolved - Pending for Confirmation') return false;
+                    if (!_isFromCustomer) return false;
+                    return true;
+                })();
+
                 return {
                     _creationDate: creationDateObj,
                     incidentId: row[colMap.incidentId] || 'N/A',
@@ -5877,6 +6102,8 @@
                     isOldest25, isIdle1, isIdle3,
                     isEmailFollowupMissed, isEmailFollowupToday, isEmailFollowupTomorrow,
                     isEmailRespMissed, isEmailRespToday,
+                    // Engineers Compliance flags
+                    isEcEmailRespDue, isEcEmailRespMissed, isEcEmailFollowupMissed, isEcEmailOnResolved,
                     // Assignment Aging fields
                     assignL1TimeDisplay: assignL1TimeObj
                         ? assignL1TimeObj.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})
@@ -7943,6 +8170,63 @@
             }
         }
 
+        // ── Engineers Compliance global filter helpers ──────────────────────────
+        //
+        // _ecBaseFilter(d)  — shared non-timescale gate: l1team, mspaccount, owner,
+        //                     submittedby, service, level, sla.  No mode gate (spans
+        //                     open + closed).  No timescale gate (email compliance is
+        //                     a current-state check, not a date-range query).
+        //
+        // _ecGlobalFiltered()           → base filter only (for email cards, ageing, totals)
+        // _ecGlobalFilteredByCreation() → base + timescale on Creation Time (for Incoming)
+        // _ecGlobalFilteredByResolved() → base + timescale on Resolve Time  (for Outgoing)
+        //
+        function _ecBaseFilter(d) {
+            if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+            if (globalFilters.mspaccount.length > 0 && !globalFilters.mspaccount.includes(d.customerName)) return false;
+            if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+            if (globalFilters.submittedby.length > 0 && !globalFilters.submittedby.includes(d.customerName)) return false;
+            if (globalFilters.service && d.service !== globalFilters.service) return false;
+            if (globalFilters.level && d.assignmentLevel !== globalFilters.level) return false;
+            if (globalFilters.sla === 'Violated' && !d.isSlaViolated) return false;
+            if (globalFilters.sla === 'Non-Violated' && d.isSlaViolated) return false;
+            return true;
+        }
+
+        // Email compliance cards + ageing + total open — NO timescale gate
+        function _ecGlobalFiltered() {
+            return processedData.filter(d => _ecBaseFilter(d));
+        }
+
+        // Incoming (INC/SR) — Creation Time must fall within selected timescale
+        // Counts BOTH open and closed statuses (per spec)
+        function _ecGlobalFilteredByCreation() {
+            return processedData.filter(d => {
+                if (!_ecBaseFilter(d)) return false;
+                if (globalFilters.timescale && globalFilters.timescale !== 'all') {
+                    if (!_timescaleMatch(d._creationDate, globalFilters.timescale)) return false;
+                }
+                return true;
+            });
+        }
+
+        // Outgoing (INC/SR) — Resolve Time must fall within selected timescale
+        // Counts ONLY closed statuses (per spec)
+        function _ecGlobalFilteredByResolved() {
+            const ts = globalFilters.timescale || 'all';
+            return processedData.filter(d => {
+                if (!_ecBaseFilter(d)) return false;
+                if (!d.isClosedCase) return false;
+                if (ts !== 'all') {
+                    if (!d.resolvedTimeRaw2 || d.resolvedTimeRaw2 === '') return false;
+                    const rd = new Date(d.resolvedTimeRaw2);
+                    if (isNaN(rd.getTime())) return false;
+                    if (!_timescaleMatch(rd, ts)) return false;
+                }
+                return true;
+            });
+        }
+
         function renderKPIDashboard() {
             if (!filteredData.length) {
                 // Zero out all KPI card values so stale numbers don't persist
@@ -7950,6 +8234,8 @@
                 document.querySelectorAll('.kpi-recommendation').forEach(el => el.textContent = 'No data for the selected filters.');
                 document.querySelectorAll('.kpi-status-tag').forEach(el => { el.textContent = 'NO DATA'; el.className = 'kpi-status-tag bg-info-tag'; });
                 document.getElementById('owner-scorecard-body').innerHTML = '<tr><td colspan="17" class="text-center text-muted py-3">No data found for selected filters.</td></tr>';
+                const ecBodyNoData = document.getElementById('eng-compliance-scorecard-body');
+                if (ecBodyNoData) ecBodyNoData.innerHTML = '<tr><td colspan="15" class="text-center text-muted py-3">No data for selected filters.</td></tr>';
                 // Also clear charts/tables that may hold stale data
                 const lvlDiv = document.getElementById('assignment-level-stats');
                 if (lvlDiv) lvlDiv.innerHTML = '<div class="text-muted text-center py-3" style="font-size:0.82rem;">No data for selected filters.</div>';
@@ -8003,6 +8289,11 @@
                 edocToday: filteredData.filter(d => d.isEdocDueToday).length,
                 edocTomorrow: filteredData.filter(d => d.isEdocDueTomorrow).length,
                 edocMissing: filteredData.filter(d => d.isEdocMissing).length,
+                // Engineers Compliance metrics — respects all global filters (l1team, owner, service, mspaccount, timescale)
+                ecEmailRespDue:        _ecGlobalFiltered().filter(d => d.isEcEmailRespDue).length,
+                ecEmailRespMissed:     _ecGlobalFiltered().filter(d => d.isEcEmailRespMissed).length,
+                ecEmailFollowupMissed: _ecGlobalFiltered().filter(d => d.isEcEmailFollowupMissed).length,
+                ecEmailOnResolved:     _ecGlobalFiltered().filter(d => d.isEcEmailOnResolved).length,
             };
 
             const infoRec = { status: 'INFO', tag: 'bg-info-tag', rec: 'Statistical count of active cases.' };
@@ -8149,6 +8440,62 @@
             updateSectionRAGStatus(4, [efuMissedRec, efuTodayRec, efuTomorrowRec, erMissedRec, erTodayRec]);
             updateSectionRAGStatus(5, [subRespRec, subRespTodayRec, subRespTomorrowRec, subSLARec]);
             updateSectionRAGStatus(6, [idle3Rec, edocRec, edocTodayRec, edocTomorrowRec]);
+
+            // ── Engineers Compliance section cards ───────────────────────────
+            const _setEcCard = (id, val, tag, tagCls, rec, drillKey) => {
+                const vEl = document.getElementById(id);         if (vEl) vEl.textContent = val;
+                const tEl = document.getElementById(`${id}-tag`); if (tEl) { tEl.textContent = tag; tEl.className = `kpi-status-tag ${tagCls}`; }
+                const rEl = document.getElementById(`${id}-rec`); if (rEl) rEl.textContent = rec;
+                const cEl = document.getElementById(`${id}-card`);
+                if (cEl) {
+                    cEl.style.cursor = 'pointer';
+                    cEl.onclick = () => openDrillDown(drillKey, rec);
+                }
+            };
+            // Card 1: Email Response Due (within 24 hrs)
+            _setEcCard(
+                'kpi-ec-resp-due',
+                m.ecEmailRespDue,
+                m.ecEmailRespDue > 0 ? 'ACT NOW' : 'GOOD',
+                m.ecEmailRespDue > 0 ? 'bg-action-needed' : 'bg-good',
+                m.ecEmailRespDue > 0
+                    ? `${m.ecEmailRespDue} ticket(s) awaiting engineer email reply — customer emailed < 24 hrs ago or no response since creation.`
+                    : 'All tickets with recent customer emails have been responded to within 24 hrs.',
+                'ecEmailRespDue'
+            );
+            // Card 2: Email Response Missed (>=24 hrs)
+            _setEcCard(
+                'kpi-ec-resp-missed',
+                m.ecEmailRespMissed,
+                m.ecEmailRespMissed > 0 ? 'URGENT' : 'GOOD',
+                m.ecEmailRespMissed > 0 ? 'bg-urgent' : 'bg-good',
+                m.ecEmailRespMissed > 0
+                    ? `${m.ecEmailRespMissed} ticket(s) with no engineer response for 24+ hrs — immediate reply required.`
+                    : 'No missed email responses — all customer emails have been acknowledged within 24 hrs.',
+                'ecEmailRespMissed'
+            );
+            // Card 3: Email Follow-up Missed (>=3 days)
+            _setEcCard(
+                'kpi-ec-followup-missed',
+                m.ecEmailFollowupMissed,
+                m.ecEmailFollowupMissed > 0 ? 'URGENT' : 'GOOD',
+                m.ecEmailFollowupMissed > 0 ? 'bg-urgent' : 'bg-good',
+                m.ecEmailFollowupMissed > 0
+                    ? `${m.ecEmailFollowupMissed} ticket(s) where the last sapphireims.com email was sent 3+ days ago — follow-up overdue.`
+                    : 'All tickets have been followed up by the engineer within the last 3 days.',
+                'ecEmailFollowupMissed'
+            );
+            // Card 4: Email on Resolved Call
+            _setEcCard(
+                'kpi-ec-email-on-resolved',
+                m.ecEmailOnResolved,
+                m.ecEmailOnResolved > 0 ? 'ACTION NEEDED' : 'GOOD',
+                m.ecEmailOnResolved > 0 ? 'bg-action-needed' : 'bg-good',
+                m.ecEmailOnResolved > 0
+                    ? `${m.ecEmailOnResolved} closed ticket(s) where the last email is from the customer — customer replied after resolution.`
+                    : 'No closed tickets with pending customer emails — all resolved calls are clear.',
+                'ecEmailOnResolved'
+            );
             
             // ── Closed-mode Section 1 cards ───────────────────────
             const closedDrillMap = {
@@ -8221,6 +8568,7 @@
             setCard('kpi-closure-followup', m.closureFollowup, m.closureFollowup>0?'ACTION NEEDED':'GOOD', m.closureFollowup>0?'bg-action-needed':'bg-good', m.closureFollowup>0?`${m.closureFollowup} closed case(s) — last email not from sapphireims.com. Customer may need a follow-up.`:'All closed cases have a support email as last contact.');
 
             renderOwnerScorecard();
+            renderEngComplianceScorecard();
         }
 
         function updateSectionRAGStatus(sectionNumber, cardRecommendations) {
@@ -8493,6 +8841,154 @@
             renderAssignmentLevelStats();
         }
 
+        // ─────────────────────────────────────────────────────────────────────
+        // ENGINEERS COMPLIANCE SCORECARD
+        // ─────────────────────────────────────────────────────────────────────
+        let _ecScorecardData = []; // for Excel export
+
+        function renderEngComplianceScorecard() {
+            // ── Three correctly-scoped data subsets ───────────────────────────
+            //
+            //  baseAll    → all filters, NO timescale gate
+            //               used for: Total Open, Open INC/SR, Ageing >15, Email flags
+            //
+            //  baseByCreation → base + timescale applied to Creation Time
+            //               used for: Incoming INC/SR (open + closed, per spec)
+            //
+            //  baseByResolved → base + timescale applied to Resolve Time, closed only
+            //               used for: Outgoing INC/SR (closed only, per spec)
+            //
+            const baseAll        = _ecGlobalFiltered();
+            const baseByCreation = _ecGlobalFilteredByCreation();
+            const baseByResolved = _ecGlobalFilteredByResolved();
+
+            const counts = {};
+            const ensure = (eng) => {
+                if (!counts[eng]) counts[eng] = {
+                    totalOpen: 0, openINC: 0, openSR: 0,
+                    incomingINC: 0, incomingSR: 0,
+                    outgoingINC: 0, outgoingSR: 0,
+                    emailRespDue: 0, emailRespMissed: 0,
+                    emailFollowupMissed: 0, emailOnResolved: 0,
+                    ageing15INC: 0, ageing15SR: 0
+                };
+            };
+
+            // Pass 1 — Total Open, Ageing >15, Email compliance flags (NO timescale gate)
+            baseAll.forEach(d => {
+                const eng = d.owner || 'Unassigned';
+                ensure(eng);
+                // Total Open Calls / Open INC / Open SR — open statuses only
+                if (d.isOpenCase) {
+                    counts[eng].totalOpen++;
+                    if (d.isINC) counts[eng].openINC++;
+                    if (d.isSR)  counts[eng].openSR++;
+                    // Ageing > 15 days (open cases only)
+                    if (d.isINC && d.isAging15Violated) counts[eng].ageing15INC++;
+                    if (d.isSR  && d.isAging15Violated) counts[eng].ageing15SR++;
+                }
+                // Email compliance flags (current-state, no timescale)
+                if (d.isEcEmailRespDue)        counts[eng].emailRespDue++;
+                if (d.isEcEmailRespMissed)     counts[eng].emailRespMissed++;
+                if (d.isEcEmailFollowupMissed) counts[eng].emailFollowupMissed++;
+                if (d.isEcEmailOnResolved)     counts[eng].emailOnResolved++;
+            });
+
+            // Pass 2 — Incoming: Creation Time in selected timescale, both open + closed (per spec)
+            baseByCreation.forEach(d => {
+                const eng = d.owner || 'Unassigned';
+                ensure(eng);
+                if (d.isINC) counts[eng].incomingINC++;
+                if (d.isSR)  counts[eng].incomingSR++;
+            });
+
+            // Pass 3 — Outgoing: Resolve Time in selected timescale, closed only (per spec)
+            baseByResolved.forEach(d => {
+                const eng = d.owner || 'Unassigned';
+                ensure(eng);
+                if (d.isINC) counts[eng].outgoingINC++;
+                if (d.isSR)  counts[eng].outgoingSR++;
+            });
+
+            const engineers = Object.keys(counts).sort();
+            _ecScorecardData = [];
+
+            if (!engineers.length) {
+                document.getElementById('eng-compliance-scorecard-body').innerHTML =
+                    '<tr><td colspan="15" class="text-center text-muted py-3">No data found for selected filters.</td></tr>';
+                return;
+            }
+
+            const rows = engineers.map((eng, idx) => {
+                const s = counts[eng];
+                _ecScorecardData.push({
+                    '#': idx + 1,
+                    'Engineer Name': eng,
+                    'Total Open Calls': s.totalOpen,
+                    'Open (INC)': s.openINC,
+                    'Open (SR)': s.openSR,
+                    'Incoming (INC)': s.incomingINC,
+                    'Incoming (SR)': s.incomingSR,
+                    'Outgoing (INC)': s.outgoingINC,
+                    'Outgoing (SR)': s.outgoingSR,
+                    'Email Response Due': s.emailRespDue,
+                    'Email Response Missed': s.emailRespMissed,
+                    'Email Follow-up Missed': s.emailFollowupMissed,
+                    'Email on Resolved Call': s.emailOnResolved,
+                    'Ageing >15 (INC)': s.ageing15INC,
+                    'Ageing >15 (SR)': s.ageing15SR
+                });
+
+                const cell = (val, cls) => `<td class="${val > 0 && cls ? cls : ''}">${val}</td>`;
+
+                return `<tr class="align-middle" onclick="updateOwnerFilter('${eng.replace(/'/g, "\'")}')" style="cursor:pointer;">
+                    <td class="text-muted" style="font-weight:600;">${idx + 1}</td>
+                    <td class="fw-bold">${eng}</td>
+                    <td class="fw-bold">${s.totalOpen}</td>
+                    ${cell(s.openINC, '')}
+                    ${cell(s.openSR, '')}
+                    ${cell(s.incomingINC, '')}
+                    ${cell(s.incomingSR, '')}
+                    ${cell(s.outgoingINC, '')}
+                    ${cell(s.outgoingSR, '')}
+                    ${cell(s.emailRespDue, 'high-cell')}
+                    ${cell(s.emailRespMissed, 'critical-cell')}
+                    ${cell(s.emailFollowupMissed, 'critical-cell')}
+                    ${cell(s.emailOnResolved, 'high-cell')}
+                    ${cell(s.ageing15INC, 'high-cell')}
+                    ${cell(s.ageing15SR, 'high-cell')}
+                </tr>`;
+            }).join('');
+
+            // Totals row
+            const tot = engineers.reduce((acc, eng) => {
+                Object.keys(counts[eng]).forEach(k => { acc[k] = (acc[k] || 0) + counts[eng][k]; });
+                return acc;
+            }, {});
+            const totRow = `<tr class="align-middle fw-bold" style="background:var(--primary-soft);border-top:2px solid var(--border-strong);">
+                <td colspan="2" style="font-weight:800;color:var(--primary);">TOTAL (${engineers.length} engineers)</td>
+                <td>${tot.totalOpen}</td><td>${tot.openINC}</td><td>${tot.openSR}</td>
+                <td>${tot.incomingINC}</td><td>${tot.incomingSR}</td>
+                <td>${tot.outgoingINC}</td><td>${tot.outgoingSR}</td>
+                <td class="${tot.emailRespDue > 0 ? 'high-cell' : ''}">${tot.emailRespDue}</td>
+                <td class="${tot.emailRespMissed > 0 ? 'critical-cell' : ''}">${tot.emailRespMissed}</td>
+                <td class="${tot.emailFollowupMissed > 0 ? 'critical-cell' : ''}">${tot.emailFollowupMissed}</td>
+                <td class="${tot.emailOnResolved > 0 ? 'high-cell' : ''}">${tot.emailOnResolved}</td>
+                <td class="${tot.ageing15INC > 0 ? 'high-cell' : ''}">${tot.ageing15INC}</td>
+                <td class="${tot.ageing15SR > 0 ? 'high-cell' : ''}">${tot.ageing15SR}</td>
+            </tr>`;
+
+            document.getElementById('eng-compliance-scorecard-body').innerHTML = rows + totRow;
+        }
+
+        function exportEngComplianceScorecardToExcel() {
+            if (!_ecScorecardData.length) { alert('No Engineers Compliance data to export. Upload data first.'); return; }
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(_ecScorecardData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Engineers Compliance');
+            XLSX.writeFile(wb, 'Engineers_Compliance_Scorecard_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+        }
+
         function renderAssignmentLevelStats() {
             const container = document.getElementById('assignment-level-stats');
             if (!container) return;
@@ -8761,6 +9257,19 @@
                     break;
                 case 'emailResponseMissed':
                     drillDownData = filteredData.filter(d => d.emailCompliance === 'Email Response Missed');
+                    break;
+                // ── Engineers Compliance drill-downs (respects global filters) ──
+                case 'ecEmailRespDue':
+                    drillDownData = _ecGlobalFiltered().filter(d => d.isEcEmailRespDue);
+                    break;
+                case 'ecEmailRespMissed':
+                    drillDownData = _ecGlobalFiltered().filter(d => d.isEcEmailRespMissed);
+                    break;
+                case 'ecEmailFollowupMissed':
+                    drillDownData = _ecGlobalFiltered().filter(d => d.isEcEmailFollowupMissed);
+                    break;
+                case 'ecEmailOnResolved':
+                    drillDownData = _ecGlobalFiltered().filter(d => d.isEcEmailOnResolved);
                     break;
                 case 'subsequentResponseMissed':
                     drillDownData = filteredData.filter(d => d.isSubsequentResponseMissed);
