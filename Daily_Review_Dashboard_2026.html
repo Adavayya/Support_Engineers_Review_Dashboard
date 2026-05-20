@@ -3916,6 +3916,212 @@
                             <div class="mt-2 small">Upload and process data to see AM Metrics</div>
                         </div>
 
+                        <!-- ── SECTION D: Delegation Aging ── -->
+                        <div class="kpi-section-title mt-4"><i class="bi bi-diagram-3 me-1"></i>Delegation Aging <small style="font-size:0.7rem;font-weight:500;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(L1→L2→SME escalation delays &amp; queue bottlenecks — Global Filters Applied)</small></div>
+
+                        <!-- Executive Summary KPIs -->
+                        <div class="row g-2 mb-3" id="da-exec-summary-cards">
+                            <div class="col-6 col-md-3">
+                                <div class="kpi-card h-100" style="border-left-color:#5B4FE9;cursor:pointer;" onclick="openDelegationDrillDown('daL1Aging','L1 Delegation Aging — L1→L2 Delay')">
+                                    <span class="kpi-status-tag bg-info-tag" id="da-avg-l1-tag">INFO</span>
+                                    <div class="kpi-title">Avg L1 Delegation Aging</div>
+                                    <div class="kpi-value" id="da-avg-l1" style="color:#5B4FE9;font-size:1.4rem;">—</div>
+                                    <div class="kpi-recommendation" id="da-avg-l1-rec">Avg time L1 held before delegating to L2.</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="kpi-card h-100" style="border-left-color:#06B6D4;cursor:pointer;" onclick="openDelegationDrillDown('daL2Aging','L2 Delegation Aging — L2→SME Delay')">
+                                    <span class="kpi-status-tag bg-info-tag" id="da-avg-l2-tag">INFO</span>
+                                    <div class="kpi-title">Avg L2 Delegation Aging</div>
+                                    <div class="kpi-value" id="da-avg-l2" style="color:#06B6D4;font-size:1.4rem;">—</div>
+                                    <div class="kpi-recommendation" id="da-avg-l2-rec">Avg time L2 held before escalating to SME.</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="kpi-card h-100" style="border-left-color:#F59E0B;cursor:pointer;" onclick="openDelegationDrillDown('daDirectL2','Direct L2 Assignments — Bypassing L1')">
+                                    <span class="kpi-status-tag bg-monitor" id="da-direct-l2-tag">INFO</span>
+                                    <div class="kpi-title">Direct to L2 %</div>
+                                    <div class="kpi-value" id="da-direct-l2" style="color:#D97706;font-size:1.4rem;">—</div>
+                                    <div class="kpi-recommendation" id="da-direct-l2-rec">Cases bypassing L1, assigned directly to L2.</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="kpi-card h-100" style="border-left-color:#EF4444;cursor:pointer;" onclick="openDelegationDrillDown('daDirectSME','Direct SME Assignments — Bypassing L1 &amp; L2')">
+                                    <span class="kpi-status-tag bg-urgent" id="da-direct-sme-tag">INFO</span>
+                                    <div class="kpi-title">Direct to SME %</div>
+                                    <div class="kpi-value" id="da-direct-sme" style="color:#EF4444;font-size:1.4rem;">—</div>
+                                    <div class="kpi-recommendation" id="da-direct-sme-rec">Cases bypassing both L1 &amp; L2, assigned directly to SME.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Queue Bottleneck Cards -->
+                        <div class="kpi-section-title" style="font-size:0.62rem;color:var(--secondary);border-bottom-color:var(--secondary-soft);margin-top:8px;"><i class="bi bi-hourglass-split me-1"></i>Live Pending Queue Aging</div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-md-4">
+                                <div class="kpi-card h-100" style="border-left-color:#5B4FE9;cursor:pointer;" onclick="openDelegationDrillDown('daPendingL1','Pending with L1 — Live Aging')">
+                                    <span class="kpi-status-tag bg-info-tag" id="da-pending-l1-tag">INFO</span>
+                                    <div class="kpi-title">⏳ Pending with L1</div>
+                                    <div class="kpi-value" id="da-pending-l1" style="color:#5B4FE9;">0</div>
+                                    <div class="kpi-recommendation" id="da-pending-l1-rec">Cases assigned to L1 with no L2 assignment yet.</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="kpi-card h-100" style="border-left-color:#06B6D4;cursor:pointer;" onclick="openDelegationDrillDown('daPendingL2','Pending with L2 — Live Aging')">
+                                    <span class="kpi-status-tag bg-info-tag" id="da-pending-l2-tag">INFO</span>
+                                    <div class="kpi-title">⏳ Pending with L2</div>
+                                    <div class="kpi-value" id="da-pending-l2" style="color:#06B6D4;">0</div>
+                                    <div class="kpi-recommendation" id="da-pending-l2-rec">Cases assigned to L2 with no SME assignment yet.</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="kpi-card h-100" style="border-left-color:#7C3AED;cursor:pointer;" onclick="openDelegationDrillDown('daPendingSME','Pending with SME — Currently Assigned')">
+                                    <span class="kpi-status-tag bg-info-tag" id="da-pending-sme-tag">INFO</span>
+                                    <div class="kpi-title">⏳ Pending with SME</div>
+                                    <div class="kpi-value" id="da-pending-sme" style="color:#7C3AED;">0</div>
+                                    <div class="kpi-recommendation" id="da-pending-sme-rec">Cases currently with SME engineer.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delegation Flow Analysis + Queue Bottleneck table -->
+                        <div class="row g-3 mb-3">
+                            <!-- Delegation Flow Analysis -->
+                            <div class="col-lg-6">
+                                <div class="card p-0" style="border:1.5px solid var(--border-strong);border-radius:14px;overflow:hidden;">
+                                    <div style="background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 60%,var(--primary-light) 100%);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <i class="bi bi-diagram-3-fill" style="color:#fff;font-size:1rem;"></i>
+                                            <span style="color:#fff;font-size:0.88rem;font-weight:800;">Delegation Flow Analysis</span>
+                                        </div>
+                                        <button class="btn btn-sm" onclick="exportDelegationFlowExcel()" style="background:rgba(255,255,255,0.18);color:#fff;font-size:0.72rem;padding:3px 10px;border:1px solid rgba(255,255,255,0.3);font-weight:600;border-radius:6px;">
+                                            <i class="bi bi-file-earmark-excel me-1"></i>Export
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
+                                        <table class="table table-sm scorecard-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:left;min-width:200px;">Flow Type</th>
+                                                    <th>Count</th>
+                                                    <th>% of Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="da-flow-table-body">
+                                                <tr><td colspan="3" class="text-center text-muted py-3" style="font-size:0.82rem;">Upload data to see delegation flow.</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Queue Bottleneck Summary -->
+                            <div class="col-lg-6">
+                                <div class="card p-0" style="border:1.5px solid var(--border-strong);border-radius:14px;overflow:hidden;">
+                                    <div style="background:linear-gradient(135deg,#0369A1 0%,#06B6D4 60%,#22D3EE 100%);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                                        <div style="display:flex;align-items:center;gap:8px;">
+                                            <i class="bi bi-speedometer2" style="color:#fff;font-size:1rem;"></i>
+                                            <span style="color:#fff;font-size:0.88rem;font-weight:800;">Queue Bottleneck Report</span>
+                                        </div>
+                                        <button class="btn btn-sm" onclick="exportQueueBottleneckExcel()" style="background:rgba(255,255,255,0.18);color:#fff;font-size:0.72rem;padding:3px 10px;border:1px solid rgba(255,255,255,0.3);font-weight:600;border-radius:6px;">
+                                            <i class="bi bi-file-earmark-excel me-1"></i>Export
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
+                                        <table class="table table-sm scorecard-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:left;">Queue</th>
+                                                    <th>Pending Count</th>
+                                                    <th>Avg Pending Aging</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="da-bottleneck-table-body">
+                                                <tr><td colspan="4" class="text-center text-muted py-3" style="font-size:0.82rem;">Upload data to see queue bottleneck.</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trend Charts Row -->
+                        <div class="kpi-section-title" style="font-size:0.62rem;color:#7C3AED;border-bottom-color:#EDE9FE;margin-top:8px;"><i class="bi bi-graph-up me-1"></i>Delegation Aging Trend Charts</div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-lg-6">
+                                <div class="card p-3">
+                                    <div class="fw-bold mb-2" style="font-size:0.85rem;color:var(--primary);"><i class="bi bi-bar-chart-fill me-1"></i>Daily Avg Delegation Aging (L1 &amp; L2)</div>
+                                    <div style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:8px;">Average hours L1/L2 held tickets before delegating — grouped by creation date</div>
+                                    <div style="position:relative;height:220px;"><canvas id="da-aging-trend-chart"></canvas></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card p-3">
+                                    <div class="fw-bold mb-2" style="font-size:0.85rem;color:var(--primary);"><i class="bi bi-people-fill me-1"></i>Engineer-wise Delegation Aging</div>
+                                    <div style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:8px;">Per-engineer avg L1 delegation aging — click bar to drill down</div>
+                                    <div style="position:relative;height:220px;"><canvas id="da-engineer-chart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-lg-6">
+                                <div class="card p-3">
+                                    <div class="fw-bold mb-2" style="font-size:0.85rem;color:var(--primary);"><i class="bi bi-pie-chart-fill me-1"></i>Aging Bucket Distribution</div>
+                                    <div style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:8px;">L1 delegation aging bucket breakdown — how long before cases moved to L2</div>
+                                    <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center;"><canvas id="da-bucket-chart"></canvas></div>
+                                    <div id="da-bucket-legend" class="d-flex flex-wrap gap-2 mt-2 justify-content-center" style="font-size:0.73rem;"></div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card p-3">
+                                    <div class="fw-bold mb-2" style="font-size:0.85rem;color:var(--primary);"><i class="bi bi-bar-chart-steps me-1"></i>Direct Assignment Trend</div>
+                                    <div style="font-size:0.72rem;color:var(--text-secondary);margin-bottom:8px;">Direct L2 &amp; SME assignments (bypassing normal flow) — by creation date</div>
+                                    <div style="position:relative;height:220px;"><canvas id="da-direct-assign-chart"></canvas></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detailed Delegation Aging Reports Table -->
+                        <div class="card p-0 mb-3" style="border:1.5px solid var(--border-strong);border-radius:14px;overflow:hidden;">
+                            <div style="background:linear-gradient(135deg,#7C3AED 0%,#A855F7 60%,#C084FC 100%);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <i class="bi bi-table" style="color:#fff;font-size:1rem;"></i>
+                                    <span style="color:#fff;font-size:0.92rem;font-weight:800;">L1 &amp; L2 Delegation Aging Detail Report</span>
+                                    <span class="badge ms-1" style="background:rgba(255,255,255,0.18);color:#fff;font-size:0.68rem;font-weight:600;border-radius:20px;padding:3px 10px;">All Delegated Cases · Global Filters Applied</span>
+                                </div>
+                                <button class="btn btn-sm" onclick="exportDelegationAgingDetailExcel()" style="background:rgba(255,255,255,0.18);color:#fff;font-size:0.72rem;padding:4px 12px;border:1px solid rgba(255,255,255,0.3);font-weight:600;border-radius:6px;">
+                                    <i class="bi bi-file-earmark-excel me-1"></i>Export Full Report
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm scorecard-table mb-0" id="da-detail-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:left;min-width:110px;">Record ID</th>
+                                            <th style="text-align:left;min-width:180px;">Title</th>
+                                            <th>Owner</th>
+                                            <th>Creation Time</th>
+                                            <th>Assign To</th>
+                                            <th>Assign L1 Engineer</th>
+                                            <th>Assign L1 Time</th>
+                                            <th>Assign L2 Engineer</th>
+                                            <th>Assign L2 Time</th>
+                                            <th>L1 Delegation Aging</th>
+                                            <th>Assign SME</th>
+                                            <th>Assign SME Time</th>
+                                            <th>L2 Delegation Aging</th>
+                                            <th>Flow Type</th>
+                                            <th>Direct Assign</th>
+                                            <th>SLA Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="da-detail-table-body">
+                                        <tr><td colspan="16" class="text-center text-muted py-3" style="font-size:0.82rem;">Upload data to see delegation aging details.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -4655,41 +4861,79 @@
                 { key: 'slaStatus', label: 'SLA Status' }
             ],
             'totalOpen': [
-                { key: 'incidentId', label: 'Incident ID' },
-                { key: 'title', label: 'Title' },
-                { key: 'owner', label: 'Owner' },
-                { key: 'customerName', label: 'Customer Name' },
-                { key: 'currentStatus', label: 'Status' },
-                { key: 'service', label: 'Service' },
-                { key: 'expectedResolutionDisplay', label: 'SR EDOC' },
-                { key: 'agingDays', label: 'Aging' },
-                { key: 'creationTimeDisplay', label: 'Creation Time' },
-                { key: 'updateTimeDisplay', label: 'Update Time' },
-                { key: 'slaViolationStatus', label: 'SLA Status' }
+                { key: 'exportDate',              label: 'Date' },
+                { key: 'owner',                   label: 'Owner' },
+                { key: 'incidentId',              label: 'Ticket ID' },
+                { key: 'title',                   label: 'Title' },
+                { key: 'customerName',            label: 'Customer Name' },
+                { key: 'scheduledSessions',       label: 'Scheduled Sessions' },
+                { key: 'activity',                label: 'Activity – POA' },
+                { key: 'eodTarget',               label: 'EOD Target' },
+                { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
+                { key: 'remarks',                 label: 'Remarks' },
+                { key: 'currentStatus',           label: 'Current Status' },
+                { key: 'service',                 label: 'Service' },
+                { key: 'creationTimeDisplay',     label: 'Creation Time' },
+                { key: 'updateTimeDisplay',       label: 'Update Time' },
+                { key: 'emailRespDueTodayYN',    label: 'Email Response Due Today' },
+                { key: 'emailRespMissedYN',      label: 'Email Response Missed' },
+                { key: 'emailFollowupMissedYN',  label: 'Email Follow-up Missed' },
+                { key: 'lastEmailFrom',           label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay',label: 'Last Email Sent Time' },
+                { key: 'agingGt15YN',            label: 'Aging > 15 Days' },
+                { key: 'agingGt25YN',            label: 'Aging > 25 Days' },
+                { key: 'agingLt15YN',            label: 'Aging < 15 Days' },
+                { key: 'agingLt7YN',             label: 'Aging < 7 Days' }
             ],
             'totalSR': [
-                { key: 'incidentId', label: 'Incident ID' },
-                { key: 'title', label: 'Title' },
-                { key: 'owner', label: 'Owner' },
-                { key: 'customerName', label: 'Customer Name' },
-                { key: 'currentStatus', label: 'Status' },
-                { key: 'service', label: 'Service' },
-                { key: 'expectedResolutionDisplay', label: 'SR EDOC' },
-                { key: 'agingDays', label: 'Aging' },
-                { key: 'creationTimeDisplay', label: 'Creation Time' },
-                { key: 'updateTimeDisplay', label: 'Update Time' },
-                { key: 'slaViolationStatus', label: 'SLA Status' }
+                { key: 'exportDate',              label: 'Date' },
+                { key: 'owner',                   label: 'Owner' },
+                { key: 'incidentId',              label: 'Ticket ID' },
+                { key: 'title',                   label: 'Title' },
+                { key: 'customerName',            label: 'Customer Name' },
+                { key: 'scheduledSessions',       label: 'Scheduled Sessions' },
+                { key: 'activity',                label: 'Activity – POA' },
+                { key: 'eodTarget',               label: 'EOD Target' },
+                { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
+                { key: 'remarks',                 label: 'Remarks' },
+                { key: 'currentStatus',           label: 'Current Status' },
+                { key: 'service',                 label: 'Service' },
+                { key: 'creationTimeDisplay',     label: 'Creation Time' },
+                { key: 'updateTimeDisplay',       label: 'Update Time' },
+                { key: 'emailRespDueTodayYN',    label: 'Email Response Due Today' },
+                { key: 'emailRespMissedYN',      label: 'Email Response Missed' },
+                { key: 'emailFollowupMissedYN',  label: 'Email Follow-up Missed' },
+                { key: 'lastEmailFrom',           label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay',label: 'Last Email Sent Time' },
+                { key: 'agingGt15YN',            label: 'Aging > 15 Days' },
+                { key: 'agingGt25YN',            label: 'Aging > 25 Days' },
+                { key: 'agingLt15YN',            label: 'Aging < 15 Days' },
+                { key: 'agingLt7YN',             label: 'Aging < 7 Days' }
             ],
             'totalINC': [
-                { key: 'incidentId', label: 'Incident ID' },
-                { key: 'title', label: 'Title' },
-                { key: 'owner', label: 'Owner' },
-                { key: 'customerName', label: 'Customer Name' },
-                { key: 'currentStatus', label: 'Status' },
-                { key: 'agingDays', label: 'Aging' },
-                { key: 'creationTimeDisplay', label: 'Creation Time' },
-                { key: 'updateTimeDisplay', label: 'Update Time' },
-                { key: 'slaViolationStatus', label: 'SLA Status' }
+                { key: 'exportDate',              label: 'Date' },
+                { key: 'owner',                   label: 'Owner' },
+                { key: 'incidentId',              label: 'Ticket ID' },
+                { key: 'title',                   label: 'Title' },
+                { key: 'customerName',            label: 'Customer Name' },
+                { key: 'scheduledSessions',       label: 'Scheduled Sessions' },
+                { key: 'activity',                label: 'Activity – POA' },
+                { key: 'eodTarget',               label: 'EOD Target' },
+                { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
+                { key: 'remarks',                 label: 'Remarks' },
+                { key: 'currentStatus',           label: 'Current Status' },
+                { key: 'service',                 label: 'Service' },
+                { key: 'creationTimeDisplay',     label: 'Creation Time' },
+                { key: 'updateTimeDisplay',       label: 'Update Time' },
+                { key: 'emailRespDueTodayYN',    label: 'Email Response Due Today' },
+                { key: 'emailRespMissedYN',      label: 'Email Response Missed' },
+                { key: 'emailFollowupMissedYN',  label: 'Email Follow-up Missed' },
+                { key: 'lastEmailFrom',           label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay',label: 'Last Email Sent Time' },
+                { key: 'agingGt15YN',            label: 'Aging > 15 Days' },
+                { key: 'agingGt25YN',            label: 'Aging > 25 Days' },
+                { key: 'agingLt15YN',            label: 'Aging < 15 Days' },
+                { key: 'agingLt7YN',             label: 'Aging < 7 Days' }
             ],
             'slaSR': [
                 { key: 'incidentId', label: 'Incident ID' },
@@ -5024,7 +5268,7 @@
             submittedby: { options: [], selected: new Set() },
             status:      { options: [], selected: new Set() },
             l1team:      { options: ["Raju R", "Aparna JS", "Aswin Kumar A S", "Ramya R", "Dhanush M", "Jenish Velmurugan", "Rafnas P", "Keerthana R", "Shruti Yelamali"], selected: new Set() },
-            mspaccount:  { options: ["Columbia Asia Hospital - Malaysia", "First Capital Bank (Cloud)", "Nayara Energy", "First Capital Bank - ITOM", "Fino Payment Bank-CIMS", "Fino Payment Bank-CS", "Fino Paytech", "SMFG India Credit Co. Ltd", "JSW Steel Deployment", "JSW Energy-IPMS", "Tata Advanced System Limited - TASL", "TATA Advanced Systems Limited - TASL (Cloud)", "Tech Mahindra", "Xceedance"], selected: new Set() }
+            mspaccount:  { options: ["Columbia Asia Hospital - Malaysia", "First Capital Bank (Cloud)", "Nayara Energy", "First Capital Bank - ITOM", "Fino Payment Bank-CIMS", "Fino Payment Bank-CS", "Fino Paytech", "SMFG India Credit Co. Ltd", "JSW Steel Deployment", "JSW Energy-IPMS", "Tata Advanced System Limited - TASL", "TATA Advanced Systems Limited - TASL (Cloud)", "Tech Mahindra", "Xceedance","Gujarat Fluorochemicals Limited (GFL)"], selected: new Set() }
         };
 
         function toggleSMS(key) {
@@ -5288,7 +5532,7 @@
             // Populate static l1team and mspaccount hidden selects
             (function() {
                 const l1Opts = ["Raju R", "Aparna JS", "Aswin Kumar A S", "Ramya R", "Dhanush M", "Jenish Velmurugan", "Rafnas P", "Keerthana R", "Shruti Yelamali"];
-                const mspOpts = ["Columbia Asia Hospital - Malaysia", "First Capital Bank (Cloud)", "Nayara Energy", "First Capital Bank - ITOM", "Fino Payment Bank-CIMS", "Fino Payment Bank-CS", "Fino Paytech", "SMFG India Credit Co. Ltd", "JSW Steel Deployment", "JSW Energy-IPMS", "Tata Advanced System Limited - TASL", "TATA Advanced Systems Limited - TASL (Cloud)", "Tech Mahindra", "Xceedance"];
+                const mspOpts = ["Columbia Asia Hospital - Malaysia", "First Capital Bank (Cloud)", "Nayara Energy", "First Capital Bank - ITOM", "Fino Payment Bank-CIMS", "Fino Payment Bank-CS", "Fino Paytech", "SMFG India Credit Co. Ltd", "JSW Steel Deployment", "JSW Energy-IPMS", "Tata Advanced System Limited - TASL", "TATA Advanced Systems Limited - TASL (Cloud)", "Tech Mahindra", "Xceedance","Gujarat Fluorochemicals Limited (GFL)"];
                 const l1Sel = document.getElementById('global-filter-l1team');
                 const mspSel = document.getElementById('global-filter-mspaccount');
                 l1Opts.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; l1Sel.appendChild(o); });
@@ -5328,6 +5572,16 @@
                         const ownerSel = document.getElementById('hp-filter-owner');
                         if (ownerSel) ownerSel.innerHTML = '<option value="">All Owners</option>';
                         renderHighPriorityCases();
+                    }
+                });
+            }
+
+            // AM Metrics tab: re-render delegation aging charts when tab is shown
+            const amMetricsTabEl = document.getElementById('view-ammetrics-tab');
+            if (amMetricsTabEl) {
+                amMetricsTabEl.addEventListener('shown.bs.tab', () => {
+                    if (processedData && processedData.length > 0) {
+                        requestAnimationFrame(() => renderDelegationAging());
                     }
                 });
             }
@@ -5517,60 +5771,65 @@
             // Column structure per official spec (A–CN). Always resolved by header name, never by index.
             // findColExact: exact match first, partial fallback second — safe against column reordering.
             const _srEDOCColIndex = (() => {
-                const byName = headers.findIndex(h => h && h.toString().trim() === 'SR EDOC');
+                const byName = headers.findIndex(h => h && h.toString().trim() === 'sr_edoc');
                 return byName !== -1 ? byName : -1; // -1 = not found; never fall back to a hardcoded index
             })();
             const colMap = {
                 // A  SLNO                        (not used in processing)
-                incidentId:                   findColExact(['Record ID'],                               ['Record ID', 'Incident ID', 'Ticket ID', 'Case ID']),
-                title:                        findColExact(['Title'],                                   ['Title', 'Subject']),
-                owner:                        findColExact(['Owner'],                                   ['Owner', 'Engineer']),
-                submittedBy:                  findColExact(['Submitted By'],                            ['Submitted By', 'Reporter']),
-                customerName:                 findColExact(['Customer Name'],                           ['Customer Name', 'Customer']),
-                creationDate:                 findColExact(['Creation Time'],                           ['Creation Time', 'Created Date', 'Created On']),
-                modifiedDate:                 findColExact(['Update Time'],                             ['Update Time', 'Modified Date', 'Last Modified Date']),
-                lastModifiedTime:             findColExact(['Update Time'],                             ['Update Time', 'Last Modified Time']),
-                currentStatus:                findColExact(['Current Status'],                          ['Current Status', 'Status', 'State']),
+                incidentId:                   findColExact(['external_id'],                               ['external_id', 'external_id', 'external_id', 'external_id']),
+                title:                        findColExact(['title'],                                   ['title', 'title']),
+                owner:                        findColExact(['owner'],                                   ['owner', 'owner']),
+                submittedBy:                  findColExact(['submitted_by'],                            ['submitted_by', 'submitted_by']),
+                customerName:                 findColExact(['customer_name'],                           ['customer_name', 'customer_name']),
+                creationDate:                 findColExact(['creation_time'],                           ['creation_time', 'creation_time', 'creation_time']),
+                modifiedDate:                 findColExact(['update_time'],                             ['update_time', 'update_time', 'update_time']),
+                lastModifiedTime:             findColExact(['update_time'],                             ['update_time', 'update_time']),
+                currentStatus:                findColExact(['current_status'],                          ['current_status', 'current_status', 'current_status']),
                 // J  Name  K  Email ID  L  Phone Number  M  Description  N  On Behalf
                 // O  Country  P  Additional Email IDs
-                source:                       findColExact(['Source'],                                  ['Source', 'Ticket Source']),
-                service:                      findColExact(['Service'],                                 ['Service', 'Service Type']),
-                urgency:                      findColExact(['Urgency'],                                 ['Urgency', 'Priority Level']),
-                severity:                     findColExact(['Severity'],                                ['Severity', 'Severity Level']),
-                supportCategory:              findColExact(['Support Category'],                        ['Support Category', 'Category']),
-                feature:                      findColExact(['Support Feature'],                         ['Support Feature', 'Feature', 'Feature Name']),
-                subFeature:                   findColExact(['Support Sub Feature'],                     ['Support Sub Feature', 'Sub Feature', 'SubFeature']),
-                priority:                     findColExact(['Priority'],                                ['Priority', 'Ticket Priority']),
+                source:                       findColExact(['source'],                                  ['source', 'source']),
+                service:                      findColExact(['service'],                                 ['service', 'service']),
+                urgency:                      findColExact(['urgency'],                                 ['urgency', 'urgency']),
+                severity:                     findColExact(['severity'],                                ['severity', 'severity']),
+                supportCategory:              findColExact(['support_category'],                        ['support_category', 'support_category']),
+                feature:                      findColExact(['support_feature'],                         ['support_feature', 'support_feature', 'support_feature']),
+                subFeature:                   findColExact(['support_subfeature'],                     ['support_subfeature', 'support_subfeature', 'support_subfeature']),
+                priority:                     findColExact(['priority'],                                ['priority', 'priority']),
                 // Y  Customer Master Status  Z  AMC Status  AA  Remaining SR Hours
                 // AB  Priority (Classification)  AC  Support Older Reference ID
-                srService:                    findColExact(['SR Service'],                              ['SR Service', 'SR Service Type']),
+                srService:                    findColExact(['sr_service'],                              ['sr_service', 'sr_service']),
                 // AE  Classification Time  AF  Assign To  AG  Assign Owner Name
-                assignmentLevel:              findColExact(['Assign To'],                               ['Assign To', 'Assignment Level']),
+                assignmentLevel:              findColExact(['assign_to'],                               ['assign_to', 'assign_to']),
                 // AH  Assign Time
-                assignL1Time:                 findColExact(['Assign L1 Time'],                          ['Assign L1 Time', 'L1 Assign Time']),
+                assignL1Time:                 findColExact(['assign_l1_time'],                          ['assign_l1_time', 'assign_l1_time']),
+                assignToL1Engineer:           findColExact(['assign_to_l1_engineer'],                    ['assign_to_l1_engineer', 'assign_to_l1_engineer']),
                 // AK  Assign To L2 Engineer  AL  Assign L2 Time  AM  Assign To SME  AN  Assign SME Time
+                assignToL2Engineer:           findColExact(['assign_to_l2_engineer'],                    ['assign_to_l2_engineer', 'assign_to_l2_engineer']),
+                assignL2Time:                 findColExact(['assign_l2_time'],                           ['assign_l2_time', 'assign_l2_time']),
+                assignToSME:                  findColExact(['assign_to_sme'],                            ['assign_to_sme', 'assign_to_sme']),
+                assignSMETime:                findColExact(['assign_sme_time'],                          ['assign_sme_time', 'assign_sme_time']),
                 // AO–AT  Duration/TAT columns  AU–AX  Effort columns
                 // AY  Company Name  AZ–BF  Effort allocation columns
                 // BG  Pending for Effort Approval Time
-                internalRefId:                findColExact(['Internal Reference ID'],                   ['Internal Reference ID', 'Internal Ref']),
-                srEDOC:                       findColExact(['SR EDOC'],                                 ['SR EDOC', 'EDOC', 'Expected Date of Closure']),
+                internalRefId:                findColExact(['internal_reference_id'],                   ['internal_reference_id', 'internal_reference_id']),
+                srEDOC:                       findColExact(['sr_edoc'],                                 ['sr_edoc', 'sr_edoc', 'sr_edoc']),
                 // BJ  SR EDOC Update Time  BK  Work In Progress Time
-                wasKBReferred:                findColExact(['Was KB Referred'],                         ['Was KB Referred', 'KB Referred']),
-                feedbackTo:                   findColExact(['Feedback To'],                             ['Feedback To', 'Feedback Recipient']),
-                feedback:                     findColExact(['Feedback'],                                ['Feedback', 'Feedback Comment']),
-                srHoursDeducted:              findColExact(['SR Hours Deducted'],                       ['SR Hours Deducted', 'Hours Deducted']),
-                oopApplied:                   findColExact(['OOP Applied'],                             ['OOP Applied', 'OOP']),
+                wasKBReferred:                findColExact(['was_kb_referred'],                         ['was_kb_referred', 'was_kb_referred']),
+                feedbackTo:                   findColExact(['feedback_to'],                             ['feedback_to', 'feedback_to']),
+                feedback:                     findColExact(['feedback'],                                ['feedback', 'feedback']),
+                srHoursDeducted:              findColExact(['sr_hours_deducted'],                       ['sr_hours_deducted', 'sr_hours_deducted']),
+                oopApplied:                   findColExact(['oop_applied'],                             ['oop_applied', 'oop_applied']),
                 // BQ  OOP Reference
-                problemStatement:             findColExact(['Requirement / Problem Statement'],         ['Requirement / Problem Statement', 'Problem Statement']),
-                resolutionCode:               findColExact(['Resolution Code'],                         ['Resolution Code', 'Resolution']),
-                resolutionSteps:              findColExact(['Resolution Steps'],                        ['Resolution Steps', 'Steps']),
-                rca:                          findColExact(['RCA'],                                     ['RCA', 'Root Cause Analysis']),
-                resolvedTime:                 findColExact(['Resolve Time'],                            ['Resolve Time', 'Resolved Time', 'Closure Time', 'Closed Time']),
+                problemStatement:             findColExact(['requirement_problem_statement'],         ['requirement_problem_statement', 'requirement_problem_statement']),
+                resolutionCode:               findColExact(['resolution_steps'],                         ['resolution_steps', 'resolution_steps']),
+                resolutionSteps:              findColExact(['resolution_code'],                        ['resolution_code', 'resolution_code']),
+                rca:                          findColExact(['rca'],                                     ['rca', 'rca']),
+                resolvedTime:                 findColExact(['resolve_time'],                            ['resolve_time', 'resolve_time', 'resolve_time', 'resolve_time']),
                 // BW  Rating  BX  Customer Agreed Time  BY  Closed Time  BZ  Acknowledged Time
                 // CA–CK  Status timestamp columns
                 // CL  Deferred Time  CM  Last Email From  CN  Last Email Sent Time
-                lastEmailFrom:                findColExact(['Last Email From'],                         ['Last Email From', 'Email From']),
-                lastEmailSentTime:            findColExact(['Last Email Sent Time'],                    ['Last Email Sent Time', 'Email Sent Time']),
+                lastEmailFrom:                findColExact(['last_email_from'],                         ['last_email_from', 'last_email_from']),
+                lastEmailSentTime:            findColExact(['last_email_sent_time'],                    ['last_email_sent_time', 'last_email_sent_time']),
                 // Legacy / derived columns (may not exist in all uploads — partial match only)
                 slaStatus:                    findCol(['SLA Status', 'SLA']),
                 slaViolationStatus:           findCol(['SLA Violation Status', 'Violation Status']),
@@ -5582,7 +5841,7 @@
                 expectedSLAClosureTime:       findCol(['Expected SLA Closure Time', 'SLA Closure']),
                 updatePendingSupportCounter:  findCol(['Update Pending From Support Counter', 'Pending Counter']),
                 ageingLastModified:           findCol(['Ageing from Last modified time', 'Last Modified Aging']),
-                steps:                        findColExact(['Resolution Steps'],                        ['Resolution Steps', 'Steps']),
+                steps:                        findColExact(['resolution_code'],                        ['resolution_code', 'resolution_code']),
             };
 
             // Open statuses (include in open cases analysis)
@@ -5834,6 +6093,15 @@
                 const assignL1TimeRaw = row[colMap.assignL1Time];
                 const assignL1TimeObj = parseAKDate(assignL1TimeRaw);
 
+                // ── L2/SME Assignment Times — for Delegation Aging metrics ──
+                const assignToL1Eng   = (row[colMap.assignToL1Engineer] || '').toString().trim();
+                const assignToL2Eng   = (row[colMap.assignToL2Engineer] || '').toString().trim();
+                const assignToSMEEng  = (row[colMap.assignToSME]        || '').toString().trim();
+                const assignL2TimeRaw  = row[colMap.assignL2Time];
+                const assignL2TimeObj  = parseAKDate(assignL2TimeRaw);
+                const assignSMETimeRaw = row[colMap.assignSMETime];
+                const assignSMETimeObj = parseAKDate(assignSMETimeRaw);
+
                 // ── Resolved Time (Col AL) — for Closed Case View metrics ──
                 const resolvedTimeRaw = row[colMap.resolvedTime];
                 const resolvedTimeObj = parseAKDate(resolvedTimeRaw);
@@ -6023,6 +6291,21 @@
                     modifiedDateDisplay: modifiedDateObj ? modifiedDateObj.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) : (row[colMap.modifiedDate] ? row[colMap.modifiedDate].toString() : ''),
                     updateTimeDisplay: modifiedDateObj ? modifiedDateObj.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}) : (row[colMap.modifiedDate] ? row[colMap.modifiedDate].toString() : ''),
                     
+                    // ── Drill-down export helpers ──────────────────────────
+                    exportDate: new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}),
+                    scheduledSessions: '',
+                    activity: '',
+                    eodTarget: '',
+                    eveningReviewStatus: '',
+                    remarks: '',
+                    emailRespDueTodayYN:    isEmailRespToday    ? 'Yes' : 'No',
+                    emailRespMissedYN:      isEmailRespMissed   ? 'Yes' : 'No',
+                    emailFollowupMissedYN:  isEmailFollowupMissed ? 'Yes' : 'No',
+                    agingGt15YN:  isAging15Violated  ? 'Yes' : 'No',
+                    agingGt25YN:  isOldest25          ? 'Yes' : 'No',
+                    agingLt15YN:  (!isAging15Violated && agingDays > 0) ? 'Yes' : 'No',
+                    agingLt7YN:   (agingDays < 7)     ? 'Yes' : 'No',
+
                     isL1ActionItem: (() => {
                         if (!creationDateObj) return false;
                         // Ignore if already assigned to L2 or SME
@@ -6108,6 +6391,64 @@
                     assignL1TimeDisplay: assignL1TimeObj
                         ? assignL1TimeObj.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})
                         : '',
+                    // ── Delegation Aging raw fields ──
+                    assignToL1Eng,
+                    assignToL2Eng,
+                    assignToSMEEng,
+                    assignL2TimeDisplay: assignL2TimeObj
+                        ? assignL2TimeObj.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})
+                        : '',
+                    assignSMETimeDisplay: assignSMETimeObj
+                        ? assignSMETimeObj.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})
+                        : '',
+                    assignL2TimeRaw:  assignL2TimeObj  ? assignL2TimeObj.toISOString()  : '',
+                    assignSMETimeRaw: assignSMETimeObj ? assignSMETimeObj.toISOString() : '',
+                    // ── Delegation Aging calculations ──
+                    // L1 Delegation Aging = Assign L2 Time − Assign L1 Time (in hours)
+                    l1DelegationAgingHrs: (() => {
+                        if (assignL1TimeObj && assignL2TimeObj) {
+                            const diff = (assignL2TimeObj - assignL1TimeObj) / 3600000;
+                            return diff >= 0 ? diff : null;
+                        }
+                        return null;
+                    })(),
+                    // L2 Delegation Aging = Assign SME Time − Assign L2 Time (in hours)
+                    l2DelegationAgingHrs: (() => {
+                        if (assignL2TimeObj && assignSMETimeObj) {
+                            const diff = (assignSMETimeObj - assignL2TimeObj) / 3600000;
+                            return diff >= 0 ? diff : null;
+                        }
+                        return null;
+                    })(),
+                    // Pending with L1 Aging = NOW − Assign L1 Time (live, only if no L2 assigned)
+                    pendingL1AgingHrs: (() => {
+                        if (assignL1TimeObj && !assignL2TimeObj) {
+                            const diff = (Date.now() - assignL1TimeObj.getTime()) / 3600000;
+                            return diff >= 0 ? diff : null;
+                        }
+                        return null;
+                    })(),
+                    // Pending with L2 Aging = NOW − Assign L2 Time (live, only if no SME assigned)
+                    pendingL2AgingHrs: (() => {
+                        if (assignL2TimeObj && !assignSMETimeObj) {
+                            const diff = (Date.now() - assignL2TimeObj.getTime()) / 3600000;
+                            return diff >= 0 ? diff : null;
+                        }
+                        return null;
+                    })(),
+                    // Direct Assignment flags
+                    isDirectL2: !assignToL1Eng && !!assignToL2Eng,
+                    isDirectSME: !assignToL1Eng && !assignToL2Eng && !!assignToSMEEng,
+                    // Delegation Flow type
+                    delegationFlow: (() => {
+                        if (assignToL1Eng && assignToL2Eng && assignToSMEEng) return 'Assign → L1 → L2 → SME';
+                        if (assignToL1Eng && assignToL2Eng) return 'Assign → L1 → L2';
+                        if (assignToL1Eng && assignToSMEEng) return 'Assign → L1 → SME';
+                        if (!assignToL1Eng && !assignToL2Eng && assignToSMEEng) return 'Assign → SME Direct';
+                        if (!assignToL1Eng && assignToL2Eng) return 'Assign → L2 Direct';
+                        if (assignToL1Eng) return 'Assign → L1 Only';
+                        return 'Initial Only';
+                    })(),
                     // Raw ISO strings for reliable Excel export
                     creationTimeRaw: creationDateObj ? creationDateObj.toISOString() : (creationDateRaw ? creationDateRaw.toString() : ''),
                     assignL1TimeRaw: assignL1TimeObj ? assignL1TimeObj.toISOString() : '',
@@ -14555,6 +14896,9 @@ ${bodyHTML}
             setEl('am-closure-gt5', clGt5);
             setTag('am-closure-gt5-tag', clGt5 > 0 ? 'URGENT' : 'GOOD', clGt5 > 0 ? 'bg-urgent' : 'bg-good');
             setEl('am-closure-gt5-rec', clGt5 > 0 ? `${clGt5} closed case${clGt5 !== 1 ? 's' : ''} took more than 5 days — escalation review needed.` : 'No cases exceeding 5 days closure time.');
+
+            // ── D: Delegation Aging ──────────────────────────────────────
+            renderDelegationAging();
         }
 
         function openAMDrillDown(type, title) {
@@ -14641,6 +14985,601 @@ ${bodyHTML}
                 : `<tr><td colspan="${cols.length}" class="text-center text-muted py-3">No cases found.</td></tr>`;
 
             new bootstrap.Modal(document.getElementById('drillDownModal')).show();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // DELEGATION AGING — render, drill-down, export
+        // ═══════════════════════════════════════════════════════════════════
+        let daAgingTrendChart  = null;
+        let daEngineerChart    = null;
+        let daBucketChart      = null;
+        let daDirectChart      = null;
+
+        // Helper: format hours to human-readable
+        function _daFmtHrs(hrs) {
+            if (hrs === null || hrs === undefined) return '—';
+            const totalMins = Math.round(hrs * 60);
+            const d = Math.floor(totalMins / 1440);
+            const h = Math.floor((totalMins % 1440) / 60);
+            const m = totalMins % 60;
+            const parts = [];
+            if (d > 0) parts.push(d + (d === 1 ? ' Day' : ' Days'));
+            if (h > 0) parts.push(h + (h === 1 ? ' Hr' : ' Hrs'));
+            if (m > 0 && d === 0) parts.push(m + ' Min' + (m !== 1 ? 's' : ''));
+            return parts.length ? parts.join(' ') : '< 1 Min';
+        }
+
+        function renderDelegationAging() {
+            const applyGF = (d) => {
+                if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+                if (globalFilters.mspaccount.length > 0 && !globalFilters.mspaccount.includes(d.customerName)) return false;
+                if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+                if (globalFilters.submittedby.length > 0 && !globalFilters.submittedby.includes(d.customerName)) return false;
+                if (globalFilters.service && d.service !== globalFilters.service) return false;
+                if (globalFilters.level && d.assignmentLevel !== globalFilters.level) return false;
+                if (globalFilters.sla === 'Violated' && !d.isSlaViolated) return false;
+                if (globalFilters.sla === 'Non-Violated' && d.isSlaViolated) return false;
+                if (globalFilters.timescale && globalFilters.timescale !== 'all') {
+                    if (!_timescaleMatch(d._creationDate, globalFilters.timescale)) return false;
+                }
+                return true;
+            };
+
+            const all = processedData.filter(applyGF);
+            const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+            const setTag = (id, text, cls) => { const e = document.getElementById(id); if (e) { e.textContent = text; e.className = `kpi-status-tag ${cls}`; } };
+
+            // ── Executive Summary ──────────────────────────────────────────
+            const l1Delegated  = all.filter(d => d.l1DelegationAgingHrs !== null);
+            const l2Delegated  = all.filter(d => d.l2DelegationAgingHrs !== null);
+            const directL2     = all.filter(d => d.isDirectL2);
+            const directSME    = all.filter(d => d.isDirectSME);
+            const total        = all.length;
+
+            const avgL1Hrs = l1Delegated.length
+                ? l1Delegated.reduce((s, d) => s + d.l1DelegationAgingHrs, 0) / l1Delegated.length
+                : null;
+            const avgL2Hrs = l2Delegated.length
+                ? l2Delegated.reduce((s, d) => s + d.l2DelegationAgingHrs, 0) / l2Delegated.length
+                : null;
+
+            setEl('da-avg-l1', avgL1Hrs !== null ? _daFmtHrs(avgL1Hrs) : '—');
+            setEl('da-avg-l1-rec', l1Delegated.length > 0 ? `Based on ${l1Delegated.length} L1→L2 delegations.` : 'No L1→L2 delegations found.');
+            setTag('da-avg-l1-tag', avgL1Hrs === null ? 'N/A' : avgL1Hrs > 48 ? 'URGENT' : avgL1Hrs > 24 ? 'MONITOR' : 'GOOD',
+                avgL1Hrs === null ? 'bg-info-tag' : avgL1Hrs > 48 ? 'bg-urgent' : avgL1Hrs > 24 ? 'bg-monitor' : 'bg-good');
+
+            setEl('da-avg-l2', avgL2Hrs !== null ? _daFmtHrs(avgL2Hrs) : '—');
+            setEl('da-avg-l2-rec', l2Delegated.length > 0 ? `Based on ${l2Delegated.length} L2→SME escalations.` : 'No L2→SME escalations found.');
+            setTag('da-avg-l2-tag', avgL2Hrs === null ? 'N/A' : avgL2Hrs > 48 ? 'URGENT' : avgL2Hrs > 24 ? 'MONITOR' : 'GOOD',
+                avgL2Hrs === null ? 'bg-info-tag' : avgL2Hrs > 48 ? 'bg-urgent' : avgL2Hrs > 24 ? 'bg-monitor' : 'bg-good');
+
+            const dlPct = total > 0 ? (directL2.length / total * 100).toFixed(1) : '0.0';
+            setEl('da-direct-l2', `${directL2.length} (${dlPct}%)`);
+            setEl('da-direct-l2-rec', `${directL2.length} case${directL2.length !== 1 ? 's' : ''} assigned directly to L2, bypassing L1.`);
+            setTag('da-direct-l2-tag', parseFloat(dlPct) > 20 ? 'HIGH' : parseFloat(dlPct) > 5 ? 'MONITOR' : 'GOOD',
+                parseFloat(dlPct) > 20 ? 'bg-urgent' : parseFloat(dlPct) > 5 ? 'bg-monitor' : 'bg-good');
+
+            const dsPct = total > 0 ? (directSME.length / total * 100).toFixed(1) : '0.0';
+            setEl('da-direct-sme', `${directSME.length} (${dsPct}%)`);
+            setEl('da-direct-sme-rec', `${directSME.length} case${directSME.length !== 1 ? 's' : ''} assigned directly to SME, bypassing L1 &amp; L2.`);
+            setTag('da-direct-sme-tag', parseFloat(dsPct) > 10 ? 'URGENT' : parseFloat(dsPct) > 3 ? 'MONITOR' : 'GOOD',
+                parseFloat(dsPct) > 10 ? 'bg-urgent' : parseFloat(dsPct) > 3 ? 'bg-monitor' : 'bg-good');
+
+            // ── Pending Queue Cards ────────────────────────────────────────
+            const pendingL1Cases = all.filter(d => d.pendingL1AgingHrs !== null);
+            const pendingL2Cases = all.filter(d => d.pendingL2AgingHrs !== null);
+            const pendingSMECases = all.filter(d => d.assignToSMEEng && !d.l2DelegationAgingHrs && !d.pendingL2AgingHrs);
+
+            setEl('da-pending-l1', pendingL1Cases.length);
+            setTag('da-pending-l1-tag', pendingL1Cases.length > 20 ? 'URGENT' : pendingL1Cases.length > 5 ? 'MONITOR' : 'GOOD',
+                pendingL1Cases.length > 20 ? 'bg-urgent' : pendingL1Cases.length > 5 ? 'bg-monitor' : 'bg-good');
+            const avgPendL1 = pendingL1Cases.length ? pendingL1Cases.reduce((s, d) => s + d.pendingL1AgingHrs, 0) / pendingL1Cases.length : null;
+            setEl('da-pending-l1-rec', pendingL1Cases.length > 0 ? `${pendingL1Cases.length} case${pendingL1Cases.length !== 1 ? 's' : ''} with L1. Avg pending: ${_daFmtHrs(avgPendL1)}.` : 'No cases currently pending with L1.');
+
+            setEl('da-pending-l2', pendingL2Cases.length);
+            setTag('da-pending-l2-tag', pendingL2Cases.length > 10 ? 'URGENT' : pendingL2Cases.length > 3 ? 'MONITOR' : 'GOOD',
+                pendingL2Cases.length > 10 ? 'bg-urgent' : pendingL2Cases.length > 3 ? 'bg-monitor' : 'bg-good');
+            const avgPendL2 = pendingL2Cases.length ? pendingL2Cases.reduce((s, d) => s + d.pendingL2AgingHrs, 0) / pendingL2Cases.length : null;
+            setEl('da-pending-l2-rec', pendingL2Cases.length > 0 ? `${pendingL2Cases.length} case${pendingL2Cases.length !== 1 ? 's' : ''} with L2. Avg pending: ${_daFmtHrs(avgPendL2)}.` : 'No cases currently pending with L2.');
+
+            setEl('da-pending-sme', pendingSMECases.length);
+            setTag('da-pending-sme-tag', pendingSMECases.length > 5 ? 'URGENT' : pendingSMECases.length > 2 ? 'MONITOR' : 'GOOD',
+                pendingSMECases.length > 5 ? 'bg-urgent' : pendingSMECases.length > 2 ? 'bg-monitor' : 'bg-good');
+            setEl('da-pending-sme-rec', pendingSMECases.length > 0 ? `${pendingSMECases.length} case${pendingSMECases.length !== 1 ? 's' : ''} currently with SME engineer.` : 'No cases currently with SME.');
+
+            // ── Delegation Flow Analysis Table ─────────────────────────────
+            const flowMap = {};
+            all.forEach(d => {
+                const ft = d.delegationFlow || 'Initial Only';
+                flowMap[ft] = (flowMap[ft] || 0) + 1;
+            });
+            const flowRows = Object.entries(flowMap).sort((a, b) => b[1] - a[1]);
+            const flowTbody = document.getElementById('da-flow-table-body');
+            if (flowTbody) {
+                if (!flowRows.length) {
+                    flowTbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">No flow data.</td></tr>';
+                } else {
+                    const ft = flowRows.reduce((s, r) => s + r[1], 0);
+                    const FLOW_COLORS = { 'Assign → L1 → L2 → SME': '#5B4FE9', 'Assign → L1 → L2': '#06B6D4', 'Assign → L2 Direct': '#F59E0B', 'Assign → SME Direct': '#EF4444', 'Assign → L1 Only': '#10B981', 'Assign → L1 → SME': '#7C3AED', 'Initial Only': '#9CA3AF' };
+                    flowTbody.innerHTML = flowRows.map(([flow, cnt]) => {
+                        const pct = ft > 0 ? (cnt / ft * 100).toFixed(1) : '0.0';
+                        const col = FLOW_COLORS[flow] || '#6B7280';
+                        return `<tr style="cursor:pointer;" onclick="openDelegationDrillDown('daFlow_${encodeURIComponent(flow)}','Flow: ${flow}')">
+                            <td style="text-align:left;border-left:3px solid ${col};padding-left:10px;">
+                                <span style="font-weight:700;color:${col};">${flow}</span>
+                            </td>
+                            <td><span style="font-weight:800;">${cnt}</span></td>
+                            <td><span style="font-weight:600;color:#6B7280;">${pct}%</span>
+                                <div style="background:#f0f0f0;border-radius:3px;height:4px;margin-top:3px;overflow:hidden;">
+                                    <div style="width:${Math.min(parseFloat(pct),100)}%;height:4px;background:${col};border-radius:3px;"></div>
+                                </div>
+                            </td>
+                        </tr>`;
+                    }).join('');
+                }
+            }
+
+            // ── Queue Bottleneck Table ─────────────────────────────────────
+            const bottleneckTbody = document.getElementById('da-bottleneck-table-body');
+            if (bottleneckTbody) {
+                const rows = [
+                    { queue: 'L1 Queue', cases: pendingL1Cases, avgHrs: avgPendL1, color: '#5B4FE9' },
+                    { queue: 'L2 Queue', cases: pendingL2Cases, avgHrs: avgPendL2, color: '#06B6D4' },
+                    { queue: 'SME Queue', cases: pendingSMECases, avgHrs: null, color: '#7C3AED' }
+                ];
+                bottleneckTbody.innerHTML = rows.map(r => {
+                    const cnt = r.cases.length;
+                    const avgDisp = r.avgHrs !== null ? _daFmtHrs(r.avgHrs) : cnt > 0 ? 'Active' : '—';
+                    const statusLabel = cnt === 0 ? 'Clear' : r.avgHrs !== null && r.avgHrs > 48 ? '⚠️ High' : cnt > 10 ? '🔴 Bottleneck' : cnt > 3 ? '⚠️ Watch' : '✅ Normal';
+                    const statusColor = cnt === 0 ? '#10B981' : r.avgHrs !== null && r.avgHrs > 48 ? '#EF4444' : cnt > 10 ? '#EF4444' : cnt > 3 ? '#D97706' : '#10B981';
+                    return `<tr>
+                        <td style="text-align:left;border-left:3px solid ${r.color};padding-left:10px;font-weight:700;color:${r.color};">${r.queue}</td>
+                        <td><span style="font-weight:800;">${cnt}</span></td>
+                        <td style="font-weight:600;">${avgDisp}</td>
+                        <td><span style="font-weight:700;color:${statusColor};">${statusLabel}</span></td>
+                    </tr>`;
+                }).join('');
+            }
+
+            // ── Detail Table ───────────────────────────────────────────────
+            const detailTbody = document.getElementById('da-detail-table-body');
+            if (detailTbody) {
+                const detailCases = all.filter(d => d.assignToL1Eng || d.assignToL2Eng || d.assignToSMEEng);
+                if (!detailCases.length) {
+                    detailTbody.innerHTML = '<tr><td colspan="16" class="text-center text-muted py-3">No delegation data found. Ensure your file contains Assign To L1 Engineer / L2 Engineer / SME columns.</td></tr>';
+                } else {
+                    detailTbody.innerHTML = detailCases.slice(0, 200).map(d => {
+                        const l1Aging = d.l1DelegationAgingHrs !== null ? _daFmtHrs(d.l1DelegationAgingHrs) : (d.pendingL1AgingHrs !== null ? '⏳ ' + _daFmtHrs(d.pendingL1AgingHrs) + ' (Live)' : '—');
+                        const l2Aging = d.l2DelegationAgingHrs !== null ? _daFmtHrs(d.l2DelegationAgingHrs) : (d.pendingL2AgingHrs !== null ? '⏳ ' + _daFmtHrs(d.pendingL2AgingHrs) + ' (Live)' : '—');
+                        const directTag = d.isDirectSME ? '<span style="background:#FEF2F2;color:#DC2626;border-radius:5px;padding:1px 7px;font-size:0.68rem;font-weight:700;border:1px solid #FECACA;">Direct SME</span>'
+                            : d.isDirectL2 ? '<span style="background:#FFFBEB;color:#B45309;border-radius:5px;padding:1px 7px;font-size:0.68rem;font-weight:700;border:1px solid #FDE68A;">Direct L2</span>'
+                            : '<span style="color:#9CA3AF;font-size:0.72rem;">Normal</span>';
+                        const l1AgingColor = d.l1DelegationAgingHrs !== null && d.l1DelegationAgingHrs > 48 ? '#DC2626' : d.l1DelegationAgingHrs !== null && d.l1DelegationAgingHrs > 24 ? '#D97706' : '#10B981';
+                        const slaColor = d.slaStatus === 'Violated' || d.isSlaViolated ? '#DC2626' : '#10B981';
+                        return `<tr onclick="viewCaseDetail(${processedData.findIndex(p => p.incidentId === d.incidentId)})" style="cursor:pointer;">
+                            <td style="text-align:left;font-weight:700;color:var(--primary);">${d.incidentId || '—'}</td>
+                            <td style="text-align:left;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${d.title || ''}">${(d.title || '').substring(0, 30)}${d.title && d.title.length > 30 ? '…' : ''}</td>
+                            <td>${d.owner || '—'}</td>
+                            <td style="font-size:0.71rem;">${d.creationTimeDisplay || '—'}</td>
+                            <td>${d.assignmentLevel || '—'}</td>
+                            <td>${d.assignToL1Eng || '—'}</td>
+                            <td style="font-size:0.71rem;">${d.assignL1TimeDisplay || '—'}</td>
+                            <td>${d.assignToL2Eng || '—'}</td>
+                            <td style="font-size:0.71rem;">${d.assignL2TimeDisplay || '—'}</td>
+                            <td style="font-weight:700;color:${l1AgingColor};">${l1Aging}</td>
+                            <td>${d.assignToSMEEng || '—'}</td>
+                            <td style="font-size:0.71rem;">${d.assignSMETimeDisplay || '—'}</td>
+                            <td style="font-weight:600;">${l2Aging}</td>
+                            <td style="font-size:0.7rem;">${d.delegationFlow || '—'}</td>
+                            <td>${directTag}</td>
+                            <td style="font-weight:700;color:${slaColor};">${d.slaStatus || (d.isSlaViolated ? 'Violated' : 'Non-Violated')}</td>
+                        </tr>`;
+                    }).join('');
+                }
+            }
+
+            // ── Charts ─────────────────────────────────────────────────────
+            _renderDATrendChart(all, l1Delegated, l2Delegated);
+            _renderDAEngineerChart(all);
+            _renderDABucketChart(l1Delegated);
+            _renderDADirectAssignChart(all);
+        }
+
+        function _renderDATrendChart(all, l1Del, l2Del) {
+            const canvas = document.getElementById('da-aging-trend-chart');
+            if (!canvas) return;
+            if (daAgingTrendChart) { daAgingTrendChart.destroy(); daAgingTrendChart = null; }
+
+            // Group by creation date
+            const dateMap = {};
+            all.forEach(d => {
+                if (!d._creationDate) return;
+                const key = d._creationDate.toLocaleDateString('en-CA');
+                if (!dateMap[key]) dateMap[key] = { l1Hrs: [], l2Hrs: [] };
+                if (d.l1DelegationAgingHrs !== null) dateMap[key].l1Hrs.push(d.l1DelegationAgingHrs);
+                if (d.l2DelegationAgingHrs !== null) dateMap[key].l2Hrs.push(d.l2DelegationAgingHrs);
+            });
+            const sortedKeys = Object.keys(dateMap).sort();
+            const last30 = sortedKeys.slice(-30);
+            const labels = last30.map(k => new Date(k).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
+            const l1Data = last30.map(k => dateMap[k].l1Hrs.length ? (dateMap[k].l1Hrs.reduce((s, v) => s + v, 0) / dateMap[k].l1Hrs.length).toFixed(1) : null);
+            const l2Data = last30.map(k => dateMap[k].l2Hrs.length ? (dateMap[k].l2Hrs.reduce((s, v) => s + v, 0) / dateMap[k].l2Hrs.length).toFixed(1) : null);
+
+            daAgingTrendChart = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Avg L1 Delegation (Hrs)', data: l1Data, borderColor: '#5B4FE9', backgroundColor: 'rgba(91,79,233,0.08)', borderWidth: 2.5, tension: 0.4, fill: true, pointRadius: 3, spanGaps: true },
+                        { label: 'Avg L2 Delegation (Hrs)', data: l2Data, borderColor: '#06B6D4', backgroundColor: 'rgba(6,182,212,0.08)', borderWidth: 2.5, tension: 0.4, fill: true, pointRadius: 3, spanGaps: true }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 12 } } },
+                    scales: { x: { ticks: { font: { size: 9 }, maxRotation: 35 }, grid: { display: false } },
+                        y: { beginAtZero: true, ticks: { font: { size: 9 } }, title: { display: true, text: 'Hours', font: { size: 9 } } } }
+                }
+            });
+        }
+
+        function _renderDAEngineerChart(all) {
+            const canvas = document.getElementById('da-engineer-chart');
+            if (!canvas) return;
+            if (daEngineerChart) { daEngineerChart.destroy(); daEngineerChart = null; }
+
+            const engMap = {};
+            all.filter(d => d.l1DelegationAgingHrs !== null).forEach(d => {
+                const eng = d.assignToL1Eng || d.owner || 'Unassigned';
+                if (!engMap[eng]) engMap[eng] = { hrs: [], cnt: 0 };
+                engMap[eng].hrs.push(d.l1DelegationAgingHrs);
+                engMap[eng].cnt++;
+            });
+            const sorted = Object.entries(engMap).sort((a, b) => {
+                const aAvg = a[1].hrs.reduce((s, v) => s + v, 0) / a[1].hrs.length;
+                const bAvg = b[1].hrs.reduce((s, v) => s + v, 0) / b[1].hrs.length;
+                return bAvg - aAvg;
+            }).slice(0, 15);
+
+            const ECOL = ['#5B4FE9','#06B6D4','#10B981','#F59E0B','#EF4444','#7C3AED','#3B82F6','#EC4899','#14B8A6','#F97316'];
+            daEngineerChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(([e]) => e.length > 14 ? e.substring(0, 14) + '…' : e),
+                    datasets: [{
+                        label: 'Avg L1 Delegation (Hrs)',
+                        data: sorted.map(([, v]) => (v.hrs.reduce((s, x) => s + x, 0) / v.hrs.length).toFixed(1)),
+                        backgroundColor: sorted.map((_, i) => ECOL[i % ECOL.length] + 'CC'),
+                        borderColor: sorted.map((_, i) => ECOL[i % ECOL.length]),
+                        borderWidth: 1.5, borderRadius: 5
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { font: { size: 9 } }, title: { display: true, text: 'Hours', font: { size: 9 } } },
+                        y: { ticks: { font: { size: 9 } } } },
+                    onClick(e, elements) {
+                        if (!elements.length) return;
+                        const eng = sorted[elements[0].index][0];
+                        openDelegationDrillDown('daEngL1_' + encodeURIComponent(eng), `L1 Delegation — Engineer: ${eng}`);
+                    }
+                }
+            });
+        }
+
+        function _renderDABucketChart(l1Del) {
+            const canvas = document.getElementById('da-bucket-chart');
+            if (!canvas) return;
+            if (daBucketChart) { daBucketChart.destroy(); daBucketChart = null; }
+
+            const buckets = [
+                { label: '< 6 Hrs',    min: 0,  max: 6,   color: '#10B981' },
+                { label: '6–12 Hrs',   min: 6,  max: 12,  color: '#06B6D4' },
+                { label: '12–24 Hrs',  min: 12, max: 24,  color: '#F59E0B' },
+                { label: '1–2 Days',   min: 24, max: 48,  color: '#F97316' },
+                { label: '2–3 Days',   min: 48, max: 72,  color: '#EF4444' },
+                { label: '> 3 Days',   min: 72, max: Infinity, color: '#991B1B' }
+            ];
+            const counts = buckets.map(b => l1Del.filter(d => d.l1DelegationAgingHrs >= b.min && d.l1DelegationAgingHrs < b.max).length);
+
+            const legendEl = document.getElementById('da-bucket-legend');
+            if (legendEl) {
+                legendEl.innerHTML = buckets.map((b, i) => `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:${b.color};display:inline-block;"></span><span style="font-size:0.7rem;">${b.label} (${counts[i]})</span></span>`).join('');
+            }
+
+            daBucketChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: { labels: buckets.map(b => b.label), datasets: [{ data: counts, backgroundColor: buckets.map(b => b.color), borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '58%',
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} cases` } } },
+                    onClick(e, elements) {
+                        if (!elements.length) return;
+                        const b = buckets[elements[0].index];
+                        const data = l1Del.filter(d => d.l1DelegationAgingHrs >= b.min && d.l1DelegationAgingHrs < b.max);
+                        openDelegationDrillDown('daCustom', `L1 Delegation Bucket: ${b.label}`, data);
+                    }
+                }
+            });
+        }
+
+        function _renderDADirectAssignChart(all) {
+            const canvas = document.getElementById('da-direct-assign-chart');
+            if (!canvas) return;
+            if (daDirectChart) { daDirectChart.destroy(); daDirectChart = null; }
+
+            const dateMap = {};
+            all.forEach(d => {
+                if (!d._creationDate) return;
+                const key = d._creationDate.toLocaleDateString('en-CA');
+                if (!dateMap[key]) dateMap[key] = { directL2: 0, directSME: 0 };
+                if (d.isDirectL2)  dateMap[key].directL2++;
+                if (d.isDirectSME) dateMap[key].directSME++;
+            });
+            const sortedKeys = Object.keys(dateMap).sort().slice(-30);
+            const labels = sortedKeys.map(k => new Date(k).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }));
+
+            daDirectChart = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Direct to L2', data: sortedKeys.map(k => dateMap[k].directL2), backgroundColor: '#F59E0BAA', borderColor: '#F59E0B', borderWidth: 1.5, borderRadius: 4 },
+                        { label: 'Direct to SME', data: sortedKeys.map(k => dateMap[k].directSME), backgroundColor: '#EF4444AA', borderColor: '#EF4444', borderWidth: 1.5, borderRadius: 4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 12 } } },
+                    scales: { x: { ticks: { font: { size: 9 }, maxRotation: 35 }, grid: { display: false }, stacked: false },
+                        y: { beginAtZero: true, ticks: { font: { size: 9 }, stepSize: 1 } } }
+                }
+            });
+        }
+
+        function openDelegationDrillDown(type, title, customData) {
+            const applyGF = (d) => {
+                if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+                if (globalFilters.mspaccount.length > 0 && !globalFilters.mspaccount.includes(d.customerName)) return false;
+                if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+                if (globalFilters.submittedby.length > 0 && !globalFilters.submittedby.includes(d.customerName)) return false;
+                if (globalFilters.service && d.service !== globalFilters.service) return false;
+                if (globalFilters.level && d.assignmentLevel !== globalFilters.level) return false;
+                if (globalFilters.sla === 'Violated' && !d.isSlaViolated) return false;
+                if (globalFilters.sla === 'Non-Violated' && d.isSlaViolated) return false;
+                if (globalFilters.timescale && globalFilters.timescale !== 'all') {
+                    if (!_timescaleMatch(d._creationDate, globalFilters.timescale)) return false;
+                }
+                return true;
+            };
+            const all = processedData.filter(applyGF);
+
+            const DA_COLS = [
+                { key: 'incidentId',          label: 'Record ID' },
+                { key: 'title',               label: 'Title' },
+                { key: 'owner',               label: 'Owner' },
+                { key: 'creationTimeDisplay', label: 'Creation Time', exportKey: 'creationTimeRaw' },
+                { key: 'currentStatus',       label: 'Status' },
+                { key: 'service',             label: 'Service' },
+                { key: 'assignmentLevel',     label: 'Assign To' },
+                { key: 'assignToL1Eng',       label: 'L1 Engineer' },
+                { key: 'assignL1TimeDisplay', label: 'Assign L1 Time', exportKey: 'assignL1TimeRaw' },
+                { key: 'assignToL2Eng',       label: 'L2 Engineer' },
+                { key: 'assignL2TimeDisplay', label: 'Assign L2 Time', exportKey: 'assignL2TimeRaw' },
+                { key: 'l1DelegationAgingDisplay', label: 'L1 Delegation Aging' },
+                { key: 'assignToSMEEng',      label: 'SME Engineer' },
+                { key: 'assignSMETimeDisplay',label: 'Assign SME Time', exportKey: 'assignSMETimeRaw' },
+                { key: 'l2DelegationAgingDisplay', label: 'L2 Delegation Aging' },
+                { key: 'delegationFlow',      label: 'Flow Type' },
+                { key: 'slaStatus',           label: 'SLA Status' }
+            ];
+
+            // Add display-formatted aging strings on the fly
+            const enrich = (d) => ({
+                ...d,
+                l1DelegationAgingDisplay: d.l1DelegationAgingHrs !== null ? _daFmtHrs(d.l1DelegationAgingHrs) : (d.pendingL1AgingHrs !== null ? '⏳ ' + _daFmtHrs(d.pendingL1AgingHrs) + ' (Live)' : '—'),
+                l2DelegationAgingDisplay: d.l2DelegationAgingHrs !== null ? _daFmtHrs(d.l2DelegationAgingHrs) : (d.pendingL2AgingHrs !== null ? '⏳ ' + _daFmtHrs(d.pendingL2AgingHrs) + ' (Live)' : '—'),
+            });
+
+            let data = [];
+            if (customData) {
+                data = customData.map(enrich);
+            } else if (type === 'daL1Aging') {
+                data = all.filter(d => d.l1DelegationAgingHrs !== null).map(enrich);
+            } else if (type === 'daL2Aging') {
+                data = all.filter(d => d.l2DelegationAgingHrs !== null).map(enrich);
+            } else if (type === 'daDirectL2') {
+                data = all.filter(d => d.isDirectL2).map(enrich);
+            } else if (type === 'daDirectSME') {
+                data = all.filter(d => d.isDirectSME).map(enrich);
+            } else if (type === 'daPendingL1') {
+                data = all.filter(d => d.pendingL1AgingHrs !== null).map(enrich);
+            } else if (type === 'daPendingL2') {
+                data = all.filter(d => d.pendingL2AgingHrs !== null).map(enrich);
+            } else if (type === 'daPendingSME') {
+                data = all.filter(d => d.assignToSMEEng && !d.l2DelegationAgingHrs && !d.pendingL2AgingHrs).map(enrich);
+            } else if (type.startsWith('daFlow_')) {
+                const flow = decodeURIComponent(type.replace('daFlow_', ''));
+                data = all.filter(d => d.delegationFlow === flow).map(enrich);
+            } else if (type.startsWith('daEngL1_')) {
+                const eng = decodeURIComponent(type.replace('daEngL1_', ''));
+                data = all.filter(d => (d.assignToL1Eng || d.owner) === eng && d.l1DelegationAgingHrs !== null).map(enrich);
+            } else {
+                data = all.filter(d => d.assignToL1Eng || d.assignToL2Eng || d.assignToSMEEng).map(enrich);
+            }
+
+            drillDownTitleForExport = title;
+            document.getElementById('drillDownTitle').textContent = title;
+            document.getElementById('drillDownCount').textContent = `${data.length} Cases`;
+            drillDownData = data;
+
+            drillDownExportData = data.map(d => {
+                const row = {};
+                DA_COLS.forEach(col => {
+                    const expKey = col.exportKey || col.key;
+                    row[col.label] = d[expKey] || '';
+                });
+                return row;
+            });
+
+            document.getElementById('drillDownHeader').innerHTML = DA_COLS.map(c => `<th>${c.label}</th>`).join('');
+            document.getElementById('drillDownBody').innerHTML = data.length
+                ? data.map(d => {
+                    const globalIndex = processedData.findIndex(p => p.incidentId === d.incidentId);
+                    const cells = DA_COLS.map(col => {
+                        const val = (d[col.key] || '').toString();
+                        const display = val.length > 32 ? val.substring(0, 32) + '…' : val;
+                        return `<td title="${val}">${display}</td>`;
+                    }).join('');
+                    return `<tr onclick="viewCaseDetail(${globalIndex})" style="cursor:pointer;">${cells}</tr>`;
+                }).join('')
+                : `<tr><td colspan="${DA_COLS.length}" class="text-center text-muted py-3">No cases found.</td></tr>`;
+
+            new bootstrap.Modal(document.getElementById('drillDownModal')).show();
+        }
+
+        function exportDelegationFlowExcel() {
+            if (!processedData || !processedData.length) { alert('No data to export.'); return; }
+            const applyGF = (d) => {
+                if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+                if (globalFilters.mspaccount.length > 0 && !globalFilters.mspaccount.includes(d.customerName)) return false;
+                if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+                if (globalFilters.service && d.service !== globalFilters.service) return false;
+                if (globalFilters.timescale && globalFilters.timescale !== 'all') { if (!_timescaleMatch(d._creationDate, globalFilters.timescale)) return false; }
+                return true;
+            };
+            const all = processedData.filter(applyGF);
+            const flowMap = {};
+            all.forEach(d => { const ft = d.delegationFlow || 'Initial Only'; flowMap[ft] = (flowMap[ft] || 0) + 1; });
+            const total = all.length;
+            const rows = Object.entries(flowMap).sort((a, b) => b[1] - a[1]).map(([flow, cnt]) => ({
+                'Flow Type': flow, 'Count': cnt, '% of Total': total > 0 ? (cnt / total * 100).toFixed(1) + '%' : '0%'
+            }));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ 'Flow Type': 'No Data', 'Count': 0, '% of Total': '0%' }]), 'Delegation Flow Analysis');
+            XLSX.writeFile(wb, `Delegation_Flow_Analysis_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function exportQueueBottleneckExcel() {
+            if (!processedData || !processedData.length) { alert('No data to export.'); return; }
+            const applyGF = (d) => {
+                if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+                if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+                if (globalFilters.timescale && globalFilters.timescale !== 'all') { if (!_timescaleMatch(d._creationDate, globalFilters.timescale)) return false; }
+                return true;
+            };
+            const all = processedData.filter(applyGF);
+            const pL1 = all.filter(d => d.pendingL1AgingHrs !== null);
+            const pL2 = all.filter(d => d.pendingL2AgingHrs !== null);
+            const pSME = all.filter(d => d.assignToSMEEng && !d.l2DelegationAgingHrs && !d.pendingL2AgingHrs);
+            const avgHrs = (arr, field) => arr.length ? (arr.reduce((s, d) => s + d[field], 0) / arr.length).toFixed(2) : '—';
+            const rows = [
+                { 'Queue': 'L1 Queue', 'Pending Count': pL1.length, 'Avg Pending Aging (Hrs)': avgHrs(pL1, 'pendingL1AgingHrs'), 'Status': pL1.length > 20 ? 'Bottleneck' : pL1.length > 5 ? 'Watch' : 'Normal' },
+                { 'Queue': 'L2 Queue', 'Pending Count': pL2.length, 'Avg Pending Aging (Hrs)': avgHrs(pL2, 'pendingL2AgingHrs'), 'Status': pL2.length > 10 ? 'Bottleneck' : pL2.length > 3 ? 'Watch' : 'Normal' },
+                { 'Queue': 'SME Queue', 'Pending Count': pSME.length, 'Avg Pending Aging (Hrs)': '—', 'current_status': pSME.length > 5 ? 'Bottleneck' : pSME.length > 2 ? 'Watch' : 'Normal' }
+            ];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Queue Bottleneck Report');
+            XLSX.writeFile(wb, `Queue_Bottleneck_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function exportDelegationAgingDetailExcel() {
+            if (!processedData || !processedData.length) { alert('No data to export.'); return; }
+            const applyGF = (d) => {
+                if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+                if (globalFilters.mspaccount.length > 0 && !globalFilters.mspaccount.includes(d.customerName)) return false;
+                if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+                if (globalFilters.service && d.service !== globalFilters.service) return false;
+                if (globalFilters.timescale && globalFilters.timescale !== 'all') { if (!_timescaleMatch(d._creationDate, globalFilters.timescale)) return false; }
+                return true;
+            };
+            const all = processedData.filter(applyGF);
+            const wb = XLSX.utils.book_new();
+
+            // Sheet 1: Executive Summary
+            const execRows = [
+                ['Metric', 'Value'],
+                ['Total Cases (Filtered)', all.length],
+                ['Cases with L1 Delegation', all.filter(d => d.l1DelegationAgingHrs !== null).length],
+                ['Cases with L2 Delegation', all.filter(d => d.l2DelegationAgingHrs !== null).length],
+                ['Direct to L2 (Bypass L1)', all.filter(d => d.isDirectL2).length],
+                ['Direct to SME (Bypass L1+L2)', all.filter(d => d.isDirectSME).length],
+                ['Pending with L1', all.filter(d => d.pendingL1AgingHrs !== null).length],
+                ['Pending with L2', all.filter(d => d.pendingL2AgingHrs !== null).length],
+            ];
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(execRows), 'Executive Summary');
+
+            // Sheet 2: L1 Delegation Aging
+            const l1Rows = all.filter(d => d.l1DelegationAgingHrs !== null).map(d => ({
+                'Record ID': d.incidentId, 'Title': d.title, 'Owner': d.owner,
+                'Creation Time': d.creationTimeRaw || d.creationTimeDisplay,
+                'L1 Engineer': d.assignToL1Eng, 'Assign L1 Time': d.assignL1TimeRaw || d.assignL1TimeDisplay,
+                'L2 Engineer': d.assignToL2Eng, 'Assign L2 Time': d.assignL2TimeRaw || d.assignL2TimeDisplay,
+                'L1 Delegation Aging (Hrs)': d.l1DelegationAgingHrs !== null ? d.l1DelegationAgingHrs.toFixed(2) : '',
+                'L1 Delegation Aging (Display)': _daFmtHrs(d.l1DelegationAgingHrs),
+                'SLA Status': d.slaStatus || (d.isSlaViolated ? 'Violated' : 'Non-Violated')
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(l1Rows.length ? l1Rows : [{}]), 'L1 Delegation Aging');
+
+            // Sheet 3: L2 Delegation Aging
+            const l2Rows = all.filter(d => d.l2DelegationAgingHrs !== null).map(d => ({
+                'Record ID': d.incidentId, 'Title': d.title, 'Owner': d.owner,
+                'Creation Time': d.creationTimeRaw || d.creationTimeDisplay,
+                'L2 Engineer': d.assignToL2Eng, 'Assign L2 Time': d.assignL2TimeRaw || d.assignL2TimeDisplay,
+                'SME Engineer': d.assignToSMEEng, 'Assign SME Time': d.assignSMETimeRaw || d.assignSMETimeDisplay,
+                'L2 Delegation Aging (Hrs)': d.l2DelegationAgingHrs !== null ? d.l2DelegationAgingHrs.toFixed(2) : '',
+                'L2 Delegation Aging (Display)': _daFmtHrs(d.l2DelegationAgingHrs),
+                'SLA Status': d.slaStatus || (d.isSlaViolated ? 'Violated' : 'Non-Violated')
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(l2Rows.length ? l2Rows : [{}]), 'L2 Delegation Aging');
+
+            // Sheet 4: Pending with L1 (Live Aging)
+            const pendL1Rows = all.filter(d => d.pendingL1AgingHrs !== null).map(d => ({
+                'Record ID': d.incidentId, 'Title': d.title, 'Owner': d.owner, 'Status': d.currentStatus,
+                'L1 Engineer': d.assignToL1Eng, 'Assign L1 Time': d.assignL1TimeRaw || d.assignL1TimeDisplay,
+                'Pending Aging (Hrs)': d.pendingL1AgingHrs !== null ? d.pendingL1AgingHrs.toFixed(2) : '',
+                'Pending Aging (Display)': _daFmtHrs(d.pendingL1AgingHrs),
+                'SLA Status': d.slaStatus || (d.isSlaViolated ? 'Violated' : 'Non-Violated')
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pendL1Rows.length ? pendL1Rows : [{}]), 'Pending with L1');
+
+            // Sheet 5: Pending with L2 (Live Aging)
+            const pendL2Rows = all.filter(d => d.pendingL2AgingHrs !== null).map(d => ({
+                'Record ID': d.incidentId, 'Title': d.title, 'Owner': d.owner, 'Status': d.currentStatus,
+                'L2 Engineer': d.assignToL2Eng, 'Assign L2 Time': d.assignL2TimeRaw || d.assignL2TimeDisplay,
+                'Pending Aging (Hrs)': d.pendingL2AgingHrs !== null ? d.pendingL2AgingHrs.toFixed(2) : '',
+                'Pending Aging (Display)': _daFmtHrs(d.pendingL2AgingHrs),
+                'SLA Status': d.slaStatus || (d.isSlaViolated ? 'Violated' : 'Non-Violated')
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pendL2Rows.length ? pendL2Rows : [{}]), 'Pending with L2');
+
+            // Sheet 6: Direct Assignments
+            const directRows = all.filter(d => d.isDirectL2 || d.isDirectSME).map(d => ({
+                'Record ID': d.incidentId, 'Title': d.title, 'Owner': d.owner, 'Status': d.currentStatus,
+                'Direct Assignment Type': d.isDirectSME ? 'Direct SME' : 'Direct L2',
+                'L2 Engineer': d.assignToL2Eng || '', 'assign_to_sme': d.assignToSMEEng || '',
+                'Creation Time': d.creationTimeRaw || d.creationTimeDisplay,
+                'SLA Status': d.slaStatus || (d.isSlaViolated ? 'Violated' : 'Non-Violated')
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(directRows.length ? directRows : [{}]), 'Direct Assignments');
+
+            // Sheet 7: Full Detail
+            const fullRows = all.map(d => ({
+                'Record ID': d.incidentId, 'Title': d.title, 'Owner': d.owner, 'Status': d.currentStatus, 'Service': d.service,
+                'Creation Time': d.creationTimeRaw || d.creationTimeDisplay,
+                'Assign To': d.assignmentLevel,
+                'L1 Engineer': d.assignToL1Eng, 'Assign L1 Time': d.assignL1TimeRaw || d.assignL1TimeDisplay,
+                'L2 Engineer': d.assignToL2Eng, 'Assign L2 Time': d.assignL2TimeRaw || d.assignL2TimeDisplay,
+                'L1 Delegation Aging (Hrs)': d.l1DelegationAgingHrs !== null ? d.l1DelegationAgingHrs.toFixed(2) : '',
+                'SME Engineer': d.assignToSMEEng, 'Assign SME Time': d.assignSMETimeRaw || d.assignSMETimeDisplay,
+                'L2 Delegation Aging (Hrs)': d.l2DelegationAgingHrs !== null ? d.l2DelegationAgingHrs.toFixed(2) : '',
+                'Pending with L1 (Hrs)': d.pendingL1AgingHrs !== null ? d.pendingL1AgingHrs.toFixed(2) : '',
+                'Pending with L2 (Hrs)': d.pendingL2AgingHrs !== null ? d.pendingL2AgingHrs.toFixed(2) : '',
+                'Delegation Flow': d.delegationFlow,
+                'Direct L2': d.isDirectL2 ? 'Yes' : 'No',
+                'Direct SME': d.isDirectSME ? 'Yes' : 'No',
+                'SLA Status': d.slaStatus || (d.isSlaViolated ? 'Violated' : 'Non-Violated')
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(fullRows.length ? fullRows : [{}]), 'Full Delegation Detail');
+
+            XLSX.writeFile(wb, `Delegation_Aging_Report_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
         function exportAMMetricsExcel() {
