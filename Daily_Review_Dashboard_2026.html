@@ -1339,47 +1339,60 @@
                  FLOATING FILTER BUTTON (top-bar inline)
             ══════════════════════════════════════════ -->
             <style>
-                /* Floating filter fab */
+                /* Floating filter fab — fixed right-center, round icon only */
                 #filter-fab {
-                    position: relative;
-                    display: inline-flex;
+                    position: fixed;
+                    right: 20px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    display: none;
                     align-items: center;
-                    gap: 7px;
+                    justify-content: center;
                     background: linear-gradient(135deg, #3D31C8, #5B4FE9);
                     color: #fff;
                     border: none;
-                    border-radius: 50px;
-                    padding: 7px 18px 7px 14px;
-                    font-size: 0.82rem;
-                    font-weight: 700;
+                    border-radius: 50%;
+                    width: 52px;
+                    height: 52px;
                     cursor: pointer;
-                    box-shadow: 0 4px 16px rgba(91,79,233,0.35);
-                    transition: box-shadow 0.2s, transform 0.15s;
-                    white-space: nowrap;
-                    z-index: 100;
+                    box-shadow: 0 4px 20px rgba(91,79,233,0.45), 0 2px 8px rgba(0,0,0,0.12);
+                    transition: box-shadow 0.2s, transform 0.2s;
+                    z-index: 1040;
                 }
-                #filter-fab:hover { box-shadow: 0 6px 22px rgba(91,79,233,0.45); transform: translateY(-1px); }
+                #filter-fab:hover {
+                    transform: translateY(-50%) scale(1.1);
+                    box-shadow: 0 6px 28px rgba(91,79,233,0.60), 0 4px 12px rgba(0,0,0,0.15);
+                }
+                #filter-fab .fab-icon {
+                    font-size: 1.35rem;
+                    line-height: 1;
+                    display: block;
+                }
+                #filter-fab span:not(.fab-badge) { display: none; }
                 #filter-fab.filters-active {
                     background: linear-gradient(135deg, #1E3A8A, #3D31C8);
                     animation: fabPulse 2s infinite;
                 }
                 @keyframes fabPulse {
-                    0%,100% { box-shadow: 0 4px 16px rgba(91,79,233,0.35); }
-                    50%      { box-shadow: 0 4px 24px rgba(91,79,233,0.65), 0 0 0 5px rgba(91,79,233,0.15); }
+                    0%,100% { box-shadow: 0 4px 20px rgba(91,79,233,0.45); }
+                    50%      { box-shadow: 0 4px 28px rgba(91,79,233,0.70), 0 0 0 6px rgba(91,79,233,0.15); }
                 }
                 #filter-fab .fab-badge {
                     background: #EF4444;
                     color: #fff;
                     border-radius: 50%;
-                    font-size: 0.62rem;
+                    font-size: 0.58rem;
                     font-weight: 900;
                     width: 18px; height: 18px;
                     display: none;
                     align-items: center;
                     justify-content: center;
-                    flex-shrink: 0;
+                    position: absolute;
+                    top: 2px;
+                    right: 2px;
+                    box-shadow: 0 2px 6px rgba(239,68,68,0.5);
                 }
-                #filter-fab.filters-active .fab-badge { display: inline-flex; }
+                #filter-fab.filters-active .fab-badge { display: flex; }
 
                 /* Slide-in filter drawer */
                 #filter-drawer-overlay {
@@ -1754,13 +1767,6 @@
                     <span id="analysis-mode-banner" class="mode-banner open-mode" style="cursor:default;">
                         <i class="bi bi-folder2-open me-1"></i>Open Cases Analysis
                     </span>
-
-                    <!-- Filter FAB -->
-                    <button id="filter-fab" onclick="openFilterDrawer()">
-                        <i class="bi bi-funnel-fill fab-icon"></i>
-                        <span>Filters</span>
-                        <span class="fab-badge" id="fab-badge-count">0</span>
-                    </button>
 
                     <!-- Download PDF -->
                     <button class="btn pdf-download-btn btn-sm" id="download-pdf-btn" style="font-size:0.78rem;padding:6px 14px;">
@@ -6511,6 +6517,7 @@
             showLoading(false);
             document.getElementById('upload-section').style.display = 'none';
             document.getElementById('dashboard-section').style.display = 'block';
+            document.getElementById('filter-fab').style.display = 'flex';
             document.getElementById('total-cases').textContent = `${processedData.length} Cases Loaded`;
             document.getElementById('last-updated').textContent = `Last Updated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
 
@@ -13121,6 +13128,7 @@ ${bodyHTML}
                 filteredData = [...processedData];
                 document.getElementById('upload-section').style.display = 'none';
                 document.getElementById('dashboard-section').style.display = 'block';
+                document.getElementById('filter-fab').style.display = 'flex';
                 document.getElementById('total-cases').textContent = `${processedData.length} Cases Loaded`;
                 updateDashboard();
                 initializeOpenCasesAnalyses();
@@ -15713,5 +15721,15 @@ ${bodyHTML}
             }
         });
     </script>
+
+    <!-- ══════════════════════════════════════════
+         GLOBAL FLOATING FILTER FAB
+         Fixed right-center, always visible on scroll
+    ══════════════════════════════════════════ -->
+    <button id="filter-fab" onclick="openFilterDrawer()" title="Open Global Filters">
+        <i class="bi bi-funnel-fill fab-icon"></i>
+        <span>Filters</span>
+        <span class="fab-badge" id="fab-badge-count">0</span>
+    </button>
 </body>
 </html>
