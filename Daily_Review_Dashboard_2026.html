@@ -4876,6 +4876,7 @@
                 { key: 'activity',                label: 'Activity – POA' },
                 { key: 'eodTarget',               label: 'EOD Target' },
                 { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
+                { key: 'categorizationType',      label: 'Categorization Type' },
                 { key: 'remarks',                 label: 'Remarks' },
                 { key: 'currentStatus',           label: 'Current Status' },
                 { key: 'service',                 label: 'Service' },
@@ -4901,6 +4902,7 @@
                 { key: 'activity',                label: 'Activity – POA' },
                 { key: 'eodTarget',               label: 'EOD Target' },
                 { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
+                { key: 'categorizationType',      label: 'Categorization Type' },
                 { key: 'remarks',                 label: 'Remarks' },
                 { key: 'currentStatus',           label: 'Current Status' },
                 { key: 'service',                 label: 'Service' },
@@ -4926,6 +4928,7 @@
                 { key: 'activity',                label: 'Activity – POA' },
                 { key: 'eodTarget',               label: 'EOD Target' },
                 { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
+                { key: 'categorizationType',      label: 'Categorization Type' },
                 { key: 'remarks',                 label: 'Remarks' },
                 { key: 'currentStatus',           label: 'Current Status' },
                 { key: 'service',                 label: 'Service' },
@@ -6303,6 +6306,7 @@
                     activity: '',
                     eodTarget: '',
                     eveningReviewStatus: '',
+                    categorizationType: '',
                     remarks: '',
                     emailRespDueTodayYN:    isEmailRespToday    ? 'Yes' : 'No',
                     emailRespMissedYN:      isEmailRespMissed   ? 'Yes' : 'No',
@@ -9739,6 +9743,11 @@
                         const value = d[col.key] || '';
                         let cellClass = '';
                         
+                        // Categorization Type — blank in UI, dropdown selection happens in exported Excel only
+                        if (col.key === 'categorizationType') {
+                            return `<td style="min-width:160px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— select in Excel export —</td>`;
+                        }
+
                         // Add styling based on value
                         if (col.key === 'agingDays' || col.key === 'agingRoundoff') {
                             const agingValue = parseInt(value) || 0;
@@ -9775,6 +9784,7 @@
 
             new bootstrap.Modal(document.getElementById('drillDownModal')).show();
         }
+
 
         // ─────────────────────────────────────────────────────────────────────
         // GENERIC DYNAMIC DRILLDOWN
@@ -10552,14 +10562,198 @@
         }
 
         function exportDrillDownToExcel() {
-            if(!drillDownExportData.length) {
-                alert("No data to export.");
+            if (!drillDownExportData.length) { alert("No data to export."); return; }
+
+            const filename = `${drillDownTitleForExport.replace(/[^a-zA-Z0-9]/g,'_')}_Export_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`;
+            const headers   = Object.keys(drillDownExportData[0]);
+            const catColIdx = headers.indexOf('Categorization Type');
+
+            // If no Categorization Type column — plain SheetJS export
+            if (catColIdx === -1) {
+                const wb2 = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb2, XLSX.utils.json_to_sheet(drillDownExportData), 'DrillDownExport');
+                XLSX.writeFile(wb2, filename);
                 return;
             }
-            const ws = XLSX.utils.json_to_sheet(drillDownExportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "DrillDownExport");
-            XLSX.writeFile(wb, `${drillDownTitleForExport.replace(/[^a-zA-Z0-9]/g,'_')}_Export_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+
+            // Build the xlsx from scratch so dropdown is guaranteed
+            _buildXlsxWithDropdown(drillDownExportData, headers, catColIdx, filename);
+        }
+
+        // ── Build xlsx from scratch with a working Categorization Type dropdown ──
+        function _buildXlsxWithDropdown(rows, headers, catColIdx, filename) {
+
+            function colLetter(n) { // 0-based index → letter
+                let r = '';
+                do { r = String.fromCharCode(65 + (n % 26)) + r; n = Math.floor(n / 26) - 1; } while (n >= 0);
+                return r;
+            }
+
+            function xmlEsc(s) {
+                return String(s == null ? '' : s)
+                    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            }
+
+            const CAT_OPTIONS = [
+                'Type 1 - Solvable by L1 with EDOC',
+                'Type 2 - Handover to L2 with possible details',
+                'Type 3 - 50/50, to move to Type 1 or Type 2 within 2 days',
+                'Type 4 - New or non-profiled cases, to profile within 24hrs'
+            ];
+
+            // ── sheet1.xml (DrillDownExport) ──────────────────────────────────────
+            function buildSheet1() {
+                const totalCols = headers.length;
+                const totalRows = rows.length + 1; // +1 for header
+                const lastCol   = colLetter(totalCols - 1);
+                const catCol    = colLetter(catColIdx);
+
+                let sheetData = '';
+                // Header row
+                sheetData += `<row r="1">`;
+                headers.forEach((h, ci) => {
+                    sheetData += `<c r="${colLetter(ci)}1" t="inlineStr"><is><t>${xmlEsc(h)}</t></is></c>`;
+                });
+                sheetData += `</row>`;
+                // Data rows
+                rows.forEach((row, ri) => {
+                    const rowNum = ri + 2;
+                    sheetData += `<row r="${rowNum}">`;
+                    headers.forEach((h, ci) => {
+                        const val = row[h];
+                        const c   = colLetter(ci);
+                        if (ci === catColIdx || val === '' || val == null) {
+                            // Leave truly blank — no <v> tag — so dropdown shows
+                            sheetData += `<c r="${c}${rowNum}"/>`;
+                        } else {
+                            sheetData += `<c r="${c}${rowNum}" t="inlineStr"><is><t>${xmlEsc(val)}</t></is></c>`;
+                        }
+                    });
+                    sheetData += `</row>`;
+                });
+
+                const dv = `<dataValidations count="1">`
+                    + `<dataValidation sqref="${catCol}2:${catCol}1048576" `
+                    + `showDropDown="0" showInputMessage="1" showErrorMessage="1" allowBlank="1" type="list">`
+                    + `<formula1>CatTypes!$A$2:$A$5</formula1>`
+                    + `</dataValidation></dataValidations>`;
+
+                return `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+                    + `<dimension ref="A1:${lastCol}${totalRows}"/>`
+                    + `<sheetViews><sheetView workbookViewId="0"><selection activeCell="A1" sqref="A1"/></sheetView></sheetViews>`
+                    + `<sheetFormatPr baseColWidth="8" defaultRowHeight="15"/>`
+                    + `<sheetData>${sheetData}</sheetData>`
+                    + dv
+                    + `<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/>`
+                    + `</worksheet>`;
+            }
+
+            // ── sheet2.xml (CatTypes) ─────────────────────────────────────────────
+            function buildSheet2() {
+                let rows2 = `<row r="1"><c r="A1" t="inlineStr"><is><t>Categorization Type</t></is></c></row>`;
+                CAT_OPTIONS.forEach((opt, i) => {
+                    rows2 += `<row r="${i+2}"><c r="A${i+2}" t="inlineStr"><is><t>${xmlEsc(opt)}</t></is></c></row>`;
+                });
+                return `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+                    + `<dimension ref="A1:A5"/>`
+                    + `<sheetViews><sheetView workbookViewId="0"><selection activeCell="A1" sqref="A1"/></sheetView></sheetViews>`
+                    + `<sheetFormatPr baseColWidth="8" defaultRowHeight="15"/>`
+                    + `<sheetData>${rows2}</sheetData>`
+                    + `<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/>`
+                    + `</worksheet>`;
+            }
+
+            const FILES = {
+                '[Content_Types].xml':
+                    `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
+                    + `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>`
+                    + `<Default Extension="xml" ContentType="application/xml"/>`
+                    + `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>`
+                    + `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
+                    + `<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
+                    + `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>`
+                    + `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>`
+                    + `<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>`
+                    + `</Types>`,
+
+                '_rels/.rels':
+                    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml" Id="rId1"/>`
+                    + `<Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml" Id="rId2"/>`
+                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml" Id="rId3"/>`
+                    + `</Relationships>`,
+
+                'xl/workbook.xml':
+                    `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">`
+                    + `<workbookPr/><bookViews><workbookView/></bookViews>`
+                    + `<sheets>`
+                    + `<sheet name="DrillDownExport" sheetId="1" r:id="rId1"/>`
+                    + `<sheet name="CatTypes" sheetId="2" r:id="rId2"/>`
+                    + `</sheets></workbook>`,
+
+                'xl/_rels/workbook.xml.rels':
+                    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
+                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet1.xml" Id="rId1"/>`
+                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet2.xml" Id="rId2"/>`
+                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml" Id="rId3"/>`
+                    + `</Relationships>`,
+
+                'xl/worksheets/sheet1.xml': buildSheet1(),
+                'xl/worksheets/sheet2.xml': buildSheet2(),
+
+                'xl/styles.xml':
+                    `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+                    + `<fonts count="1"><font><name val="Calibri"/><sz val="11"/></font></fonts>`
+                    + `<fills count="2"><fill><patternFill/></fill><fill><patternFill patternType="gray125"/></fill></fills>`
+                    + `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>`
+                    + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>`
+                    + `<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>`
+                    + `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>`
+                    + `</styleSheet>`,
+
+                'docProps/app.xml':
+                    `<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties">`
+                    + `<Application>Microsoft Excel</Application></Properties>`,
+
+                'docProps/core.xml':
+                    `<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties">`
+                    + `<dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">Dashboard</dc:creator>`
+                    + `</cp:coreProperties>`
+            };
+
+            // Load fflate and zip everything up
+            function _zip(fflate) {
+                const enc = new TextEncoder();
+                const fileMap = {};
+                for (const [path, content] of Object.entries(FILES)) {
+                    fileMap[path] = [enc.encode(content), { level: 6 }];
+                }
+                const zipped = fflate.zipSync(fileMap);
+                const blob = new Blob([zipped], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = filename;
+                document.body.appendChild(a); a.click();
+                setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500);
+            }
+
+            if (window.fflate) {
+                _zip(window.fflate);
+            } else {
+                const s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/fflate/0.8.2/fflate.min.js';
+                s.onload = () => _zip(window.fflate);
+                s.onerror = () => {
+                    // Final fallback: plain SheetJS without dropdown
+                    const wb2 = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb2, XLSX.utils.json_to_sheet(drillDownExportData), 'DrillDownExport');
+                    XLSX.writeFile(wb2, filename);
+                };
+                document.head.appendChild(s);
+            }
         }
         
         function exportFullData() {
