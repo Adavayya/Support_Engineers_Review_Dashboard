@@ -4881,7 +4881,7 @@
                 { key: 'eodTarget',               label: 'EOD Target' },
                 { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
                 { key: 'categorizationType',      label: 'Categorization Type' },
-                { key: 'remarks',                 label: 'Remarks' },
+                { key: 'agingLt2YN',             label: 'Aging < 2 Days' },
                 { key: 'currentStatus',           label: 'Current Status' },
                 { key: 'service',                 label: 'Service' },
                 { key: 'creationTimeDisplay',     label: 'Creation Time' },
@@ -4907,7 +4907,7 @@
                 { key: 'eodTarget',               label: 'EOD Target' },
                 { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
                 { key: 'categorizationType',      label: 'Categorization Type' },
-                { key: 'remarks',                 label: 'Remarks' },
+                { key: 'agingLt2YN',             label: 'Aging < 2 Days' },
                 { key: 'currentStatus',           label: 'Current Status' },
                 { key: 'service',                 label: 'Service' },
                 { key: 'creationTimeDisplay',     label: 'Creation Time' },
@@ -4933,7 +4933,7 @@
                 { key: 'eodTarget',               label: 'EOD Target' },
                 { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
                 { key: 'categorizationType',      label: 'Categorization Type' },
-                { key: 'remarks',                 label: 'Remarks' },
+                { key: 'agingLt2YN',             label: 'Aging < 2 Days' },
                 { key: 'currentStatus',           label: 'Current Status' },
                 { key: 'service',                 label: 'Service' },
                 { key: 'creationTimeDisplay',     label: 'Creation Time' },
@@ -6319,6 +6319,7 @@
                     agingGt25YN:  isOldest25          ? 'Yes' : 'No',
                     agingLt15YN:  (!isAging15Violated && agingDays > 0) ? 'Yes' : 'No',
                     agingLt7YN:   (agingDays < 7)     ? 'Yes' : 'No',
+                    agingLt2YN:   (agingDays < 2)     ? 'Yes' : 'No',
 
                     isL1ActionItem: (() => {
                         if (!creationDateObj) return false;
