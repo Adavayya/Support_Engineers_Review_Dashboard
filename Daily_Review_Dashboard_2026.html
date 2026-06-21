@@ -11380,6 +11380,11 @@
                 const totalCols = headers.length;
                 const totalRows = rows.length + 1; // +1 for header
                 const lastCol   = colLetter(totalCols - 1);
+                const closureColIdx     = headers.indexOf('Closure Compliance Status');
+                const delegationColIdx  = headers.indexOf('Delegation Eligible');
+                const emailDueColIdx    = headers.indexOf('Email Response Due Today');
+                const emailMissedColIdx = headers.indexOf('Email Response Missed');
+                const emailFollowColIdx = headers.indexOf('Email Follow-up Missed');
 
                 let sheetData = '';
                 // Header row
@@ -11388,8 +11393,7 @@
                     sheetData += `<c r="${colLetter(ci)}1" t="inlineStr"><is><t>${xmlEsc(h)}</t></is></c>`;
                 });
                 sheetData += `</row>`;
-                // catColIdx is always left blank (user selects via dropdown in Excel)
-                // engActIdx and progMadeIdx carry captured UI values — write them if filled, else blank
+                // s="1" = red fill + bold white, s="2" = green fill + bold white
                 // Data rows
                 rows.forEach((row, ri) => {
                     const rowNum = ri + 2;
@@ -11398,15 +11402,24 @@
                         const val = row[h];
                         const c   = colLetter(ci);
                         if (ci === catColIdx) {
-                            // Always blank — user picks Categorization Type in Excel dropdown
                             sheetData += `<c r="${c}${rowNum}"/>`;
                         } else if (ci === engActIdx) {
-                            // Blank cell — list dropdown from DateList sheet provides the date picker
                             sheetData += `<c r="${c}${rowNum}"/>`;
+                        } else if (ci === closureColIdx && val) {
+                            // Breached = red, Within SLA = green
+                            const s = val === 'Breached' ? '1' : '2';
+                            sheetData += `<c r="${c}${rowNum}" t="inlineStr" s="${s}"><is><t>${xmlEsc(val)}</t></is></c>`;
+                        } else if (ci === delegationColIdx && val) {
+                            // Applicable = green, Not Applicable = red
+                            const s = val === 'Applicable' ? '2' : '1';
+                            sheetData += `<c r="${c}${rowNum}" t="inlineStr" s="${s}"><is><t>${xmlEsc(val)}</t></is></c>`;
+                        } else if ((ci === emailDueColIdx || ci === emailMissedColIdx || ci === emailFollowColIdx) && val) {
+                            // Yes = red, No = green
+                            const s = val === 'Yes' ? '1' : '2';
+                            sheetData += `<c r="${c}${rowNum}" t="inlineStr" s="${s}"><is><t>${xmlEsc(val)}</t></is></c>`;
                         } else if (val === '' || val == null) {
                             sheetData += `<c r="${c}${rowNum}"/>`;
                         } else {
-                            // Write value as string (covers computed cols + captured UI cols)
                             sheetData += `<c r="${c}${rowNum}" t="inlineStr"><is><t>${xmlEsc(val)}</t></is></c>`;
                         }
                     });
@@ -11542,11 +11555,19 @@
 
                 'xl/styles.xml':
                     `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
-                    + `<fonts count="1"><font><name val="Calibri"/><sz val="11"/></font></fonts>`
-                    + `<fills count="2"><fill><patternFill/></fill><fill><patternFill patternType="gray125"/></fill></fills>`
+                    + `<fonts count="3">`
+                    + `<font><name val="Calibri"/><sz val="11"/></font>`
+                    + `<font><name val="Calibri"/><sz val="11"/><b/><color rgb="FFC00000"/></font>`
+                    + `<font><name val="Calibri"/><sz val="11"/><b/><color rgb="FF00B050"/></font>`
+                    + `</fonts>`
+                    + `<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>`
                     + `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>`
                     + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>`
-                    + `<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>`
+                    + `<cellXfs count="3">`
+                    + `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`
+                    + `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`
+                    + `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>`
+                    + `</cellXfs>`
                     + `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>`
                     + `</styleSheet>`,
 
