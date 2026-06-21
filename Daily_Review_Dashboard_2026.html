@@ -1843,6 +1843,11 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="view-l1metricsreport-tab" data-bs-toggle="tab" data-bs-target="#view-l1metricsreport" type="button" role="tab" style="display:none;">
+                        <i class="bi bi-shield-check me-1"></i>L1 Metrics
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="view-resolutionquality-tab" data-bs-toggle="tab" data-bs-target="#view-resolutionquality" type="button" role="tab" style="display:none;">
                         <i class="bi bi-journal-check me-1"></i>Resolution Review
                     </button>
@@ -1931,7 +1936,7 @@
                                 <div class="accordion-body">
                                     <!-- Open mode cards -->
                                     <div class="row g-2" id="section1-open-cards">
-                                        <div class="col-md-3"><div class="kpi-card" id="kpi-total-card">
+                                        <div class="col-md-3"><div class="kpi-card" id="kpi-total-card" style="cursor:pointer;" onclick="openDrillDown('totalOpen','Total Active Cases')">
                                             <span class="kpi-status-tag bg-info-tag" id="kpi-total-tag">INFO</span>
                                             <div class="kpi-title">Total Active Cases</div>
                                             <div class="kpi-value" id="kpi-total">0</div>
@@ -1943,13 +1948,13 @@
                                             <div class="kpi-value" id="kpi-new" style="color:#EF4444;">0</div>
                                             <div class="kpi-recommendation" id="kpi-new-rec">No unacknowledged new cases.</div>
                                         </div></div>
-                                        <div class="col-md-3"><div class="kpi-card" id="kpi-sr-card">
+                                        <div class="col-md-3"><div class="kpi-card" id="kpi-sr-card" style="cursor:pointer;" onclick="openDrillDown('totalSR','Service Requests (SR)')">
                                             <span class="kpi-status-tag bg-info-tag" id="kpi-sr-tag">INFO</span>
                                             <div class="kpi-title">Service Requests (SR)</div>
                                             <div class="kpi-value" id="kpi-sr">0</div>
                                             <div class="kpi-recommendation" id="kpi-sr-rec">Breakdown of active Service Requests.</div>
                                         </div></div>
-                                        <div class="col-md-3"><div class="kpi-card" id="kpi-inc-card">
+                                        <div class="col-md-3"><div class="kpi-card" id="kpi-inc-card" style="cursor:pointer;" onclick="openDrillDown('totalINC','Incident Management (INC)')">
                                             <span class="kpi-status-tag bg-info-tag" id="kpi-inc-tag">INFO</span>
                                             <div class="kpi-title">Incident Management (INC)</div>
                                             <div class="kpi-value" id="kpi-inc">0</div>
@@ -1995,25 +2000,134 @@
 
                         <!-- ═══ SECTION 2: SLA Compliance ═══ -->
                         <div class="accordion-item" id="accordion-section-2">
-                            <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
-                                <i class="bi bi-alarm-fill me-2"></i>2. SLA Compliance <small class="text-muted ms-2" style="font-size:0.7rem;">(No SLA data currently — section retained for future use)</small>
+                            <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" id="accordion-section-2-btn">
+                                <i class="bi bi-alarm-fill me-2"></i>2. SLA Compliance
+                                <span id="sla-compliance-indicator" style="display:inline-flex;align-items:center;margin-left:10px;gap:5px;font-size:0.72rem;font-weight:700;padding:2px 10px;border-radius:20px;background:rgba(16,185,129,0.15);color:#065F46;border:1px solid rgba(16,185,129,0.4);vertical-align:middle;transition:all 0.3s;">
+                                    <span id="sla-compliance-indicator-dot" style="width:8px;height:8px;border-radius:50%;background:#10B981;display:inline-block;flex-shrink:0;"></span>
+                                    <span id="sla-compliance-indicator-text">ALL CLEAR</span>
+                                </span>
                             </button></h2>
                             <div id="collapseTwo" class="accordion-collapse collapse">
                                 <div class="accordion-body">
-                                    <div class="row g-2">
-                                        <div class="col-md-6"><div class="kpi-card" id="kpi-sla-sr-card">
-                                            <span class="kpi-status-tag bg-good" id="kpi-sla-sr-tag">GOOD</span>
-                                            <div class="kpi-title">SLA Violated – SR <small class="text-muted">(No SLA data)</small></div>
-                                            <div class="kpi-value" id="kpi-sla-sr">0</div>
-                                            <div class="kpi-recommendation" id="kpi-sla-sr-rec">No SR cases currently in violation.</div>
-                                        </div></div>
-                                        <div class="col-md-6"><div class="kpi-card" id="kpi-sla-inc-card">
-                                            <span class="kpi-status-tag bg-good" id="kpi-sla-inc-tag">GOOD</span>
-                                            <div class="kpi-title">SLA Violated – INC <small class="text-muted">(No SLA data)</small></div>
-                                            <div class="kpi-value" id="kpi-sla-inc">0</div>
-                                            <div class="kpi-recommendation" id="kpi-sla-inc-rec">No INC cases currently in violation.</div>
-                                        </div></div>
-                                    </div>
+
+                                    <!-- ── OPEN MODE ── -->
+                                    <div id="section2-open-cards">
+                                        <!-- Assignment SLA -->
+                                        <div class="kpi-section-title mb-1"><i class="bi bi-person-check me-1"></i>Assignment SLA <small style="font-size:0.7rem;font-weight:500;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(Open Cases · class_sla_breached)</small></div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-open-assign-sla-overall-card" style="cursor:pointer;" onclick="openDrillDown('openAssignSlaOverall','Overall Assignment SLA — Breached (Open)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-open-assign-sla-overall-tag">GOOD</span>
+                                                <div class="kpi-title">Overall Assignment SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-open-assign-sla-overall">0</div>
+                                                <div class="kpi-recommendation" id="kpi-open-assign-sla-overall-rec">No assignment SLA breaches in open cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-open-assign-sla-inc-card" style="cursor:pointer;" onclick="openDrillDown('openAssignSlaINC','Assignment SLA – INC — Breached (Open)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-open-assign-sla-inc-tag">GOOD</span>
+                                                <div class="kpi-title">Assignment SLA – INC <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-open-assign-sla-inc">0</div>
+                                                <div class="kpi-recommendation" id="kpi-open-assign-sla-inc-rec">No INC assignment SLA breaches in open cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-open-assign-sla-sr-card" style="cursor:pointer;" onclick="openDrillDown('openAssignSlaSR','Assignment SLA – SR — Breached (Open)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-open-assign-sla-sr-tag">GOOD</span>
+                                                <div class="kpi-title">Assignment SLA – SR <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-open-assign-sla-sr">0</div>
+                                                <div class="kpi-recommendation" id="kpi-open-assign-sla-sr-rec">No SR assignment SLA breaches in open cases.</div>
+                                            </div></div>
+                                        </div>
+                                        <!-- 1st Response SLA -->
+                                        <div class="kpi-section-title mb-1"><i class="bi bi-reply-fill me-1"></i>1st Response SLA <small style="font-size:0.7rem;font-weight:500;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(Open Cases · first_response_sla_breached)</small></div>
+                                        <div class="row g-2">
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-open-resp-sla-overall-card" style="cursor:pointer;" onclick="openDrillDown('openRespSlaOverall','Overall 1st Response SLA — Breached (Open)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-open-resp-sla-overall-tag">GOOD</span>
+                                                <div class="kpi-title">Overall 1st Response SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-open-resp-sla-overall">0</div>
+                                                <div class="kpi-recommendation" id="kpi-open-resp-sla-overall-rec">No 1st response SLA breaches in open cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-open-resp-sla-inc-card" style="cursor:pointer;" onclick="openDrillDown('openRespSlaINC','INC – 1st Response SLA — Breached (Open)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-open-resp-sla-inc-tag">GOOD</span>
+                                                <div class="kpi-title">INC – 1st Response SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-open-resp-sla-inc">0</div>
+                                                <div class="kpi-recommendation" id="kpi-open-resp-sla-inc-rec">No INC 1st response SLA breaches in open cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-open-resp-sla-sr-card" style="cursor:pointer;" onclick="openDrillDown('openRespSlaSR','SR – 1st Response SLA — Breached (Open)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-open-resp-sla-sr-tag">GOOD</span>
+                                                <div class="kpi-title">SR – 1st Response SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-open-resp-sla-sr">0</div>
+                                                <div class="kpi-recommendation" id="kpi-open-resp-sla-sr-rec">No SR 1st response SLA breaches in open cases.</div>
+                                            </div></div>
+                                        </div>
+                                    </div><!-- /section2-open-cards -->
+
+                                    <!-- ── CLOSED MODE ── -->
+                                    <div id="section2-closed-cards" style="display:none;">
+                                        <!-- Assignment SLA (Open + Closed) -->
+                                        <div class="kpi-section-title mb-1"><i class="bi bi-person-check me-1"></i>Assignment SLA <small style="font-size:0.7rem;font-weight:500;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(Open + Closed · class_sla_breached)</small></div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-all-assign-sla-overall-card" style="cursor:pointer;" onclick="openDrillDown('allAssignSlaOverall','Overall Assignment SLA — Breached (All)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-all-assign-sla-overall-tag">GOOD</span>
+                                                <div class="kpi-title">Overall Assignment SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-all-assign-sla-overall">0</div>
+                                                <div class="kpi-recommendation" id="kpi-all-assign-sla-overall-rec">No assignment SLA breaches across all cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-all-assign-sla-inc-card" style="cursor:pointer;" onclick="openDrillDown('allAssignSlaINC','Assignment SLA – INC — Breached (All)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-all-assign-sla-inc-tag">GOOD</span>
+                                                <div class="kpi-title">Assignment SLA – INC <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-all-assign-sla-inc">0</div>
+                                                <div class="kpi-recommendation" id="kpi-all-assign-sla-inc-rec">No INC assignment SLA breaches across all cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-all-assign-sla-sr-card" style="cursor:pointer;" onclick="openDrillDown('allAssignSlaSR','Assignment SLA – SR — Breached (All)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-all-assign-sla-sr-tag">GOOD</span>
+                                                <div class="kpi-title">Assignment SLA – SR <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-all-assign-sla-sr">0</div>
+                                                <div class="kpi-recommendation" id="kpi-all-assign-sla-sr-rec">No SR assignment SLA breaches across all cases.</div>
+                                            </div></div>
+                                        </div>
+                                        <!-- 1st Response SLA (Open + Closed) -->
+                                        <div class="kpi-section-title mb-1"><i class="bi bi-reply-fill me-1"></i>1st Response SLA <small style="font-size:0.7rem;font-weight:500;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(Open + Closed · first_response_sla_breached)</small></div>
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-all-resp-sla-overall-card" style="cursor:pointer;" onclick="openDrillDown('allRespSlaOverall','Overall 1st Response SLA — Breached (All)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-all-resp-sla-overall-tag">GOOD</span>
+                                                <div class="kpi-title">Overall 1st Response SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-all-resp-sla-overall">0</div>
+                                                <div class="kpi-recommendation" id="kpi-all-resp-sla-overall-rec">No 1st response SLA breaches across all cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-all-resp-sla-inc-card" style="cursor:pointer;" onclick="openDrillDown('allRespSlaINC','INC – 1st Response SLA — Breached (All)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-all-resp-sla-inc-tag">GOOD</span>
+                                                <div class="kpi-title">INC – 1st Response SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-all-resp-sla-inc">0</div>
+                                                <div class="kpi-recommendation" id="kpi-all-resp-sla-inc-rec">No INC 1st response SLA breaches across all cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-all-resp-sla-sr-card" style="cursor:pointer;" onclick="openDrillDown('allRespSlaSR','SR – 1st Response SLA — Breached (All)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-all-resp-sla-sr-tag">GOOD</span>
+                                                <div class="kpi-title">SR – 1st Response SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-all-resp-sla-sr">0</div>
+                                                <div class="kpi-recommendation" id="kpi-all-resp-sla-sr-rec">No SR 1st response SLA breaches across all cases.</div>
+                                            </div></div>
+                                        </div>
+                                        <!-- Resolution SLA (Closed only) -->
+                                        <div class="kpi-section-title mb-1"><i class="bi bi-check2-all me-1"></i>Resolution SLA <small style="font-size:0.7rem;font-weight:500;color:var(--text-secondary);text-transform:none;letter-spacing:0;">(Closed Cases Only · resolution_sla_breached)</small></div>
+                                        <div class="row g-2">
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-closed-res-sla-overall-card" style="cursor:pointer;" onclick="openDrillDown('closedResSlaOverall','Overall Resolution SLA — Breached (Closed)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-closed-res-sla-overall-tag">GOOD</span>
+                                                <div class="kpi-title">Overall Resolution SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-closed-res-sla-overall">0</div>
+                                                <div class="kpi-recommendation" id="kpi-closed-res-sla-overall-rec">No resolution SLA breaches in closed cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-closed-res-sla-inc-card" style="cursor:pointer;" onclick="openDrillDown('closedResSlaINC','INC – Resolution SLA — Breached (Closed)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-closed-res-sla-inc-tag">GOOD</span>
+                                                <div class="kpi-title">INC – Resolution SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-closed-res-sla-inc">0</div>
+                                                <div class="kpi-recommendation" id="kpi-closed-res-sla-inc-rec">No INC resolution SLA breaches in closed cases.</div>
+                                            </div></div>
+                                            <div class="col-md-4"><div class="kpi-card" id="kpi-closed-res-sla-sr-card" style="cursor:pointer;" onclick="openDrillDown('closedResSlaSR','SR – Resolution SLA — Breached (Closed)')">
+                                                <span class="kpi-status-tag bg-good" id="kpi-closed-res-sla-sr-tag">GOOD</span>
+                                                <div class="kpi-title">SR – Resolution SLA <span style="font-size:0.58rem;background:rgba(239,68,68,0.1);color:#DC2626;padding:1px 6px;border-radius:8px;margin-left:4px;">Breached</span></div>
+                                                <div class="kpi-value" id="kpi-closed-res-sla-sr">0</div>
+                                                <div class="kpi-recommendation" id="kpi-closed-res-sla-sr-rec">No SR resolution SLA breaches in closed cases.</div>
+                                            </div></div>
+                                        </div>
+                                    </div><!-- /section2-closed-cards -->
+
                                 </div>
                             </div>
                         </div>
@@ -3668,6 +3782,194 @@
                     </div><!-- /p-3 -->
                 </div><!-- /view-l1metrics -->
 
+                <!-- ═══════════════════════════════════════════════
+                     L1 METRICS REPORT TAB PANE
+                     (Assignment / First Response / Delegation / Resolution Compliance)
+                ═══════════════════════════════════════════════ -->
+                <div class="tab-pane fade" id="view-l1metricsreport" role="tabpanel">
+                    <div class="p-3">
+
+                        <!-- Header -->
+                        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+                            <div>
+                                <h5 style="color:var(--primary);font-weight:800;margin-bottom:2px;">
+                                    <i class="bi bi-shield-check me-2"></i>L1 Metrics
+                                </h5>
+                                <p class="text-muted small mb-0">Assignment, First Response, Delegation &amp; Resolution SLA compliance — grouped by Assignment Level &amp; L1 Owner. <span style="color:var(--primary);font-weight:600;"><i class="bi bi-funnel-fill me-1"></i>Respects all Global Filters.</span></p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm pdf-download-btn" onclick="downloadDashboardPDF()" style="font-size:0.78rem;padding:5px 13px;">
+                                    <i class="bi bi-file-pdf me-1"></i>PDF Export
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="exportL1MetricsReportExcel()" style="font-size:0.78rem;padding:5px 13px;font-weight:600;">
+                                    <i class="bi bi-file-earmark-excel me-1"></i>Excel Export
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ── Overview KPI Cards ── -->
+                        <div class="row g-3 mb-4" id="l1mr-kpi-cards">
+                            <div class="col-6 col-md-3" style="min-width:0;">
+                                <div class="kpi-card" style="border-left-color:#5B4FE9;">
+                                    <span class="kpi-status-tag bg-good" id="l1mr-kpi-assign-tag">GOOD</span>
+                                    <div class="kpi-title">Assignment Compliance %</div>
+                                    <div class="kpi-value" id="l1mr-kpi-assign-pct" style="color:#5B4FE9;">0%</div>
+                                    <div class="kpi-recommendation" id="l1mr-kpi-assign-rec">class_sla_breached — Overall</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3" style="min-width:0;">
+                                <div class="kpi-card" style="border-left-color:#06B6D4;">
+                                    <span class="kpi-status-tag bg-good" id="l1mr-kpi-fresp-tag">GOOD</span>
+                                    <div class="kpi-title">First Response Compliance %</div>
+                                    <div class="kpi-value" id="l1mr-kpi-fresp-pct" style="color:#06B6D4;">0%</div>
+                                    <div class="kpi-recommendation" id="l1mr-kpi-fresp-rec">first_response_sla_breached — Overall</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3" style="min-width:0;">
+                                <div class="kpi-card" style="border-left-color:#F59E0B;">
+                                    <span class="kpi-status-tag bg-good" id="l1mr-kpi-deleg-tag">GOOD</span>
+                                    <div class="kpi-title">Delegation Compliance %</div>
+                                    <div class="kpi-value" id="l1mr-kpi-deleg-pct" style="color:#F59E0B;">0%</div>
+                                    <div class="kpi-recommendation" id="l1mr-kpi-deleg-rec">L1 → L2 handoff within 48 Hrs</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3" style="min-width:0;">
+                                <div class="kpi-card" style="border-left-color:#10B981;">
+                                    <span class="kpi-status-tag bg-good" id="l1mr-kpi-resol-tag">GOOD</span>
+                                    <div class="kpi-title">Resolution Compliance %</div>
+                                    <div class="kpi-value" id="l1mr-kpi-resol-pct" style="color:#10B981;">0%</div>
+                                    <div class="kpi-recommendation" id="l1mr-kpi-resol-rec">resolution_sla_breached — Overall</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── #1 Assignment / Classified Compliance ── -->
+                        <div class="card mb-4" style="border:1.5px solid var(--border-strong);border-radius:16px;overflow:hidden;">
+                            <div style="background:linear-gradient(135deg,#1E3A5F 0%,#5B4FE9 60%,#7C72F0 100%);padding:14px 20px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-check-fill" style="color:#fff;font-size:1.1rem;"></i>
+                                    <span style="color:#fff;font-size:1rem;font-weight:800;letter-spacing:-0.2px;">1. Assignment / Classified Compliance</span>
+                                </div>
+                                <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);margin-top:3px;">assign_to (Assignment Level) × assign_to_l1_engineer (Owner) — class_sla_breached (0 = Non-Violated, 1 = Violated)</div>
+                            </div>
+                            <div class="p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-sm scorecard-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="min-width:110px;">Assignment Level</th>
+                                                <th style="text-align:left;min-width:160px;">Owner (L1 Engineer)</th>
+                                                <th>Over All Compliance %</th>
+                                                <th>Total Cases</th>
+                                                <th>Total Open Cases</th>
+                                                <th>Total Closed Cases</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="l1mr-assign-table-body">
+                                            <tr><td colspan="6" class="text-center text-muted py-3">Upload data to see assignment compliance.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── #2 First Response Compliance ── -->
+                        <div class="card mb-4" style="border:1.5px solid var(--border-strong);border-radius:16px;overflow:hidden;">
+                            <div style="background:linear-gradient(135deg,#0369A1 0%,#06B6D4 60%,#22D3EE 100%);padding:14px 20px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-reply-fill" style="color:#fff;font-size:1.1rem;"></i>
+                                    <span style="color:#fff;font-size:1rem;font-weight:800;letter-spacing:-0.2px;">2. First Response Compliance</span>
+                                </div>
+                                <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);margin-top:3px;">assign_to (Assignment Level) × assign_to_l1_engineer (Owner) — class_sla_breached &amp; first_response_sla_breached (0 = Non-Violated, 1 = Violated)</div>
+                            </div>
+                            <div class="p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-sm scorecard-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="min-width:110px;">Assignment Level</th>
+                                                <th style="text-align:left;min-width:160px;">Owner (L1 Engineer)</th>
+                                                <th>Assignment Compliance %</th>
+                                                <th>First Response Compliance %</th>
+                                                <th>Total Cases</th>
+                                                <th>Total Open Cases</th>
+                                                <th>Total Closed Cases</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="l1mr-fresp-table-body">
+                                            <tr><td colspan="7" class="text-center text-muted py-3">Upload data to see first response compliance.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── #3 Delegation Compliance ── -->
+                        <div class="card mb-4" style="border:1.5px solid var(--border-strong);border-radius:16px;overflow:hidden;">
+                            <div style="background:linear-gradient(135deg,#92400E 0%,#F59E0B 60%,#FCD34D 100%);padding:14px 20px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-arrow-left-right" style="color:#fff;font-size:1.1rem;"></i>
+                                    <span style="color:#fff;font-size:1rem;font-weight:800;letter-spacing:-0.2px;">3. Delegation Compliance</span>
+                                </div>
+                                <div style="font-size:0.72rem;color:rgba(255,255,255,0.9);margin-top:3px;line-height:1.5;">
+                                    Delegation Compliance = assign_l2_time − assign_l1_time, must be ≤ 48 Hrs (otherwise Breached). <strong>Exception:</strong> if breached but the case has an <code style="background:rgba(255,255,255,0.25);color:#fff;border-radius:4px;padding:0 4px;">sr_edoc</code> date (Service Request) or a <code style="background:rgba(255,255,255,0.25);color:#fff;border-radius:4px;padding:0 4px;">resolution_sla_target_end_time</code> (Incident Management), it is treated as doable by L1 and is NOT counted as breached.
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-sm scorecard-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="min-width:110px;">Assignment Level</th>
+                                                <th style="text-align:left;min-width:170px;">Owner (L1 Engineer) — assign_l1_time</th>
+                                                <th style="text-align:left;min-width:170px;">L2 Engineer(s) — assign_l2_time</th>
+                                                <th>Total Delegated Cases</th>
+                                                <th>Within 48 Hrs</th>
+                                                <th>Breached (&gt;48 Hrs)</th>
+                                                <th>Delegation Compliance %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="l1mr-deleg-table-body">
+                                            <tr><td colspan="7" class="text-center text-muted py-3">Upload data to see delegation compliance.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── #4 Resolution Compliance ── -->
+                        <div class="card mb-2" style="border:1.5px solid var(--border-strong);border-radius:16px;overflow:hidden;">
+                            <div style="background:linear-gradient(135deg,#065F46 0%,#10B981 60%,#6EE7B7 100%);padding:14px 20px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-check2-all" style="color:#fff;font-size:1.1rem;"></i>
+                                    <span style="color:#fff;font-size:1rem;font-weight:800;letter-spacing:-0.2px;">4. Resolution Compliance</span>
+                                </div>
+                                <div style="font-size:0.72rem;color:rgba(255,255,255,0.7);margin-top:3px;">assign_to (Assignment Level) × assign_to_l1_engineer (Owner) — resolution_sla_breached (0 = Non-Violated, 1 = Violated)</div>
+                            </div>
+                            <div class="p-3">
+                                <div class="table-responsive">
+                                    <table class="table table-sm scorecard-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th style="min-width:110px;">Assignment Level</th>
+                                                <th style="text-align:left;min-width:160px;">Owner (L1 Engineer)</th>
+                                                <th>Resolution Compliance %</th>
+                                                <th>Total Cases</th>
+                                                <th>Total Open Cases</th>
+                                                <th>Total Closed Cases</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="l1mr-resol-table-body">
+                                            <tr><td colspan="6" class="text-center text-muted py-3">Upload data to see resolution compliance.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /p-3 -->
+                </div><!-- /view-l1metricsreport -->
+
                 <div class="tab-pane fade" id="view-highpriority" role="tabpanel">
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
@@ -4467,9 +4769,9 @@
                                                 <td class="mar-num" id="mar-daily-time-sr-avg">0.0</td>
                                             </tr>
                                             <tr>
-                                                <td>SLA Violated</td>
-                                                <td class="mar-num" id="mar-daily-sla-inc">0</td>
-                                                <td class="mar-num" id="mar-daily-sla-sr">0</td>
+                                                <td>SLA Target (Days)</td>
+                                                <td class="mar-num" id="mar-daily-sla-target-inc">—</td>
+                                                <td class="mar-num" id="mar-daily-sla-target-sr">—</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -4504,6 +4806,21 @@
                                             </div>
                                             <div class="mar-chart-container">
                                                 <canvas id="marDailySLAComplianceChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-12">
+                                        <div class="mar-chart-box">
+                                            <div class="mar-section-header">
+                                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                                </svg>
+                                                Average Resolution Trend
+                                            </div>
+                                            <div class="mar-chart-container">
+                                                <canvas id="marDailyAvgResolutionTrendChart"></canvas>
                                             </div>
                                         </div>
                                     </div>
@@ -4871,82 +5188,76 @@
                 { key: 'slaStatus', label: 'SLA Status' }
             ],
             'totalOpen': [
-                { key: 'exportDate',              label: 'Date' },
-                { key: 'owner',                   label: 'Owner' },
-                { key: 'incidentId',              label: 'Ticket ID' },
-                { key: 'title',                   label: 'Title' },
-                { key: 'customerName',            label: 'Customer Name' },
-                { key: 'scheduledSessions',       label: 'Scheduled Sessions' },
-                { key: 'activity',                label: 'Activity – POA' },
-                { key: 'eodTarget',               label: 'EOD Target' },
-                { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
-                { key: 'categorizationType',      label: 'Categorization Type' },
-                { key: 'agingLt2YN',             label: 'Aging < 2 Days' },
-                { key: 'currentStatus',           label: 'Current Status' },
-                { key: 'service',                 label: 'Service' },
-                { key: 'creationTimeDisplay',     label: 'Creation Time' },
-                { key: 'updateTimeDisplay',       label: 'Update Time' },
-                { key: 'emailRespDueTodayYN',    label: 'Email Response Due Today' },
-                { key: 'emailRespMissedYN',      label: 'Email Response Missed' },
-                { key: 'emailFollowupMissedYN',  label: 'Email Follow-up Missed' },
-                { key: 'lastEmailFrom',           label: 'Last Email From' },
-                { key: 'lastEmailSentTimeDisplay',label: 'Last Email Sent Time' },
-                { key: 'agingGt15YN',            label: 'Aging > 15 Days' },
-                { key: 'agingGt25YN',            label: 'Aging > 25 Days' },
-                { key: 'agingLt15YN',            label: 'Aging < 15 Days' },
-                { key: 'agingLt7YN',             label: 'Aging < 7 Days' }
+                { key: 'exportDate',                  label: 'Date' },
+                { key: 'owner',                       label: 'Owner' },
+                { key: 'incidentId',                  label: 'Ticket ID' },
+                { key: 'title',                       label: 'Title' },
+                { key: 'customerName',                label: 'Customer Name' },
+                { key: 'categorizationType',          label: 'Categorization Type' },
+                { key: '_engineerActionDate',         label: 'Engineer Action Date' },
+                { key: '_progressMade',               label: 'Progress Made (Yes/No)' },
+                { key: 'activity',                    label: 'Activity - POA' },
+                { key: 'currentStatus',               label: 'Current Status' },
+                { key: 'service',                     label: 'Service' },
+                { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
+                { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
+                { key: '_delegationEligible',         label: 'Delegation Eligible' },
+                { key: 'eveningReviewStatus',         label: 'Evening Review Status' },
+                { key: 'creationTimeDisplay',         label: 'Creation Time' },
+                { key: 'emailRespDueTodayYN',         label: 'Email Response Due Today' },
+                { key: 'emailRespMissedYN',           label: 'Email Response Missed' },
+                { key: 'emailFollowupMissedYN',       label: 'Email Follow-up Missed' },
+                { key: 'lastEmailFrom',               label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay',    label: 'Last Email Sent Time' },
+                { key: 'updateTimeDisplay',           label: 'Update Time' }
             ],
             'totalSR': [
-                { key: 'exportDate',              label: 'Date' },
-                { key: 'owner',                   label: 'Owner' },
-                { key: 'incidentId',              label: 'Ticket ID' },
-                { key: 'title',                   label: 'Title' },
-                { key: 'customerName',            label: 'Customer Name' },
-                { key: 'scheduledSessions',       label: 'Scheduled Sessions' },
-                { key: 'activity',                label: 'Activity – POA' },
-                { key: 'eodTarget',               label: 'EOD Target' },
-                { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
-                { key: 'categorizationType',      label: 'Categorization Type' },
-                { key: 'agingLt2YN',             label: 'Aging < 2 Days' },
-                { key: 'currentStatus',           label: 'Current Status' },
-                { key: 'service',                 label: 'Service' },
-                { key: 'creationTimeDisplay',     label: 'Creation Time' },
-                { key: 'updateTimeDisplay',       label: 'Update Time' },
-                { key: 'emailRespDueTodayYN',    label: 'Email Response Due Today' },
-                { key: 'emailRespMissedYN',      label: 'Email Response Missed' },
-                { key: 'emailFollowupMissedYN',  label: 'Email Follow-up Missed' },
-                { key: 'lastEmailFrom',           label: 'Last Email From' },
-                { key: 'lastEmailSentTimeDisplay',label: 'Last Email Sent Time' },
-                { key: 'agingGt15YN',            label: 'Aging > 15 Days' },
-                { key: 'agingGt25YN',            label: 'Aging > 25 Days' },
-                { key: 'agingLt15YN',            label: 'Aging < 15 Days' },
-                { key: 'agingLt7YN',             label: 'Aging < 7 Days' }
+                { key: 'exportDate',                  label: 'Date' },
+                { key: 'owner',                       label: 'Owner' },
+                { key: 'incidentId',                  label: 'Ticket ID' },
+                { key: 'title',                       label: 'Title' },
+                { key: 'customerName',                label: 'Customer Name' },
+                { key: 'categorizationType',          label: 'Categorization Type' },
+                { key: '_engineerActionDate',         label: 'Engineer Action Date' },
+                { key: '_progressMade',               label: 'Progress Made (Yes/No)' },
+                { key: 'activity',                    label: 'Activity - POA' },
+                { key: 'currentStatus',               label: 'Current Status' },
+                { key: 'service',                     label: 'Service' },
+                { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
+                { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
+                { key: '_delegationEligible',         label: 'Delegation Eligible' },
+                { key: 'eveningReviewStatus',         label: 'Evening Review Status' },
+                { key: 'creationTimeDisplay',         label: 'Creation Time' },
+                { key: 'emailRespDueTodayYN',         label: 'Email Response Due Today' },
+                { key: 'emailRespMissedYN',           label: 'Email Response Missed' },
+                { key: 'emailFollowupMissedYN',       label: 'Email Follow-up Missed' },
+                { key: 'lastEmailFrom',               label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay',    label: 'Last Email Sent Time' },
+                { key: 'updateTimeDisplay',           label: 'Update Time' }
             ],
             'totalINC': [
-                { key: 'exportDate',              label: 'Date' },
-                { key: 'owner',                   label: 'Owner' },
-                { key: 'incidentId',              label: 'Ticket ID' },
-                { key: 'title',                   label: 'Title' },
-                { key: 'customerName',            label: 'Customer Name' },
-                { key: 'scheduledSessions',       label: 'Scheduled Sessions' },
-                { key: 'activity',                label: 'Activity – POA' },
-                { key: 'eodTarget',               label: 'EOD Target' },
-                { key: 'eveningReviewStatus',     label: 'Evening Review Status' },
-                { key: 'categorizationType',      label: 'Categorization Type' },
-                { key: 'agingLt2YN',             label: 'Aging < 2 Days' },
-                { key: 'currentStatus',           label: 'Current Status' },
-                { key: 'service',                 label: 'Service' },
-                { key: 'creationTimeDisplay',     label: 'Creation Time' },
-                { key: 'updateTimeDisplay',       label: 'Update Time' },
-                { key: 'emailRespDueTodayYN',    label: 'Email Response Due Today' },
-                { key: 'emailRespMissedYN',      label: 'Email Response Missed' },
-                { key: 'emailFollowupMissedYN',  label: 'Email Follow-up Missed' },
-                { key: 'lastEmailFrom',           label: 'Last Email From' },
-                { key: 'lastEmailSentTimeDisplay',label: 'Last Email Sent Time' },
-                { key: 'agingGt15YN',            label: 'Aging > 15 Days' },
-                { key: 'agingGt25YN',            label: 'Aging > 25 Days' },
-                { key: 'agingLt15YN',            label: 'Aging < 15 Days' },
-                { key: 'agingLt7YN',             label: 'Aging < 7 Days' }
+                { key: 'exportDate',                  label: 'Date' },
+                { key: 'owner',                       label: 'Owner' },
+                { key: 'incidentId',                  label: 'Ticket ID' },
+                { key: 'title',                       label: 'Title' },
+                { key: 'customerName',                label: 'Customer Name' },
+                { key: 'categorizationType',          label: 'Categorization Type' },
+                { key: '_engineerActionDate',         label: 'Engineer Action Date' },
+                { key: '_progressMade',               label: 'Progress Made (Yes/No)' },
+                { key: 'activity',                    label: 'Activity - POA' },
+                { key: 'currentStatus',               label: 'Current Status' },
+                { key: 'service',                     label: 'Service' },
+                { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
+                { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
+                { key: '_delegationEligible',         label: 'Delegation Eligible' },
+                { key: 'eveningReviewStatus',         label: 'Evening Review Status' },
+                { key: 'creationTimeDisplay',         label: 'Creation Time' },
+                { key: 'emailRespDueTodayYN',         label: 'Email Response Due Today' },
+                { key: 'emailRespMissedYN',           label: 'Email Response Missed' },
+                { key: 'emailFollowupMissedYN',       label: 'Email Follow-up Missed' },
+                { key: 'lastEmailFrom',               label: 'Last Email From' },
+                { key: 'lastEmailSentTimeDisplay',    label: 'Last Email Sent Time' },
+                { key: 'updateTimeDisplay',           label: 'Update Time' }
             ],
             'slaSR': [
                 { key: 'incidentId', label: 'Incident ID' },
@@ -5107,6 +5418,144 @@
                 { key: 'creationTimeDisplay', label: 'Creation Time' },
                 { key: 'updateTimeDisplay', label: 'Update Time' },
                 { key: 'slaViolationStatus', label: 'SLA Status' }
+            ],
+            // ── SLA Compliance drill-down columns (ALL 15 cards — uniform set) ──
+            // Columns: Incident ID, Title, Owner, Customer Name, Status, Service,
+            //          Creation Time, Update Time, Assignment SLA Status, 1st Response SLA Status, Aging(Roundoff)
+            'openAssignSlaOverall': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'openAssignSlaINC': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'openAssignSlaSR': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'openRespSlaOverall': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'openRespSlaINC': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'openRespSlaSR': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'allAssignSlaOverall': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'allAssignSlaINC': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'allAssignSlaSR': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'allRespSlaOverall': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'allRespSlaINC': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'allRespSlaSR': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'closedResSlaOverall': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'closedResSlaINC': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
+            ],
+            'closedResSlaSR': [
+                { key: 'incidentId', label: 'Incident ID' }, { key: 'title', label: 'Title' },
+                { key: 'owner', label: 'Owner' }, { key: 'customerName', label: 'Customer Name' },
+                { key: 'currentStatus', label: 'Status' }, { key: 'service', label: 'Service' },
+                { key: 'creationTimeDisplay', label: 'Creation Time' }, { key: 'updateTimeDisplay', label: 'Update Time' },
+                { key: 'assignSlaStatusDisplay', label: 'Assignment SLA Status' },
+                { key: 'firstRespSlaStatusDisplay', label: '1st Response SLA Status' },
+                { key: 'agingRoundoff', label: 'Aging(Roundoff)' }
             ],
             'edocMissing': [
                 { key: 'incidentId', label: 'Incident ID' },
@@ -5516,6 +5965,14 @@
                 });
             }
 
+            // L1 Metrics report tab: render when tab is shown
+            const l1MetricsReportTabEl = document.getElementById('view-l1metricsreport-tab');
+            if (l1MetricsReportTabEl) {
+                l1MetricsReportTabEl.addEventListener('shown.bs.tab', () => {
+                    if (analysisMode === 'closed') setTimeout(() => renderL1MetricsReport(), 80);
+                });
+            }
+
             // Resolution Review tab: render when tab is shown
             const rqTabEl = document.getElementById('view-resolutionquality-tab');
             if (rqTabEl) {
@@ -5838,6 +6295,7 @@
                 resolutionSteps:              findColExact(['resolution_code'],                        ['resolution_code', 'resolution_code']),
                 rca:                          findColExact(['rca'],                                     ['rca', 'rca']),
                 resolvedTime:                 findColExact(['resolve_time'],                            ['resolve_time', 'resolve_time', 'resolve_time', 'resolve_time']),
+                resolutionSlaStartTime:       findColExact(['resolution_sla_start_time'],               ['resolution_sla_start_time', 'resolution_sla_start_time']),
                 // BW  Rating  BX  Customer Agreed Time  BY  Closed Time  BZ  Acknowledged Time
                 // CA–CK  Status timestamp columns
                 // CL  Deferred Time  CM  Last Email From  CN  Last Email Sent Time
@@ -5855,6 +6313,12 @@
                 updatePendingSupportCounter:  findCol(['Update Pending From Support Counter', 'Pending Counter']),
                 ageingLastModified:           findCol(['Ageing from Last modified time', 'Last Modified Aging']),
                 steps:                        findColExact(['resolution_code'],                        ['resolution_code', 'resolution_code']),
+                // ── New SLA breach columns ──
+                classSlaBreached:             findColExact(['class_sla_breached'],                     ['class_sla_breached']),
+                firstResponseSlaBreached:     findColExact(['first_response_sla_breached'],            ['first_response_sla_breached']),
+                resolutionSlaBreached:        findColExact(['resolution_sla_breached'],                ['resolution_sla_breached']),
+                // ── L1 Metrics report — Delegation Compliance exception column ──
+                resolutionSlaTargetEndTime:   findColExact(['resolution_sla_target_end_time'],         ['resolution_sla_target_end_time']),
             };
 
             // Open statuses (include in open cases analysis)
@@ -6119,6 +6583,19 @@
                 const resolvedTimeRaw = row[colMap.resolvedTime];
                 const resolvedTimeObj = parseAKDate(resolvedTimeRaw);
 
+                // ── SLA Target Days = resolve_time − resolution_sla_start_time ──
+                const resolutionSlaStartRaw = row[colMap.resolutionSlaStartTime];
+                const resolutionSlaStartObj = parseAKDate(resolutionSlaStartRaw);
+
+                // ── L1 Metrics: Resolution SLA Target End Time (INC delegation exception) ──
+                const resolutionSlaTargetEndRaw = row[colMap.resolutionSlaTargetEndTime];
+                const resolutionSlaTargetEndObj = parseAKDate(resolutionSlaTargetEndRaw);
+                let slaDurationDays = null;
+                if (resolvedTimeObj && resolutionSlaStartObj) {
+                    const diffMs = resolvedTimeObj - resolutionSlaStartObj;
+                    slaDurationDays = diffMs >= 0 ? diffMs / 86400000 : null;
+                }
+
                 // Closed-case duration = Resolved Time − Creation Time (in days)
                 let closedAgingDays = 0;
                 let closedWithin24h = false;
@@ -6176,6 +6653,13 @@
                 const isOldest25 = agingDays > 25;
                 const isIdle1 = agingFromLastModified >= 1;
                 const isIdle3 = agingFromLastModified >= 3;
+                // ── New SLA breach flags (0=not breached, 1=breached) ──
+                const _classSlaRaw         = row[colMap.classSlaBreached];
+                const _firstRespSlaRaw     = row[colMap.firstResponseSlaBreached];
+                const _resolutionSlaRaw    = row[colMap.resolutionSlaBreached];
+                const isAssignSlaBreached      = parseInt(_classSlaRaw)      === 1;
+                const isFirstRespSlaBreached   = parseInt(_firstRespSlaRaw)  === 1;
+                const isResolutionSlaBreached  = parseInt(_resolutionSlaRaw) === 1;
 
                 const isFollowUpMissed = (!isDateValid(nextFollowUp) || isAlreadyPast(nextFollowUp));
                 const isFollowUpDueToday    = isTodayDate(nextFollowUp);
@@ -6391,8 +6875,13 @@
                         if (mins > 0 && days === 0) parts.push(mins + ' Min' + (mins !== 1 ? 's' : ''));
                         return parts.length ? parts.join(' ') : '< 1 Min';
                     })(),
+                    // ── SLA Status display strings for drill-down columns ──
+                    assignSlaStatusDisplay:      isAssignSlaBreached      ? 'Breached' : 'Not Breached',
+                    firstRespSlaStatusDisplay:   isFirstRespSlaBreached   ? 'Breached' : 'Not Breached',
+                    resolutionSlaStatusDisplay:  isResolutionSlaBreached  ? 'Breached' : 'Not Breached',
                     isSR, isINC, isOpenCase, isClosedCase, isNew,
                     isSlaViolated, isAging15Violated,
+                    isAssignSlaBreached, isFirstRespSlaBreached, isResolutionSlaBreached,
                     isFollowUpMissed, isFollowUpDueToday, isFollowUpDueTomorrow,
                     isSubsequentResponseMissed, isSubsequentResponseDueToday, isSubsequentResponseDueTomorrow,
                     isSubsequentSLABreach,
@@ -6410,6 +6899,24 @@
                     assignToL1Eng,
                     assignToL2Eng,
                     assignToSMEEng,
+                    // ── L1 Metrics: Resolution SLA Target End Time (raw + flag) ──
+                    resolutionSlaTargetEndTime: resolutionSlaTargetEndObj,
+                    hasResolutionSlaTargetEndTime: !!resolutionSlaTargetEndObj,
+                    // ── L1 Metrics: Delegation Compliance (assign_l2_time − assign_l1_time, within 48 hrs) ──
+                    // Exceptions: SR with sr_edoc set, or INC with resolution_sla_target_end_time set →
+                    // treated as doable by L1, so NOT counted as a delegation breach even if > 48 hrs.
+                    isDelegationApplicable: !!(assignToL2Eng && assignL1TimeObj && assignL2TimeObj),
+                    delegationHrs: (assignL1TimeObj && assignL2TimeObj)
+                        ? Math.max(0, (assignL2TimeObj - assignL1TimeObj) / 3600000)
+                        : null,
+                    isDelegationBreached: (() => {
+                        if (!assignToL2Eng || !assignL1TimeObj || !assignL2TimeObj) return false; // not applicable
+                        const diffHrs = (assignL2TimeObj - assignL1TimeObj) / 3600000;
+                        if (diffHrs <= 48) return false;
+                        if (isSR && srEDOC) return false;                            // SR doable by L1 (sr_edoc set)
+                        if (isINC && resolutionSlaTargetEndObj) return false;        // INC doable by L1 (target end set)
+                        return true;
+                    })(),
                     assignL2TimeDisplay: assignL2TimeObj
                         ? assignL2TimeObj.toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})
                         : '',
@@ -6503,7 +7010,7 @@
                         : (closedAgingDays >= 1
                             ? Math.round(closedAgingDays) + (Math.round(closedAgingDays) === 1 ? ' Day' : ' Days')
                             : (closedAgingDays > 0 ? 'Within 24 hrs' : '—')),
-                    closedAgingDays, closedWithin24h,
+                    closedAgingDays, closedWithin24h, slaDurationDays,
                     isClosedINCLt7, isClosedINCGt7, isClosedINCLt15, isClosedINCGt15,
                     isClosedSRLt7, isClosedSRGt7, isClosedSRLt15, isClosedSRGt15,
                     // Category fields (Cols S, T, U)
@@ -6722,6 +7229,12 @@
             const rqTab2 = document.getElementById('view-resolutionquality');
             if (rqTab2 && rqTab2.classList.contains('active') && analysisMode === 'closed') {
                 requestAnimationFrame(() => renderResolutionQuality());
+            }
+
+            // Update L1 Metrics report if that tab is currently visible
+            const l1mrTab2 = document.getElementById('view-l1metricsreport');
+            if (l1mrTab2 && l1mrTab2.classList.contains('active') && analysisMode === 'closed') {
+                requestAnimationFrame(() => renderL1MetricsReport());
             }
             
             showLoading(false);
@@ -8337,6 +8850,11 @@
             const s1closed = document.getElementById('section1-closed-cards');
             if (s1open)   s1open.style.display   = isClosed ? 'none' : '';
             if (s1closed) s1closed.style.display  = isClosed ? '' : 'none';
+            // Section 2 (SLA Compliance)
+            const s2open   = document.getElementById('section2-open-cards');
+            const s2closed = document.getElementById('section2-closed-cards');
+            if (s2open)   s2open.style.display   = isClosed ? 'none' : '';
+            if (s2closed) s2closed.style.display  = isClosed ? '' : 'none';
             // Section 3
             const s3open   = document.getElementById('section3-open-cards');
             const s3closed = document.getElementById('section3-closed-cards');
@@ -8384,6 +8902,7 @@
             const catAnalysisTabBtn = document.getElementById('view-catanalysis-tab');
             const rcReviewTabBtn = document.getElementById('view-resolutionreview-tab');
             const l1MetricsTabBtn = document.getElementById('view-l1metrics-tab');
+            const l1MetricsReportTabBtn = document.getElementById('view-l1metricsreport-tab');
             const rqTabBtn = document.getElementById('view-resolutionquality-tab');
             const marDailyTabBtn = document.getElementById('view-monthlyaccounts-tab');
             const amMetricsTabLi = document.getElementById('view-ammetrics-tab') ? document.getElementById('view-ammetrics-tab').closest('li') : null;
@@ -8397,6 +8916,7 @@
                 if (catAnalysisTabBtn) catAnalysisTabBtn.style.display = '';
                 if (rcReviewTabBtn)    rcReviewTabBtn.style.display    = '';
                 if (l1MetricsTabBtn)   l1MetricsTabBtn.style.display   = '';
+                if (l1MetricsReportTabBtn) l1MetricsReportTabBtn.style.display = '';
                 if (rqTabBtn)          rqTabBtn.style.display          = '';
                 if (marDailyTabBtn)    marDailyTabBtn.style.display    = '';
                 // Switch active tab to Dashboard View if one of the hidden tabs is active
@@ -8421,6 +8941,7 @@
                 if (catAnalysisTabBtn) catAnalysisTabBtn.style.display = 'none';
                 if (rcReviewTabBtn)    rcReviewTabBtn.style.display    = 'none';
                 if (l1MetricsTabBtn)   l1MetricsTabBtn.style.display   = 'none';
+                if (l1MetricsReportTabBtn) l1MetricsReportTabBtn.style.display = 'none';
                 if (rqTabBtn)          rqTabBtn.style.display          = 'none';
                 if (marDailyTabBtn)    marDailyTabBtn.style.display    = 'none';
             }
@@ -8474,6 +8995,22 @@
                     case 'kpi-edoc-today':   drillDownKey = 'edocDueToday'; break;
                     case 'kpi-edoc-tomorrow':drillDownKey = 'edocDueTomorrow'; break;
                     case 'kpi-edoc-missing': drillDownKey = 'edocMissing'; break;
+                    // ── SLA Compliance section cards ──
+                    case 'kpi-open-assign-sla-overall': drillDownKey = 'openAssignSlaOverall'; break;
+                    case 'kpi-open-assign-sla-inc':     drillDownKey = 'openAssignSlaINC';     break;
+                    case 'kpi-open-assign-sla-sr':      drillDownKey = 'openAssignSlaSR';      break;
+                    case 'kpi-open-resp-sla-overall':   drillDownKey = 'openRespSlaOverall';   break;
+                    case 'kpi-open-resp-sla-inc':       drillDownKey = 'openRespSlaINC';       break;
+                    case 'kpi-open-resp-sla-sr':        drillDownKey = 'openRespSlaSR';        break;
+                    case 'kpi-all-assign-sla-overall':  drillDownKey = 'allAssignSlaOverall';  break;
+                    case 'kpi-all-assign-sla-inc':      drillDownKey = 'allAssignSlaINC';      break;
+                    case 'kpi-all-assign-sla-sr':       drillDownKey = 'allAssignSlaSR';       break;
+                    case 'kpi-all-resp-sla-overall':    drillDownKey = 'allRespSlaOverall';    break;
+                    case 'kpi-all-resp-sla-inc':        drillDownKey = 'allRespSlaINC';        break;
+                    case 'kpi-all-resp-sla-sr':         drillDownKey = 'allRespSlaSR';         break;
+                    case 'kpi-closed-res-sla-overall':  drillDownKey = 'closedResSlaOverall';  break;
+                    case 'kpi-closed-res-sla-inc':      drillDownKey = 'closedResSlaINC';      break;
+                    case 'kpi-closed-res-sla-sr':       drillDownKey = 'closedResSlaSR';       break;
                     default: drillDownKey = 'totalOpen';
                 }
                 openDrillDown(drillDownKey, recommendation.status);
@@ -8548,6 +9085,20 @@
             if (globalFilters.sla === 'Violated' && !d.isSlaViolated) return false;
             if (globalFilters.sla === 'Non-Violated' && d.isSlaViolated) return false;
             return true;
+        }
+
+        // All records (open + closed) with global filters applied — used for closed-mode SLA cards
+        function allFilteredData() {
+            return processedData.filter(d => {
+                if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+                if (globalFilters.submittedby.length > 0 && !globalFilters.submittedby.includes(d.customerName)) return false;
+                if (globalFilters.service && d.service !== globalFilters.service) return false;
+                if (globalFilters.status.length > 0 && !globalFilters.status.includes(d.currentStatus)) return false;
+                if (globalFilters.level && d.assignmentLevel !== globalFilters.level) return false;
+                if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+                if (globalFilters.mspaccount.length > 0 && !globalFilters.mspaccount.includes(d.customerName)) return false;
+                return true;
+            });
         }
 
         // Email compliance cards + ageing + total open — NO timescale gate
@@ -8743,9 +9294,86 @@
             updateCard('kpi-sr', m.totalSR, srRec);
             updateCard('kpi-inc', m.totalINC, incRec);
 
-            // Section 2 SLA
-            updateCard('kpi-sla-sr', m.slaSR, slaSRRec);
-            updateCard('kpi-sla-inc', m.slaINC, slaINCRec);
+            // Section 2 SLA (legacy — kept for backward compat if old IDs still exist)
+            if (document.getElementById('kpi-sla-sr')) updateCard('kpi-sla-sr', m.slaSR, slaSRRec);
+            if (document.getElementById('kpi-sla-inc')) updateCard('kpi-sla-inc', m.slaINC, slaINCRec);
+
+            // ── Section 2: New SLA cards ──
+            // Compute counts using processedData + global filters (allFilteredData covers both open+closed)
+            const _allFD = allFilteredData();
+            const _openFD = _allFD.filter(d => d.isOpenCase);
+            const _closedFD = _allFD.filter(d => d.isClosedCase);
+            // Open-mode: Assignment SLA
+            const openAssignAll  = _openFD.filter(d => d.isAssignSlaBreached).length;
+            const openAssignINC  = _openFD.filter(d => d.isINC && d.isAssignSlaBreached).length;
+            const openAssignSR   = _openFD.filter(d => d.isSR && d.isAssignSlaBreached).length;
+            // Open-mode: 1st Response SLA
+            const openRespAll    = _openFD.filter(d => d.isFirstRespSlaBreached).length;
+            const openRespINC    = _openFD.filter(d => d.isINC && d.isFirstRespSlaBreached).length;
+            const openRespSR     = _openFD.filter(d => d.isSR && d.isFirstRespSlaBreached).length;
+            // Closed-mode: Assignment SLA (open + closed)
+            const allAssignAll   = _allFD.filter(d => d.isAssignSlaBreached).length;
+            const allAssignINC   = _allFD.filter(d => d.isINC && d.isAssignSlaBreached).length;
+            const allAssignSR    = _allFD.filter(d => d.isSR && d.isAssignSlaBreached).length;
+            // Closed-mode: 1st Response SLA (open + closed)
+            const allRespAll     = _allFD.filter(d => d.isFirstRespSlaBreached).length;
+            const allRespINC     = _allFD.filter(d => d.isINC && d.isFirstRespSlaBreached).length;
+            const allRespSR      = _allFD.filter(d => d.isSR && d.isFirstRespSlaBreached).length;
+            // Closed-mode: Resolution SLA (closed only)
+            const closedResAll   = _closedFD.filter(d => d.isResolutionSlaBreached).length;
+            const closedResINC   = _closedFD.filter(d => d.isINC && d.isResolutionSlaBreached).length;
+            const closedResSR    = _closedFD.filter(d => d.isSR && d.isResolutionSlaBreached).length;
+
+            const mkSlaRec = (n, label) => n > 0
+                ? { status: 'URGENT', tag: 'bg-urgent', rec: `${n} ${label} SLA breach${n !== 1 ? 'es' : ''} detected. Immediate review required.` }
+                : { status: 'GOOD', tag: 'bg-good', rec: `No ${label} SLA breaches.` };
+
+            updateCard('kpi-open-assign-sla-overall', openAssignAll, mkSlaRec(openAssignAll, 'assignment'));
+            updateCard('kpi-open-assign-sla-inc',     openAssignINC, mkSlaRec(openAssignINC, 'INC assignment'));
+            updateCard('kpi-open-assign-sla-sr',      openAssignSR,  mkSlaRec(openAssignSR,  'SR assignment'));
+            updateCard('kpi-open-resp-sla-overall',   openRespAll,   mkSlaRec(openRespAll,   '1st response'));
+            updateCard('kpi-open-resp-sla-inc',       openRespINC,   mkSlaRec(openRespINC,   'INC 1st response'));
+            updateCard('kpi-open-resp-sla-sr',        openRespSR,    mkSlaRec(openRespSR,    'SR 1st response'));
+            updateCard('kpi-all-assign-sla-overall',  allAssignAll,  mkSlaRec(allAssignAll,  'assignment'));
+            updateCard('kpi-all-assign-sla-inc',      allAssignINC,  mkSlaRec(allAssignINC,  'INC assignment'));
+            updateCard('kpi-all-assign-sla-sr',       allAssignSR,   mkSlaRec(allAssignSR,   'SR assignment'));
+            updateCard('kpi-all-resp-sla-overall',    allRespAll,    mkSlaRec(allRespAll,    '1st response'));
+            updateCard('kpi-all-resp-sla-inc',        allRespINC,    mkSlaRec(allRespINC,    'INC 1st response'));
+            updateCard('kpi-all-resp-sla-sr',         allRespSR,     mkSlaRec(allRespSR,     'SR 1st response'));
+            updateCard('kpi-closed-res-sla-overall',  closedResAll,  mkSlaRec(closedResAll,  'resolution'));
+            updateCard('kpi-closed-res-sla-inc',      closedResINC,  mkSlaRec(closedResINC,  'INC resolution'));
+            updateCard('kpi-closed-res-sla-sr',       closedResSR,   mkSlaRec(closedResSR,   'SR resolution'));
+
+            // ── Section 2 accordion header: RED if any SLA violation present, else GREEN ──
+            (function() {
+                const _isClosedMode        = analysisMode === 'closed';
+                const totalOpenViolations  = openAssignAll + openRespAll;
+                const totalClosedViolations = allAssignAll + allRespAll + closedResAll;
+                const anyViolation = _isClosedMode
+                    ? (totalClosedViolations > 0)
+                    : (totalOpenViolations > 0);
+                const indicator   = document.getElementById('sla-compliance-indicator');
+                const dot         = document.getElementById('sla-compliance-indicator-dot');
+                const text        = document.getElementById('sla-compliance-indicator-text');
+                const section2    = document.getElementById('accordion-section-2');
+                if (!indicator || !dot || !text) return;
+                if (anyViolation) {
+                    const totalCount = _isClosedMode ? totalClosedViolations : totalOpenViolations;
+                    indicator.style.background = 'rgba(239,68,68,0.15)';
+                    indicator.style.color      = '#991B1B';
+                    indicator.style.border     = '1px solid rgba(239,68,68,0.45)';
+                    dot.style.background       = '#EF4444';
+                    text.textContent           = totalCount + ' BREACH' + (totalCount !== 1 ? 'ES' : '');
+                    if (section2) { section2.classList.remove('good'); section2.classList.add('danger'); }
+                } else {
+                    indicator.style.background = 'rgba(16,185,129,0.15)';
+                    indicator.style.color      = '#065F46';
+                    indicator.style.border     = '1px solid rgba(16,185,129,0.4)';
+                    dot.style.background       = '#10B981';
+                    text.textContent           = 'ALL CLEAR';
+                    if (section2) { section2.classList.remove('danger'); section2.classList.add('good'); }
+                }
+            })();
 
             // Section 3 Aging
             updateCard('kpi-aging-15', m.aging15, aging15Rec);
@@ -9588,6 +10216,57 @@
                 case 'slaINC':
                     drillDownData = filteredData.filter(d => d.isINC && d.isSlaViolated);
                     break;
+                // ── New SLA breach drill-downs ──
+                // Open-mode: Assignment SLA (open cases only)
+                case 'openAssignSlaOverall':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.isAssignSlaBreached);
+                    break;
+                case 'openAssignSlaINC':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.isINC && d.isAssignSlaBreached);
+                    break;
+                case 'openAssignSlaSR':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.isSR && d.isAssignSlaBreached);
+                    break;
+                // Open-mode: 1st Response SLA (open cases only)
+                case 'openRespSlaOverall':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.isFirstRespSlaBreached);
+                    break;
+                case 'openRespSlaINC':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.isINC && d.isFirstRespSlaBreached);
+                    break;
+                case 'openRespSlaSR':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.isSR && d.isFirstRespSlaBreached);
+                    break;
+                // Closed-mode: Assignment SLA (open + closed)
+                case 'allAssignSlaOverall':
+                    drillDownData = allFilteredData().filter(d => d.isAssignSlaBreached);
+                    break;
+                case 'allAssignSlaINC':
+                    drillDownData = allFilteredData().filter(d => d.isINC && d.isAssignSlaBreached);
+                    break;
+                case 'allAssignSlaSR':
+                    drillDownData = allFilteredData().filter(d => d.isSR && d.isAssignSlaBreached);
+                    break;
+                // Closed-mode: 1st Response SLA (open + closed)
+                case 'allRespSlaOverall':
+                    drillDownData = allFilteredData().filter(d => d.isFirstRespSlaBreached);
+                    break;
+                case 'allRespSlaINC':
+                    drillDownData = allFilteredData().filter(d => d.isINC && d.isFirstRespSlaBreached);
+                    break;
+                case 'allRespSlaSR':
+                    drillDownData = allFilteredData().filter(d => d.isSR && d.isFirstRespSlaBreached);
+                    break;
+                // Closed-mode: Resolution SLA (closed only)
+                case 'closedResSlaOverall':
+                    drillDownData = allFilteredData().filter(d => d.isClosedCase && d.isResolutionSlaBreached);
+                    break;
+                case 'closedResSlaINC':
+                    drillDownData = allFilteredData().filter(d => d.isClosedCase && d.isINC && d.isResolutionSlaBreached);
+                    break;
+                case 'closedResSlaSR':
+                    drillDownData = allFilteredData().filter(d => d.isClosedCase && d.isSR && d.isResolutionSlaBreached);
+                    break;
                 case 'aging15':
                     drillDownData = filteredData.filter(d => d.isAging15Violated);
                     break;
@@ -9702,10 +10381,54 @@
             document.getElementById('drillDownCount').textContent = `${drillDownData.length} Cases`;
             
             // Prepare export data
+            // ── Helper: compute derived columns for totalOpen/totalSR/totalINC ──
+            const CASE_VOL_KEYS = new Set(['totalOpen','totalSR','totalINC']);
+            function _computeCaseVolFields(d) {
+                const today = new Date(); today.setHours(0,0,0,0);
+                // Use _creationDate (Date object already parsed during data load)
+                let creationDate = null;
+                if (d._creationDate && d._creationDate instanceof Date && !isNaN(d._creationDate)) {
+                    creationDate = new Date(d._creationDate);
+                    creationDate.setHours(0,0,0,0);
+                }
+                // Target Date for Closure — add business days only (skip Sat/Sun)
+                let targetDate = null;
+                let targetDateDisplay = '';
+                if (creationDate) {
+                    const addDays = (d.isSR || (d.service || '').toLowerCase().includes('service request')) ? 7 : 5;
+                    let count = 0;
+                    targetDate = new Date(creationDate);
+                    while (count < addDays) {
+                        targetDate.setDate(targetDate.getDate() + 1);
+                        const day = targetDate.getDay(); // 0=Sun, 6=Sat
+                        if (day !== 0 && day !== 6) count++;
+                    }
+                    targetDateDisplay = targetDate.toLocaleDateString('en-GB');
+                }
+                // Closure Compliance Status
+                let closureStatus = '';
+                if (targetDate) { closureStatus = (today > targetDate) ? 'Breached' : 'Within SLA'; }
+                // Delegation Eligible
+                let delegationStatus = '';
+                if (creationDate) {
+                    const diffDays = Math.floor((today - creationDate) / (1000*60*60*24));
+                    delegationStatus = (diffDays > 2) ? 'Not Applicable' : 'Applicable';
+                }
+                return { targetDateDisplay, closureStatus, delegationStatus };
+            }
+
             drillDownExportData = drillDownData.map(d => {
                 const exportRow = {};
                 if (drillDownColumns[kpi]) {
+                    const computed = CASE_VOL_KEYS.has(kpi) ? _computeCaseVolFields(d) : null;
                     drillDownColumns[kpi].forEach(col => {
+                        if (computed) {
+                            if (col.key === '_engineerActionDate') { exportRow[col.label] = ''; return; }
+                            if (col.key === '_progressMade')       { exportRow[col.label] = ''; return; }
+                            if (col.key === '_targetDateForClosure')    { exportRow[col.label] = computed.targetDateDisplay; return; }
+                            if (col.key === '_closureComplianceStatus') { exportRow[col.label] = computed.closureStatus; return; }
+                            if (col.key === '_delegationEligible')      { exportRow[col.label] = computed.delegationStatus; return; }
+                        }
                         exportRow[col.label] = d[col.key] || '';
                     });
                 } else {
@@ -9742,6 +10465,7 @@
             // Update table body
             const drillDownHtml = drillDownData.map((d, index) => {
                 const globalIndex = processedData.findIndex(p => p.incidentId === d.incidentId);
+                const computed = CASE_VOL_KEYS.has(kpi) ? _computeCaseVolFields(d) : null;
                 
                 if (drillDownColumns[kpi]) {
                     const cells = drillDownColumns[kpi].map(col => {
@@ -9751,6 +10475,31 @@
                         // Categorization Type — blank in UI, dropdown selection happens in exported Excel only
                         if (col.key === 'categorizationType') {
                             return `<td style="min-width:160px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— select in Excel export —</td>`;
+                        }
+
+                        // Engineer Action Date — blank in UI, date picker appears only in exported Excel
+                        if (col.key === '_engineerActionDate') {
+                            return `<td style="min-width:130px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel export —</td>`;
+                        }
+
+                        // Progress Made — Yes/No dropdown (shown in UI only, exported blank)
+                        if (col.key === '_progressMade') {
+                            return `<td style="min-width:110px;" onclick="event.stopPropagation()"><select class="form-select form-select-sm" style="font-size:0.75rem;padding:2px 6px;"><option value="">— select —</option><option value="Yes">Yes</option><option value="No">No</option></select></td>`;
+                        }
+
+                        // Computed columns
+                        if (computed) {
+                            if (col.key === '_targetDateForClosure') {
+                                return `<td style="min-width:110px;">${computed.targetDateDisplay}</td>`;
+                            }
+                            if (col.key === '_closureComplianceStatus') {
+                                const cls = computed.closureStatus === 'Breached' ? 'text-danger fw-bold' : 'text-success fw-bold';
+                                return `<td class="${cls}" style="min-width:120px;">${computed.closureStatus}</td>`;
+                            }
+                            if (col.key === '_delegationEligible') {
+                                const cls = computed.delegationStatus === 'Applicable' ? 'text-success fw-bold' : 'text-muted';
+                                return `<td class="${cls}" style="min-width:120px;">${computed.delegationStatus}</td>`;
+                            }
                         }
 
                         // Add styling based on value
@@ -10571,22 +11320,39 @@
 
             const filename = `${drillDownTitleForExport.replace(/[^a-zA-Z0-9]/g,'_')}_Export_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`;
             const headers   = Object.keys(drillDownExportData[0]);
-            const catColIdx = headers.indexOf('Categorization Type');
+            const catColIdx   = headers.indexOf('Categorization Type');
+            const engActIdx   = headers.indexOf('Engineer Action Date');
+            const progMadeIdx = headers.indexOf('Progress Made (Yes/No)');
 
-            // If no Categorization Type column — plain SheetJS export
-            if (catColIdx === -1) {
+            // — Capture live UI value for Progress Made (Yes/No dropdown) —
+            const tbody = document.querySelector('#drillDownModal .modal-body tbody');
+            if (tbody && progMadeIdx !== -1) {
+                const trows = tbody.querySelectorAll('tr');
+                trows.forEach((tr, i) => {
+                    if (!drillDownExportData[i]) return;
+                    const sel = tr.querySelector('select');
+                    if (sel && sel.value) {
+                        drillDownExportData[i]['Progress Made (Yes/No)'] = sel.value;
+                    }
+                });
+            }
+
+            const hasSpecialCols = catColIdx !== -1 || engActIdx !== -1 || progMadeIdx !== -1;
+
+            // If no special columns — plain SheetJS export
+            if (!hasSpecialCols) {
                 const wb2 = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb2, XLSX.utils.json_to_sheet(drillDownExportData), 'DrillDownExport');
                 XLSX.writeFile(wb2, filename);
                 return;
             }
 
-            // Build the xlsx from scratch so dropdown is guaranteed
-            _buildXlsxWithDropdown(drillDownExportData, headers, catColIdx, filename);
+            // Build the xlsx from scratch so all dropdowns and date validation are guaranteed
+            _buildXlsxWithDropdown(drillDownExportData, headers, catColIdx, engActIdx, progMadeIdx, filename);
         }
 
-        // ── Build xlsx from scratch with a working Categorization Type dropdown ──
-        function _buildXlsxWithDropdown(rows, headers, catColIdx, filename) {
+        // ── Build xlsx from scratch with Categorization Type dropdown, Engineer Action Date, Progress Made Yes/No ──
+        function _buildXlsxWithDropdown(rows, headers, catColIdx, engActIdx, progMadeIdx, filename) {
 
             function colLetter(n) { // 0-based index → letter
                 let r = '';
@@ -10607,12 +11373,13 @@
                 'Type 4 - New or non-profiled cases, to profile within 24hrs'
             ];
 
+            const PROGRESS_OPTIONS = ['Yes', 'No'];
+
             // ── sheet1.xml (DrillDownExport) ──────────────────────────────────────
             function buildSheet1() {
                 const totalCols = headers.length;
                 const totalRows = rows.length + 1; // +1 for header
                 const lastCol   = colLetter(totalCols - 1);
-                const catCol    = colLetter(catColIdx);
 
                 let sheetData = '';
                 // Header row
@@ -10621,6 +11388,8 @@
                     sheetData += `<c r="${colLetter(ci)}1" t="inlineStr"><is><t>${xmlEsc(h)}</t></is></c>`;
                 });
                 sheetData += `</row>`;
+                // catColIdx is always left blank (user selects via dropdown in Excel)
+                // engActIdx and progMadeIdx carry captured UI values — write them if filled, else blank
                 // Data rows
                 rows.forEach((row, ri) => {
                     const rowNum = ri + 2;
@@ -10628,21 +11397,59 @@
                     headers.forEach((h, ci) => {
                         const val = row[h];
                         const c   = colLetter(ci);
-                        if (ci === catColIdx || val === '' || val == null) {
-                            // Leave truly blank — no <v> tag — so dropdown shows
+                        if (ci === catColIdx) {
+                            // Always blank — user picks Categorization Type in Excel dropdown
+                            sheetData += `<c r="${c}${rowNum}"/>`;
+                        } else if (ci === engActIdx) {
+                            // Blank cell — list dropdown from DateList sheet provides the date picker
+                            sheetData += `<c r="${c}${rowNum}"/>`;
+                        } else if (val === '' || val == null) {
                             sheetData += `<c r="${c}${rowNum}"/>`;
                         } else {
+                            // Write value as string (covers computed cols + captured UI cols)
                             sheetData += `<c r="${c}${rowNum}" t="inlineStr"><is><t>${xmlEsc(val)}</t></is></c>`;
                         }
                     });
                     sheetData += `</row>`;
                 });
 
-                const dv = `<dataValidations count="1">`
-                    + `<dataValidation sqref="${catCol}2:${catCol}1048576" `
-                    + `showDropDown="0" showInputMessage="1" showErrorMessage="1" allowBlank="1" type="list">`
-                    + `<formula1>CatTypes!$A$2:$A$5</formula1>`
-                    + `</dataValidation></dataValidations>`;
+                // Build data validations
+                let dvEntries = '';
+                let dvCount = 0;
+
+                if (catColIdx !== -1) {
+                    const catCol = colLetter(catColIdx);
+                    dvEntries += `<dataValidation sqref="${catCol}2:${catCol}1048576" `
+                        + `showDropDown="0" showInputMessage="1" showErrorMessage="1" allowBlank="1" type="list">`
+                        + `<formula1>CatTypes!$A$2:$A$5</formula1>`
+                        + `</dataValidation>`;
+                    dvCount++;
+                }
+
+                if (progMadeIdx !== -1) {
+                    const pmCol = colLetter(progMadeIdx);
+                    dvEntries += `<dataValidation sqref="${pmCol}2:${pmCol}1048576" `
+                        + `showDropDown="0" showInputMessage="1" showErrorMessage="1" allowBlank="1" type="list">`
+                        + `<formula1>"Yes,No"</formula1>`
+                        + `</dataValidation>`;
+                    dvCount++;
+                }
+
+                // Note: Engineer Action Date uses numFmtId="14" (date format) on the cells
+                // so Excel renders each cell as a date with a calendar picker — no dataValidation needed.
+
+                if (engActIdx !== -1) {
+                    const eaCol = colLetter(engActIdx);
+                    dvEntries += `<dataValidation sqref="${eaCol}2:${eaCol}1048576" `
+                        + `showDropDown="0" showInputMessage="1" showErrorMessage="1" allowBlank="1" type="list">`
+                        + `<formula1>DateList!$A$2:$A$366</formula1>`
+                        + `</dataValidation>`;
+                    dvCount++;
+                }
+
+                const dv = dvCount > 0
+                    ? `<dataValidations count="${dvCount}">${dvEntries}</dataValidations>`
+                    : '';
 
                 return `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
                     + `<dimension ref="A1:${lastCol}${totalRows}"/>`
@@ -10669,6 +11476,28 @@
                     + `</worksheet>`;
             }
 
+            // ── sheet3.xml (DateList) — next 365 days as dd/mm/yyyy strings ────────
+            function buildSheet3() {
+                const today = new Date();
+                let rows3 = `<row r="1"><c r="A1" t="inlineStr"><is><t>Engineer Action Date</t></is></c></row>`;
+                for (let i = 0; i < 365; i++) {
+                    const d = new Date(today);
+                    d.setDate(today.getDate() + i);
+                    const dd   = String(d.getDate()).padStart(2,'0');
+                    const mm   = String(d.getMonth()+1).padStart(2,'0');
+                    const yyyy = d.getFullYear();
+                    const label = `${dd}/${mm}/${yyyy}`;
+                    rows3 += `<row r="${i+2}"><c r="A${i+2}" t="inlineStr"><is><t>${label}</t></is></c></row>`;
+                }
+                return `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+                    + `<dimension ref="A1:A366"/>`
+                    + `<sheetViews><sheetView workbookViewId="0"><selection activeCell="A1" sqref="A1"/></sheetView></sheetViews>`
+                    + `<sheetFormatPr baseColWidth="12" defaultRowHeight="15"/>`
+                    + `<sheetData>${rows3}</sheetData>`
+                    + `<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/>`
+                    + `</worksheet>`;
+            }
+
             const FILES = {
                 '[Content_Types].xml':
                     `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
@@ -10677,6 +11506,7 @@
                     + `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>`
                     + `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
                     + `<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
+                    + `<Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
                     + `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>`
                     + `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>`
                     + `<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>`
@@ -10695,6 +11525,7 @@
                     + `<sheets>`
                     + `<sheet name="DrillDownExport" sheetId="1" r:id="rId1"/>`
                     + `<sheet name="CatTypes" sheetId="2" r:id="rId2"/>`
+                    + `<sheet name="DateList" sheetId="3" r:id="rId4"/>`
                     + `</sheets></workbook>`,
 
                 'xl/_rels/workbook.xml.rels':
@@ -10702,10 +11533,12 @@
                     + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet1.xml" Id="rId1"/>`
                     + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet2.xml" Id="rId2"/>`
                     + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml" Id="rId3"/>`
+                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet3.xml" Id="rId4"/>`
                     + `</Relationships>`,
 
                 'xl/worksheets/sheet1.xml': buildSheet1(),
                 'xl/worksheets/sheet2.xml': buildSheet2(),
+                'xl/worksheets/sheet3.xml': buildSheet3(),
 
                 'xl/styles.xml':
                     `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
@@ -13295,6 +14128,327 @@ ${bodyHTML}
             XLSX.writeFile(wb, `Team_Level_Metrics_Export_${dateTag}.xlsx`);
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // L1 METRICS REPORT — Assignment / First Response / Delegation / Resolution Compliance
+        // Always evaluated across Open + Closed cases (respects ALL Global Filters, not just
+        // the Open/Closed analysis-mode gate) so that "Total Open Cases" / "Total Closed Cases"
+        // can be reported side-by-side for every group.
+        // ═══════════════════════════════════════════════════════════════
+
+        // Cases matching every Global Filter EXCEPT the Open/Closed analysis-mode gate.
+        function _l1mrFilteredCases() {
+            const applyGF = (d) => {
+                if (globalFilters.l1team.length > 0 && !globalFilters.l1team.includes(d.owner)) return false;
+                if (globalFilters.mspaccount.length > 0 && !globalFilters.mspaccount.includes(d.customerName)) return false;
+                if (globalFilters.owner.length > 0 && !globalFilters.owner.includes(d.owner)) return false;
+                if (globalFilters.submittedby.length > 0 && !globalFilters.submittedby.includes(d.customerName)) return false;
+                if (globalFilters.service && d.service !== globalFilters.service) return false;
+                if (globalFilters.status.length > 0 && !globalFilters.status.includes(d.currentStatus)) return false;
+                if (globalFilters.level && d.assignmentLevel !== globalFilters.level) return false;
+                if (globalFilters.sla === 'Violated' && !d.isSlaViolated) return false;
+                if (globalFilters.sla === 'Non-Violated' && d.isSlaViolated) return false;
+                if (globalFilters.timescale && globalFilters.timescale !== 'all') {
+                    if (!_timescaleMatch(d._creationDate, globalFilters.timescale)) return false;
+                }
+                return true;
+            };
+            return (processedData || []).filter(applyGF);
+        }
+
+        // Group an array of cases by (Assignment Level, L1 Owner) — used by sections #1, #2, #4
+        function _l1mrGroupByLevelOwner(cases) {
+            const map = {};
+            cases.forEach(d => {
+                const level = d.assignmentLevel || 'Unclassified';
+                const owner = d.assignToL1Eng || 'Unassigned';
+                const key = level + '|||' + owner;
+                if (!map[key]) map[key] = { level, owner, rows: [] };
+                map[key].rows.push(d);
+            });
+            return Object.values(map).sort((a, b) => (a.owner.localeCompare(b.owner) || a.level.localeCompare(b.level)));
+        }
+
+        function _l1mrPctSpan(pct) {
+            const col = pct >= 90 ? '#10B981' : pct >= 70 ? '#D97706' : '#EF4444';
+            return `<span style="font-weight:700;color:${col};">${pct.toFixed(1)}%</span>`;
+        }
+
+        function _l1mrSetKpi(pctId, tagId, recId, pct, recText) {
+            const pctEl = document.getElementById(pctId);
+            if (pctEl) pctEl.textContent = pct.toFixed(1) + '%';
+            const tagEl = document.getElementById(tagId);
+            if (tagEl) {
+                const status = pct >= 90 ? 'GOOD' : pct >= 70 ? 'MONITOR' : 'ATTENTION';
+                const cls = pct >= 90 ? 'bg-good' : pct >= 70 ? 'bg-monitor' : 'bg-urgent';
+                tagEl.textContent = status;
+                tagEl.className = 'kpi-status-tag ' + cls;
+            }
+            const recEl = document.getElementById(recId);
+            if (recEl) recEl.textContent = recText;
+        }
+
+        function renderL1MetricsReport() {
+            const cases = _l1mrFilteredCases();
+            const groups = _l1mrGroupByLevelOwner(cases);
+
+            // ── Overview KPI cards (computed across the full filtered set) ──
+            const totalCount = cases.length;
+            const assignBreached = cases.filter(d => d.isAssignSlaBreached).length;
+            const frespBreached  = cases.filter(d => d.isFirstRespSlaBreached).length;
+            const resolBreached  = cases.filter(d => d.isResolutionSlaBreached).length;
+            const delegApplicable = cases.filter(d => d.isDelegationApplicable);
+            const delegBreached    = delegApplicable.filter(d => d.isDelegationBreached).length;
+
+            const assignPct = totalCount > 0 ? ((totalCount - assignBreached) / totalCount * 100) : 0;
+            const frespPct  = totalCount > 0 ? ((totalCount - frespBreached) / totalCount * 100) : 0;
+            const resolPct  = totalCount > 0 ? ((totalCount - resolBreached) / totalCount * 100) : 0;
+            const delegPct  = delegApplicable.length > 0 ? ((delegApplicable.length - delegBreached) / delegApplicable.length * 100) : 0;
+
+            _l1mrSetKpi('l1mr-kpi-assign-pct', 'l1mr-kpi-assign-tag', 'l1mr-kpi-assign-rec', assignPct, `${totalCount - assignBreached} of ${totalCount} cases — class_sla_breached`);
+            _l1mrSetKpi('l1mr-kpi-fresp-pct',  'l1mr-kpi-fresp-tag',  'l1mr-kpi-fresp-rec',  frespPct,  `${totalCount - frespBreached} of ${totalCount} cases — first_response_sla_breached`);
+            _l1mrSetKpi('l1mr-kpi-deleg-pct',  'l1mr-kpi-deleg-tag',  'l1mr-kpi-deleg-rec',  delegPct,  `${delegApplicable.length - delegBreached} of ${delegApplicable.length} delegated cases ≤48 Hrs`);
+            _l1mrSetKpi('l1mr-kpi-resol-pct',  'l1mr-kpi-resol-tag',  'l1mr-kpi-resol-rec',  resolPct,  `${totalCount - resolBreached} of ${totalCount} cases — resolution_sla_breached`);
+
+            // ── #1 Assignment / Classified Compliance ──
+            const t1 = document.getElementById('l1mr-assign-table-body');
+            if (t1) {
+                if (!groups.length) {
+                    t1.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No data for the current filters.</td></tr>';
+                } else {
+                    let gTotal = 0, gOpen = 0, gClosed = 0, gBreached = 0;
+                    const rows = groups.map(g => {
+                        const total   = g.rows.length;
+                        const open    = g.rows.filter(d => d.isOpenCase).length;
+                        const closed  = g.rows.filter(d => d.isClosedCase).length;
+                        const breached= g.rows.filter(d => d.isAssignSlaBreached).length;
+                        const pct = total > 0 ? ((total - breached) / total * 100) : 0;
+                        gTotal += total; gOpen += open; gClosed += closed; gBreached += breached;
+                        return `<tr>
+                            <td>${g.level}</td>
+                            <td style="text-align:left;">${g.owner}</td>
+                            <td>${_l1mrPctSpan(pct)}</td>
+                            <td>${total}</td>
+                            <td>${open}</td>
+                            <td>${closed}</td>
+                        </tr>`;
+                    }).join('');
+                    const overallPct = gTotal > 0 ? ((gTotal - gBreached) / gTotal * 100) : 0;
+                    t1.innerHTML = rows + `<tr style="background:#F3F4F6;font-weight:800;">
+                        <td colspan="2">Grand Total</td>
+                        <td>${_l1mrPctSpan(overallPct)}</td>
+                        <td>${gTotal}</td><td>${gOpen}</td><td>${gClosed}</td>
+                    </tr>`;
+                }
+            }
+
+            // ── #2 First Response Compliance ──
+            const t2 = document.getElementById('l1mr-fresp-table-body');
+            if (t2) {
+                if (!groups.length) {
+                    t2.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No data for the current filters.</td></tr>';
+                } else {
+                    let gTotal = 0, gOpen = 0, gClosed = 0, gAssignBreached = 0, gFrespBreached = 0;
+                    const rows = groups.map(g => {
+                        const total   = g.rows.length;
+                        const open    = g.rows.filter(d => d.isOpenCase).length;
+                        const closed  = g.rows.filter(d => d.isClosedCase).length;
+                        const aBreached = g.rows.filter(d => d.isAssignSlaBreached).length;
+                        const fBreached = g.rows.filter(d => d.isFirstRespSlaBreached).length;
+                        const aPct = total > 0 ? ((total - aBreached) / total * 100) : 0;
+                        const fPct = total > 0 ? ((total - fBreached) / total * 100) : 0;
+                        gTotal += total; gOpen += open; gClosed += closed;
+                        gAssignBreached += aBreached; gFrespBreached += fBreached;
+                        return `<tr>
+                            <td>${g.level}</td>
+                            <td style="text-align:left;">${g.owner}</td>
+                            <td>${_l1mrPctSpan(aPct)}</td>
+                            <td>${_l1mrPctSpan(fPct)}</td>
+                            <td>${total}</td>
+                            <td>${open}</td>
+                            <td>${closed}</td>
+                        </tr>`;
+                    }).join('');
+                    const overallAPct = gTotal > 0 ? ((gTotal - gAssignBreached) / gTotal * 100) : 0;
+                    const overallFPct = gTotal > 0 ? ((gTotal - gFrespBreached) / gTotal * 100) : 0;
+                    t2.innerHTML = rows + `<tr style="background:#F3F4F6;font-weight:800;">
+                        <td colspan="2">Grand Total</td>
+                        <td>${_l1mrPctSpan(overallAPct)}</td>
+                        <td>${_l1mrPctSpan(overallFPct)}</td>
+                        <td>${gTotal}</td><td>${gOpen}</td><td>${gClosed}</td>
+                    </tr>`;
+                }
+            }
+
+            // ── #3 Delegation Compliance ──
+            const t3 = document.getElementById('l1mr-deleg-table-body');
+            if (t3) {
+                const delegGroups = groups
+                    .map(g => ({ ...g, delegRows: g.rows.filter(d => d.isDelegationApplicable) }))
+                    .filter(g => g.delegRows.length > 0);
+                if (!delegGroups.length) {
+                    t3.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No delegated cases (Assign L1 → Assign L2) for the current filters.</td></tr>';
+                } else {
+                    let gTotal = 0, gWithin = 0, gBreached = 0;
+                    const rows = delegGroups.map(g => {
+                        const total = g.delegRows.length;
+                        const breached = g.delegRows.filter(d => d.isDelegationBreached).length;
+                        const within = total - breached;
+                        const pct = total > 0 ? (within / total * 100) : 0;
+                        const l2Engs = [...new Set(g.delegRows.map(d => d.assignToL2Eng).filter(Boolean))];
+                        const l2Label = l2Engs.length === 0 ? '—' : l2Engs.length === 1 ? l2Engs[0] : `${l2Engs.length} Engineers (Multiple)`;
+                        gTotal += total; gWithin += within; gBreached += breached;
+                        return `<tr>
+                            <td>${g.level}</td>
+                            <td style="text-align:left;">${g.owner}</td>
+                            <td style="text-align:left;">${l2Label}</td>
+                            <td>${total}</td>
+                            <td>${within}</td>
+                            <td>${breached}</td>
+                            <td>${_l1mrPctSpan(pct)}</td>
+                        </tr>`;
+                    }).join('');
+                    const overallPct = gTotal > 0 ? (gWithin / gTotal * 100) : 0;
+                    t3.innerHTML = rows + `<tr style="background:#F3F4F6;font-weight:800;">
+                        <td colspan="3">Grand Total</td>
+                        <td>${gTotal}</td><td>${gWithin}</td><td>${gBreached}</td>
+                        <td>${_l1mrPctSpan(overallPct)}</td>
+                    </tr>`;
+                }
+            }
+
+            // ── #4 Resolution Compliance ──
+            const t4 = document.getElementById('l1mr-resol-table-body');
+            if (t4) {
+                if (!groups.length) {
+                    t4.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No data for the current filters.</td></tr>';
+                } else {
+                    let gTotal = 0, gOpen = 0, gClosed = 0, gBreached = 0;
+                    const rows = groups.map(g => {
+                        const total   = g.rows.length;
+                        const open    = g.rows.filter(d => d.isOpenCase).length;
+                        const closed  = g.rows.filter(d => d.isClosedCase).length;
+                        const breached= g.rows.filter(d => d.isResolutionSlaBreached).length;
+                        const pct = total > 0 ? ((total - breached) / total * 100) : 0;
+                        gTotal += total; gOpen += open; gClosed += closed; gBreached += breached;
+                        return `<tr>
+                            <td>${g.level}</td>
+                            <td style="text-align:left;">${g.owner}</td>
+                            <td>${_l1mrPctSpan(pct)}</td>
+                            <td>${total}</td>
+                            <td>${open}</td>
+                            <td>${closed}</td>
+                        </tr>`;
+                    }).join('');
+                    const overallPct = gTotal > 0 ? ((gTotal - gBreached) / gTotal * 100) : 0;
+                    t4.innerHTML = rows + `<tr style="background:#F3F4F6;font-weight:800;">
+                        <td colspan="2">Grand Total</td>
+                        <td>${_l1mrPctSpan(overallPct)}</td>
+                        <td>${gTotal}</td><td>${gOpen}</td><td>${gClosed}</td>
+                    </tr>`;
+                }
+            }
+        }
+
+        function exportL1MetricsReportExcel() {
+            const cases = _l1mrFilteredCases();
+            if (!cases.length) { alert('No data to export. Upload data first or adjust Global Filters.'); return; }
+            const groups = _l1mrGroupByLevelOwner(cases);
+            const wb = XLSX.utils.book_new();
+            const dateTag = new Date().toLocaleDateString().replace(/\//g, '-');
+
+            // Sheet 1: Assignment / Classified Compliance
+            const s1 = groups.map(g => {
+                const total = g.rows.length;
+                const open = g.rows.filter(d => d.isOpenCase).length;
+                const closed = g.rows.filter(d => d.isClosedCase).length;
+                const breached = g.rows.filter(d => d.isAssignSlaBreached).length;
+                return {
+                    'Assignment Level': g.level,
+                    'Owner (L1 Engineer)': g.owner,
+                    'Over All Compliance %': total > 0 ? parseFloat(((total - breached) / total * 100).toFixed(1)) : 0,
+                    'Total Cases': total,
+                    'Total Open Cases': open,
+                    'Total Closed Cases': closed
+                };
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s1.length ? s1 : [{}]), 'Assignment Compliance');
+
+            // Sheet 2: First Response Compliance
+            const s2 = groups.map(g => {
+                const total = g.rows.length;
+                const open = g.rows.filter(d => d.isOpenCase).length;
+                const closed = g.rows.filter(d => d.isClosedCase).length;
+                const aBreached = g.rows.filter(d => d.isAssignSlaBreached).length;
+                const fBreached = g.rows.filter(d => d.isFirstRespSlaBreached).length;
+                return {
+                    'Assignment Level': g.level,
+                    'Owner (L1 Engineer)': g.owner,
+                    'Assignment Compliance %': total > 0 ? parseFloat(((total - aBreached) / total * 100).toFixed(1)) : 0,
+                    'First Response Compliance %': total > 0 ? parseFloat(((total - fBreached) / total * 100).toFixed(1)) : 0,
+                    'Total Cases': total,
+                    'Total Open Cases': open,
+                    'Total Closed Cases': closed
+                };
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s2.length ? s2 : [{}]), 'First Response Compliance');
+
+            // Sheet 3: Delegation Compliance
+            const delegGroups = groups
+                .map(g => ({ ...g, delegRows: g.rows.filter(d => d.isDelegationApplicable) }))
+                .filter(g => g.delegRows.length > 0);
+            const s3 = delegGroups.map(g => {
+                const total = g.delegRows.length;
+                const breached = g.delegRows.filter(d => d.isDelegationBreached).length;
+                const within = total - breached;
+                const l2Engs = [...new Set(g.delegRows.map(d => d.assignToL2Eng).filter(Boolean))];
+                return {
+                    'Assignment Level': g.level,
+                    'Owner (L1 Engineer)': g.owner,
+                    'L2 Engineer(s)': l2Engs.join(', ') || '—',
+                    'Total Delegated Cases': total,
+                    'Within 48 Hrs': within,
+                    'Breached (>48 Hrs)': breached,
+                    'Delegation Compliance %': total > 0 ? parseFloat((within / total * 100).toFixed(1)) : 0
+                };
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s3.length ? s3 : [{}]), 'Delegation Compliance');
+
+            // Sheet 4: Resolution Compliance
+            const s4 = groups.map(g => {
+                const total = g.rows.length;
+                const open = g.rows.filter(d => d.isOpenCase).length;
+                const closed = g.rows.filter(d => d.isClosedCase).length;
+                const breached = g.rows.filter(d => d.isResolutionSlaBreached).length;
+                return {
+                    'Assignment Level': g.level,
+                    'Owner (L1 Engineer)': g.owner,
+                    'Resolution Compliance %': total > 0 ? parseFloat(((total - breached) / total * 100).toFixed(1)) : 0,
+                    'Total Cases': total,
+                    'Total Open Cases': open,
+                    'Total Closed Cases': closed
+                };
+            });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s4.length ? s4 : [{}]), 'Resolution Compliance');
+
+            // Sheet 5: Raw case-level data (delegation detail, for audit)
+            const s5 = cases.filter(d => d.isDelegationApplicable).map(d => ({
+                'Case ID': d.incidentId,
+                'Service': d.service,
+                'Assignment Level': d.assignmentLevel,
+                'Owner (L1 Engineer)': d.assignToL1Eng,
+                'Assign L1 Time': d.assignL1TimeDisplay,
+                'L2 Engineer': d.assignToL2Eng,
+                'Assign L2 Time': d.assignL2TimeDisplay,
+                'Delegation Hours': d.delegationHrs !== null ? parseFloat(d.delegationHrs.toFixed(1)) : '',
+                'SR EDOC Set': d.isSR ? (d.expectedResolution ? 'Yes' : 'No') : 'N/A',
+                'Resolution SLA Target End Set': d.isINC ? (d.hasResolutionSlaTargetEndTime ? 'Yes' : 'No') : 'N/A',
+                'Delegation Breached': d.isDelegationBreached ? 'Yes' : 'No'
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s5.length ? s5 : [{}]), 'Delegation Detail (Raw)');
+
+            XLSX.writeFile(wb, `L1_Metrics_Report_${dateTag}.xlsx`);
+        }
+
         function showLoading(show) {
             const spinner = document.getElementById('loadingSpinner');
             if (show) {
@@ -14598,8 +15752,9 @@ ${bodyHTML}
         // Monthly Accounts Review (Daily Dashboard) Functions
         // Uses filteredData (closed cases) + global filters
         // ═══════════════════════════════════════════════════════════════
-        let marDailyOverallVolumeChart = null;
-        let marDailySLAComplianceChart = null;
+        let marDailyOverallVolumeChart     = null;
+        let marDailySLAComplianceChart     = null;
+        let marDailyAvgResolutionTrendChart = null;
 
         function loadMonthlyAccountsReviewDaily() {
             // Determine filter label (mirror MSP logic but adapted for multi-select)
@@ -14642,23 +15797,31 @@ ${bodyHTML}
             const incOpen       = openCases.filter(d => d.isINC).length;
             const srOpen        = openCases.filter(d => d.isSR).length;
 
-            // SLA
+            // Legacy general SLA (kept for KPI card — uses isSlaViolated)
             const slaViolatedClosed = closedCases.filter(d => d.isSlaViolated).length;
             const slaCompliance = totalClosed > 0
                 ? (((totalClosed - slaViolatedClosed) / totalClosed) * 100).toFixed(1)
                 : 100;
-            const slaViolatedINC = closedCases.filter(d => d.isINC && d.isSlaViolated).length;
-            const slaViolatedSR  = closedCases.filter(d => d.isSR  && d.isSlaViolated).length;
 
-            // Avg closure days
+            // Avg closure days — uses closedAgingDays (creation → resolved time, the correct field)
             const incClosedCases = closedCases.filter(d => d.isINC);
             const srClosedCases  = closedCases.filter(d => d.isSR);
             const avgIncDays = incClosedCases.length
-                ? (incClosedCases.reduce((s, d) => s + (d.closedAgingDays || 0), 0) / incClosedCases.length).toFixed(1)
+                ? (incClosedCases.reduce((s, d) => s + (typeof d.closedAgingDays === 'number' ? d.closedAgingDays : (d.agingDays || 0)), 0) / incClosedCases.length).toFixed(1)
                 : '0.0';
             const avgSRDays  = srClosedCases.length
-                ? (srClosedCases.reduce((s, d) => s + (d.closedAgingDays || 0), 0) / srClosedCases.length).toFixed(1)
+                ? (srClosedCases.reduce((s, d) => s + (typeof d.closedAgingDays === 'number' ? d.closedAgingDays : (d.agingDays || 0)), 0) / srClosedCases.length).toFixed(1)
                 : '0.0';
+
+            // SLA Target (Days) = avg of (resolve_time − resolution_sla_start_time) per type
+            const incSlaTargetCases = incClosedCases.filter(d => d.slaDurationDays !== null && d.slaDurationDays >= 0);
+            const srSlaTargetCases  = srClosedCases.filter(d => d.slaDurationDays !== null && d.slaDurationDays >= 0);
+            const slaTargetINC = incSlaTargetCases.length > 0
+                ? parseFloat((incSlaTargetCases.reduce((s, d) => s + d.slaDurationDays, 0) / incSlaTargetCases.length).toFixed(1))
+                : null;
+            const slaTargetSR  = srSlaTargetCases.length > 0
+                ? parseFloat((srSlaTargetCases.reduce((s, d) => s + d.slaDurationDays, 0) / srSlaTargetCases.length).toFixed(1))
+                : null;
 
             const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -14737,9 +15900,20 @@ ${bodyHTML}
                 if (!resolveDate && d._creationDate) resolveDate = d._creationDate;
                 if (resolveDate && !isNaN(resolveDate.getTime())) {
                     const key = `${resolveDate.getMonth()+1}-${resolveDate.getFullYear()}`;
-                    if (!monthlyClosedMap[key]) monthlyClosedMap[key] = { closed:0, violated:0 };
+                    if (!monthlyClosedMap[key]) monthlyClosedMap[key] = { closed:0, violated:0, resSlaBreached:0, totalDays:0, breachedDays:0, slaTargetDays:0, slaTargetCount:0 };
                     monthlyClosedMap[key].closed++;
+                    const days = typeof d.closedAgingDays === 'number' ? d.closedAgingDays : (d.agingDays || 0);
+                    monthlyClosedMap[key].totalDays += days;
                     if (d.isSlaViolated) monthlyClosedMap[key].violated++;
+                    if (d.isResolutionSlaBreached) {
+                        monthlyClosedMap[key].resSlaBreached++;
+                        monthlyClosedMap[key].breachedDays += days;
+                    }
+                    // SLA Target days = resolve_time − resolution_sla_start_time
+                    if (d.slaDurationDays !== null && d.slaDurationDays >= 0) {
+                        monthlyClosedMap[key].slaTargetDays  += d.slaDurationDays;
+                        monthlyClosedMap[key].slaTargetCount += 1;
+                    }
                 }
             });
 
@@ -14748,9 +15922,14 @@ ${bodyHTML}
             const monthlyBreakdown = {};
             allKeys.forEach(k => {
                 monthlyBreakdown[k] = {
-                    loggedCases: (monthlyLogged[k]?.logged   || 0),
-                    closedCases: (monthlyClosedMap[k]?.closed || 0),
-                    violated:    (monthlyClosedMap[k]?.violated || 0)
+                    loggedCases:    (monthlyLogged[k]?.logged              || 0),
+                    closedCases:    (monthlyClosedMap[k]?.closed           || 0),
+                    violated:       (monthlyClosedMap[k]?.violated         || 0),
+                    resSlaBreached: (monthlyClosedMap[k]?.resSlaBreached   || 0),
+                    totalDays:      (monthlyClosedMap[k]?.totalDays        || 0),
+                    breachedDays:   (monthlyClosedMap[k]?.breachedDays     || 0),
+                    slaTargetDays:  (monthlyClosedMap[k]?.slaTargetDays    || 0),
+                    slaTargetCount: (monthlyClosedMap[k]?.slaTargetCount   || 0)
                 };
             });
 
@@ -14799,8 +15978,8 @@ ${bodyHTML}
             // Performance table
             document.getElementById('mar-daily-time-inc-avg').textContent  = avgIncDays;
             document.getElementById('mar-daily-time-sr-avg').textContent   = avgSRDays;
-            document.getElementById('mar-daily-sla-inc').textContent       = slaViolatedINC;
-            document.getElementById('mar-daily-sla-sr').textContent        = slaViolatedSR;
+            document.getElementById('mar-daily-sla-target-inc').textContent = slaTargetINC !== null ? slaTargetINC + ' Days' : '—';
+            document.getElementById('mar-daily-sla-target-sr').textContent  = slaTargetSR  !== null ? slaTargetSR  + ' Days' : '—';
 
             // Open cases overview
             document.getElementById('mar-daily-total-open-cases').textContent = totalOpen;
@@ -14925,6 +16104,99 @@ ${bodyHTML}
                         },
                         scales: {
                             y: { beginAtZero: false, min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                            x: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+                        }
+                    }
+                });
+            }
+
+            // Chart 3: Average Resolution Trend — 24/7 Performance (Avg Days) vs Actual SLA Performance (Avg Days)
+            const avgResTrendCtx = document.getElementById('marDailyAvgResolutionTrendChart');
+            if (avgResTrendCtx) {
+                if (marDailyAvgResolutionTrendChart) marDailyAvgResolutionTrendChart.destroy();
+
+                // 24/7 Performance (Avg Days) = avg SLA target days (resolve_time − resolution_sla_start_time) per month
+                const avgDaysAll = sortedKeys.map(k => {
+                    const count = monthlyBreakdown[k]?.slaTargetCount || 0;
+                    const total = monthlyBreakdown[k]?.slaTargetDays  || 0;
+                    return count > 0 ? parseFloat((total / count).toFixed(1)) : null;
+                });
+
+                // Actual SLA Performance (Avg Days) = avg actual resolution days (closedAgingDays) per month
+                const avgDaysBreached = sortedKeys.map(k => {
+                    const closed      = monthlyBreakdown[k]?.closedCases || 0;
+                    const totalDays   = monthlyBreakdown[k]?.totalDays   || 0;
+                    return closed > 0 ? parseFloat((totalDays / closed).toFixed(1)) : null;
+                });
+
+                marDailyAvgResolutionTrendChart = new Chart(avgResTrendCtx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: '24/7 Performance (Avg Days)',
+                                data: avgDaysAll,
+                                backgroundColor: 'rgba(245,158,11,0.10)',
+                                borderColor: '#f59e0b',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: '#f59e0b',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                spanGaps: true
+                            },
+                            {
+                                label: 'Actual SLA Performance (Avg Days)',
+                                data: avgDaysBreached,
+                                backgroundColor: 'rgba(239,68,68,0.07)',
+                                borderColor: '#ef4444',
+                                borderWidth: 2.5,
+                                borderDash: [7, 4],
+                                tension: 0.4,
+                                fill: false,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                pointBackgroundColor: '#ef4444',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                spanGaps: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { font: { size: 11 }, padding: 16, boxWidth: 14 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y + ' days' : 'N/A'}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: v => v + ' days',
+                                    font: { size: 10 }
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Days',
+                                    font: { size: 11 },
+                                    color: '#64748b'
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
                             x: { ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
                         }
                     }
