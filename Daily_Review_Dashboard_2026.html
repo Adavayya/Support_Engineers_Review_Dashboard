@@ -5209,7 +5209,9 @@
                 { key: 'emailFollowupMissedYN',       label: 'Email Follow-up Missed' },
                 { key: 'lastEmailFrom',               label: 'Last Email From' },
                 { key: 'lastEmailSentTimeDisplay',    label: 'Last Email Sent Time' },
-                { key: 'updateTimeDisplay',           label: 'Update Time' }
+                { key: 'updateTimeDisplay',           label: 'Update Time' },
+                { key: 'tatDays',                     label: 'TAT Days' },
+                { key: 'edocDisplay',                 label: 'EDOC' }
             ],
             'totalSR': [
                 { key: 'exportDate',                  label: 'Date' },
@@ -5233,7 +5235,9 @@
                 { key: 'emailFollowupMissedYN',       label: 'Email Follow-up Missed' },
                 { key: 'lastEmailFrom',               label: 'Last Email From' },
                 { key: 'lastEmailSentTimeDisplay',    label: 'Last Email Sent Time' },
-                { key: 'updateTimeDisplay',           label: 'Update Time' }
+                { key: 'updateTimeDisplay',           label: 'Update Time' },
+                { key: 'tatDays',                     label: 'TAT Days' },
+                { key: 'edocDisplay',                 label: 'EDOC' }
             ],
             'totalINC': [
                 { key: 'exportDate',                  label: 'Date' },
@@ -5257,7 +5261,9 @@
                 { key: 'emailFollowupMissedYN',       label: 'Email Follow-up Missed' },
                 { key: 'lastEmailFrom',               label: 'Last Email From' },
                 { key: 'lastEmailSentTimeDisplay',    label: 'Last Email Sent Time' },
-                { key: 'updateTimeDisplay',           label: 'Update Time' }
+                { key: 'updateTimeDisplay',           label: 'Update Time' },
+                { key: 'tatDays',                     label: 'TAT Days' },
+                { key: 'edocDisplay',                 label: 'EDOC' }
             ],
             'slaSR': [
                 { key: 'incidentId', label: 'Incident ID' },
@@ -6319,6 +6325,9 @@
                 resolutionSlaBreached:        findColExact(['resolution_sla_breached'],                ['resolution_sla_breached']),
                 // ── L1 Metrics report — Delegation Compliance exception column ──
                 resolutionSlaTargetEndTime:   findColExact(['resolution_sla_target_end_time'],         ['resolution_sla_target_end_time']),
+                // ── New columns: TAT Days and EDOC ──
+                tatDays:                      findColExact(['tat_days'],                               ['tat_days', 'tat days', 'TAT Days']),
+                edoc:                         findColExact(['edoc'],                                   ['edoc', 'EDOC']),
             };
 
             // Open statuses (include in open cases analysis)
@@ -7025,6 +7034,9 @@
                     // L1 Feedback fields (Cols AA, AB)
                     feedbackTo:         (row[colMap.feedbackTo]        || '').toString().trim(),
                     feedback:           (row[colMap.feedback]          || '').toString().trim(),
+                    // ── New columns: TAT Days and EDOC ──
+                    tatDays:            (row[colMap.tatDays]           != null ? row[colMap.tatDays].toString().trim() : ''),
+                    edocDisplay:        (row[colMap.edoc]              != null ? row[colMap.edoc].toString().trim()    : ''),
                     _raw: row
                 };
             }).filter(row => row !== null);
@@ -10408,11 +10420,17 @@
                 // Closure Compliance Status
                 let closureStatus = '';
                 if (targetDate) { closureStatus = (today > targetDate) ? 'Breached' : 'Within SLA'; }
-                // Delegation Eligible
+                // Delegation Eligible — count business days only (skip Sat/Sun)
                 let delegationStatus = '';
                 if (creationDate) {
-                    const diffDays = Math.floor((today - creationDate) / (1000*60*60*24));
-                    delegationStatus = (diffDays > 2) ? 'Not Applicable' : 'Applicable';
+                    let bizDays = 0;
+                    const cursor = new Date(creationDate);
+                    while (cursor < today) {
+                        cursor.setDate(cursor.getDate() + 1);
+                        const day = cursor.getDay();
+                        if (day !== 0 && day !== 6) bizDays++;
+                    }
+                    delegationStatus = (bizDays > 2) ? 'Not Applicable' : 'Applicable';
                 }
                 return { targetDateDisplay, closureStatus, delegationStatus };
             }
