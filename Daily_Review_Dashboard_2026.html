@@ -5201,6 +5201,7 @@
                 { key: 'strikeCountDisplay',          label: 'Strike Count' },
                 { key: 'service',                     label: 'Service' },
                 { key: 'edocDisplay',                 label: 'EDOC' },
+                { key: 'srService',                   label: 'SR Service' },
                 { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
                 { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
                 { key: '_delegationEligible',         label: 'Delegation Eligible' },
@@ -5229,6 +5230,7 @@
                 { key: 'strikeCountDisplay',          label: 'Strike Count' },
                 { key: 'service',                     label: 'Service' },
                 { key: 'edocDisplay',                 label: 'EDOC' },
+                { key: 'srService',                   label: 'SR Service' },
                 { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
                 { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
                 { key: '_delegationEligible',         label: 'Delegation Eligible' },
@@ -5257,6 +5259,7 @@
                 { key: 'strikeCountDisplay',          label: 'Strike Count' },
                 { key: 'service',                     label: 'Service' },
                 { key: 'edocDisplay',                 label: 'EDOC' },
+                { key: 'srService',                   label: 'SR Service' },
                 { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
                 { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
                 { key: '_delegationEligible',         label: 'Delegation Eligible' },
@@ -6825,6 +6828,7 @@
                     eodTarget: '',
                     eveningReviewStatus: '',
                     categorizationType: '',
+                    srService: (row[colMap.srService] != null ? row[colMap.srService].toString().trim() : ''),
                     remarks: '',
                     emailRespDueTodayYN:    isEmailRespToday    ? 'Yes' : 'No',
                     emailRespMissedYN:      isEmailRespMissed   ? 'Yes' : 'No',
@@ -10430,16 +10434,24 @@
                     creationDate = new Date(d._creationDate);
                     creationDate.setHours(0,0,0,0);
                 }
-                // Target Date for Closure — add business days only (skip Sat/Sun)
+                // Target Date for Closure — business days only (skip Sat/Sun)
+                // INC: 5 days | SR standard: 3 days | SR nonstandard (sr_service contains 'nonstandard'): 7 days
                 let targetDate = null;
                 let targetDateDisplay = '';
                 if (creationDate) {
-                    const addDays = (d.isSR || (d.service || '').toLowerCase().includes('service request')) ? 7 : 5;
+                    let addDays;
+                    const isSR = d.isSR || (d.service || '').toLowerCase().includes('service request');
+                    if (isSR) {
+                        const srSvc = (d.srService || '').toLowerCase();
+                        addDays = srSvc.includes('nonstandard') ? 7 : 3;
+                    } else {
+                        addDays = 5; // INC
+                    }
                     let count = 0;
                     targetDate = new Date(creationDate);
                     while (count < addDays) {
                         targetDate.setDate(targetDate.getDate() + 1);
-                        const day = targetDate.getDay(); // 0=Sun, 6=Sat
+                        const day = targetDate.getDay();
                         if (day !== 0 && day !== 6) count++;
                     }
                     targetDateDisplay = targetDate.toLocaleDateString('en-GB');
