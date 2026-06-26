@@ -2429,6 +2429,31 @@
 
                     </div>
 
+                    <!-- ═══ SECTION 7: Escalation Tracker ═══ -->
+                    <div class="accordion-item" id="accordion-section-7">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-section-7">
+                                <i class="bi bi-exclamation-triangle me-2"></i>7. Escalation Tracker
+                            </button>
+                        </h2>
+                        <div id="collapse-section-7" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <div class="kpi-card" id="kpi-open-escalation" style="cursor:pointer;border-left-color:#DC2626;" onclick="openDrillDown('openEscalation','Open Escalation')">
+                                            <span class="kpi-status-tag" id="kpi-open-escalation-tag" style="background:#DC2626;color:#fff;">ALERT</span>
+                                            <div class="kpi-title">Open Escalation</div>
+                                            <div class="kpi-value" id="kpi-open-escalation-count" style="color:#DC2626;">0</div>
+                                            <div class="kpi-recommendation" id="kpi-open-escalation-rec">No escalations found.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    </div>
+
                     <!-- ═══════════════════════════════════════════════ -->
                     <!-- OWNER SCORECARD + ASSIGNMENT LEVEL TEAM STATS  -->
                     <!-- ═══════════════════════════════════════════════ -->
@@ -5200,6 +5225,7 @@
                 { key: 'currentStatus',               label: 'Current Status' },
                 { key: 'strikeCountDisplay',          label: 'Strike Count' },
                 { key: 'service',                     label: 'Service' },
+                { key: 'severity',                    label: 'Severity/Priority' },
                 { key: 'edocDisplay',                 label: 'EDOC' },
                 { key: 'srService',                   label: 'SR Service' },
                 { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
@@ -5229,6 +5255,7 @@
                 { key: 'currentStatus',               label: 'Current Status' },
                 { key: 'strikeCountDisplay',          label: 'Strike Count' },
                 { key: 'service',                     label: 'Service' },
+                { key: 'severity',                    label: 'Severity/Priority' },
                 { key: 'edocDisplay',                 label: 'EDOC' },
                 { key: 'srService',                   label: 'SR Service' },
                 { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
@@ -5258,6 +5285,7 @@
                 { key: 'currentStatus',               label: 'Current Status' },
                 { key: 'strikeCountDisplay',          label: 'Strike Count' },
                 { key: 'service',                     label: 'Service' },
+                { key: 'severity',                    label: 'Severity/Priority' },
                 { key: 'edocDisplay',                 label: 'EDOC' },
                 { key: 'srService',                   label: 'SR Service' },
                 { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
@@ -5587,35 +5615,82 @@
             ],
             // ── Closed-case drill-down column definitions ──
             'closedTotal': [
-                { key: 'incidentId', label: 'Incident ID' },
-                { key: 'title', label: 'Title' },
-                { key: 'owner', label: 'Owner' },
-                { key: 'customerName', label: 'Customer Name' },
-                { key: 'currentStatus', label: 'Status' },
-                { key: 'service', label: 'Service' },
-                { key: 'creationTimeDisplay', label: 'Creation Time' },
-                { key: 'resolvedDateDisplay', label: 'Resolved Date' },
-                { key: 'closedAgingDisplay', label: 'Closure Aging' }
+                { key: 'incidentId',                  label: 'Incident ID' },
+                { key: 'title',                       label: 'Title' },
+                { key: 'owner',                       label: 'Owner' },
+                { key: 'customerName',                label: 'Customer Name' },
+                { key: 'currentStatus',               label: 'Status' },
+                { key: 'service',                     label: 'Service' },
+                { key: 'creationTimeDisplay',         label: 'Creation Time' },
+                { key: 'resolvedDateDisplay',         label: 'Resolved Date' },
+                { key: 'closedAgingDisplay',          label: 'Closure Aging' },
+                { key: 'resolutionTypeDisplay',       label: 'Resolution Type' },
+                { key: 'srService',                   label: 'SR Service' },
+                { key: 'edocDisplay',                 label: 'EDOC' },
+                { key: 'frComplianceStatus',          label: 'FR Compliance Status' },
+                { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
+                { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
+                { key: '_custFollowupClosure',        label: 'Customer Follow-up on Closure Calls' },
+                { key: 'lastEmailFrom',               label: 'Last Email From' }
             ],
             'closedSR': [
-                { key: 'incidentId', label: 'Incident ID' },
-                { key: 'title', label: 'Title' },
-                { key: 'owner', label: 'Owner' },
-                { key: 'customerName', label: 'Customer Name' },
-                { key: 'currentStatus', label: 'Status' },
-                { key: 'creationTimeDisplay', label: 'Creation Time' },
-                { key: 'resolvedDateDisplay', label: 'Resolved Date' },
-                { key: 'closedAgingDisplay', label: 'Closure Aging' }
+                { key: 'incidentId',                  label: 'Incident ID' },
+                { key: 'title',                       label: 'Title' },
+                { key: 'owner',                       label: 'Owner' },
+                { key: 'customerName',                label: 'Customer Name' },
+                { key: 'currentStatus',               label: 'Status' },
+                { key: 'service',                     label: 'Service' },
+                { key: 'creationTimeDisplay',         label: 'Creation Time' },
+                { key: 'resolvedDateDisplay',         label: 'Resolved Date' },
+                { key: 'closedAgingDisplay',          label: 'Closure Aging' },
+                { key: 'resolutionTypeDisplay',       label: 'Resolution Type' },
+                { key: 'srService',                   label: 'SR Service' },
+                { key: 'edocDisplay',                 label: 'EDOC' },
+                { key: 'frComplianceStatus',          label: 'FR Compliance Status' },
+                { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
+                { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
+                { key: '_custFollowupClosure',        label: 'Customer Follow-up on Closure Calls' },
+                { key: 'lastEmailFrom',               label: 'Last Email From' }
             ],
             'closedINC': [
-                { key: 'incidentId', label: 'Incident ID' },
-                { key: 'title', label: 'Title' },
-                { key: 'owner', label: 'Owner' },
-                { key: 'customerName', label: 'Customer Name' },
-                { key: 'currentStatus', label: 'Status' },
-                { key: 'creationTimeDisplay', label: 'Creation Time' },
-                { key: 'resolvedDateDisplay', label: 'Resolved Date' },
-                { key: 'closedAgingDisplay', label: 'Closure Aging' }
+                { key: 'incidentId',                  label: 'Incident ID' },
+                { key: 'title',                       label: 'Title' },
+                { key: 'owner',                       label: 'Owner' },
+                { key: 'customerName',                label: 'Customer Name' },
+                { key: 'currentStatus',               label: 'Status' },
+                { key: 'service',                     label: 'Service' },
+                { key: 'creationTimeDisplay',         label: 'Creation Time' },
+                { key: 'resolvedDateDisplay',         label: 'Resolved Date' },
+                { key: 'closedAgingDisplay',          label: 'Closure Aging' },
+                { key: 'resolutionTypeDisplay',       label: 'Resolution Type' },
+                { key: 'srService',                   label: 'SR Service' },
+                { key: 'edocDisplay',                 label: 'EDOC' },
+                { key: 'frComplianceStatus',          label: 'FR Compliance Status' },
+                { key: '_targetDateForClosure',       label: 'Target Date for Closure' },
+                { key: '_closureComplianceStatus',    label: 'Closure Compliance Status' },
+                { key: '_custFollowupClosure',        label: 'Customer Follow-up on Closure Calls' },
+                { key: 'lastEmailFrom',               label: 'Last Email From' }
+            ],
+            'openEscalation': [
+                { key: '_slNo',                       label: 'SL No' },
+                { key: 'incidentId',                  label: 'Support ID' },
+                { key: 'title',                       label: 'Title' },
+                { key: 'creationTimeDisplay',         label: 'Logged Date' },
+                { key: '_escReceivedDate',            label: 'Esc Received Date' },
+                { key: 'customerName',                label: 'Customer Name' },
+                { key: '_escalationSource',           label: 'Escalation Source' },
+                { key: '_escalatedBy',                label: 'Escalated By' },
+                { key: '_escalatedTo',                label: 'Escalated To' },
+                { key: 'escalationType',              label: 'Escalation Type' },
+                { key: 'severity',                    label: 'Severity/Priority' },
+                { key: 'reasonForEscalation',         label: 'Escalation Reason' },
+                { key: '_allAspectsFollowed',         label: 'All Aspects Followed (Y/N)' },
+                { key: 'owner',                       label: 'Owner' },
+                { key: 'assignmentLevel',             label: 'Level' },
+                { key: '_correctiveAction',           label: 'Corrective Action' },
+                { key: 'edocDisplay',                 label: 'Resolution Date Planned' },
+                { key: 'currentStatus',               label: 'Current Status' },
+                { key: '_escRemarks',                 label: 'Remarks' }
             ],
             'closedFCR': [
                 { key: 'incidentId', label: 'Incident ID' },
@@ -6342,6 +6417,9 @@
                 firstResponseSlaTargetEnd:    findColExact(['first_response_sla_target_end_time'],    ['first_response_sla_target_end_time']),
                 // ── New column: Strike Count ──
                 strikeCount:                  findColExact(['strike_count'],                           ['strike_count', 'Strike Count']),
+                // ── Escalation columns ──
+                escalationType:               findColExact(['escalation_type'],                        ['escalation_type', 'Escalation Type']),
+                reasonForEscalation:          findColExact(['reason_for_escalation'],                  ['reason_for_escalation', 'Reason for Escalation']),
             };
 
             // Open statuses (include in open cases analysis)
@@ -7068,6 +7146,11 @@
                     frTargetDisplay:       frTargetDisplay,
                     // ── New column: Strike Count ──
                     strikeCountDisplay:    (row[colMap.strikeCount] != null ? row[colMap.strikeCount].toString().trim() : ''),
+                    // ── Escalation columns ──
+                    escalationType:        (row[colMap.escalationType]      != null ? row[colMap.escalationType].toString().trim()      : ''),
+                    reasonForEscalation:   (row[colMap.reasonForEscalation] != null ? row[colMap.reasonForEscalation].toString().trim() : ''),
+                    severity:              (row[colMap.severity]            != null ? row[colMap.severity].toString().trim()            : ''),
+                    priority:              (row[colMap.priority]            != null ? row[colMap.priority].toString().trim()            : ''),
                     _raw: row
                 };
             }).filter(row => row !== null);
@@ -9240,6 +9323,7 @@
                 edocToday: filteredData.filter(d => d.isEdocDueToday).length,
                 edocTomorrow: filteredData.filter(d => d.isEdocDueTomorrow).length,
                 edocMissing: filteredData.filter(d => d.isEdocMissing).length,
+                openEscalation: filteredData.filter(d => d.isOpenCase && d.escalationType && d.escalationType.trim() !== '').length,
                 // Engineers Compliance metrics — respects all global filters (l1team, owner, service, mspaccount, timescale)
                 ecEmailRespDue:        _ecGlobalFiltered().filter(d => d.isEcEmailRespDue).length,
                 ecEmailRespMissed:     _ecGlobalFiltered().filter(d => d.isEcEmailRespMissed).length,
@@ -9460,6 +9544,15 @@
             updateCard('kpi-edoc-today', m.edocToday, edocTodayRec);
             updateCard('kpi-edoc-tomorrow', m.edocTomorrow, edocTomorrowRec);
             updateCard('kpi-edoc-missing', m.edocMissing, edocMissingRec);
+
+            // ── Section 7: Escalation Tracker ──
+            const escCount = m.openEscalation;
+            const escRec   = escCount > 0 ? `${escCount} open escalation${escCount !== 1 ? 's' : ''} require attention.` : 'No escalations found.';
+            const escCountEl = document.getElementById('kpi-open-escalation-count'); if (escCountEl) escCountEl.textContent = escCount;
+            const escRecEl   = document.getElementById('kpi-open-escalation-rec');   if (escRecEl)   escRecEl.textContent   = escRec;
+            const escTagEl = document.getElementById('kpi-open-escalation-tag');
+            if (escTagEl) { escTagEl.textContent = escCount > 0 ? 'ALERT' : 'OK'; escTagEl.style.background = escCount > 0 ? '#DC2626' : '#16a34a'; }
+            updateSectionRAGStatus(7, [escRec]);
             
             // #1 FIX: Update section RAG status with corrected logic
             updateSectionRAGStatus(1, [infoRec, srRec, incRec]);
@@ -10244,6 +10337,9 @@
                 case 'edocMissing':
                     drillDownData = filteredData.filter(d => d.isEdocMissing);
                     break;
+                case 'openEscalation':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.escalationType && d.escalationType.trim() !== '');
+                    break;
                 case 'l1ActionItems':
                     drillDownData = filteredData.filter(d => d.isOpenCase && d.isL1ActionItem);
                     break;
@@ -10425,7 +10521,7 @@
             
             // Prepare export data
             // ── Helper: compute derived columns for totalOpen/totalSR/totalINC ──
-            const CASE_VOL_KEYS = new Set(['totalOpen','totalSR','totalINC']);
+            const CASE_VOL_KEYS = new Set(['totalOpen','totalSR','totalINC','closedTotal','closedSR','closedINC']);
             function _computeCaseVolFields(d) {
                 const today = new Date(); today.setHours(0,0,0,0);
                 // Use _creationDate (Date object already parsed during data load)
@@ -10471,19 +10567,39 @@
                     }
                     delegationStatus = (bizDays > 2) ? 'Not Applicable' : 'Applicable';
                 }
-                return { targetDateDisplay, closureStatus, delegationStatus };
+                // Customer Follow-up on Closure Calls
+                // Yes (red) = last email NOT from sapphireims.com | No (green) = from sapphireims.com
+                const emailFrom = (d.lastEmailFrom || '').toString().trim().toLowerCase();
+                const custFollowupClosure = emailFrom === ''
+                    ? ''
+                    : emailFrom.includes('sapphireims.com') ? 'No' : 'Yes';
+
+                return { targetDateDisplay, closureStatus, delegationStatus, custFollowupClosure };
             }
 
-            drillDownExportData = drillDownData.map(d => {
+            const ESC_KEYS = new Set(['openEscalation']);
+            drillDownExportData = drillDownData.map((d, idx) => {
                 const exportRow = {};
                 if (drillDownColumns[kpi]) {
                     const computed = CASE_VOL_KEYS.has(kpi) ? _computeCaseVolFields(d) : null;
+                    const isEsc    = ESC_KEYS.has(kpi);
                     drillDownColumns[kpi].forEach(col => {
                         if (computed) {
                             if (col.key === '_engineerActionDate')      { exportRow[col.label] = ''; return; }
                             if (col.key === '_targetDateForClosure')    { exportRow[col.label] = computed.targetDateDisplay; return; }
                             if (col.key === '_closureComplianceStatus') { exportRow[col.label] = computed.closureStatus; return; }
                             if (col.key === '_delegationEligible')      { exportRow[col.label] = computed.delegationStatus; return; }
+                            if (col.key === '_custFollowupClosure')     { exportRow[col.label] = computed.custFollowupClosure; return; }
+                        }
+                        if (isEsc) {
+                            if (col.key === '_slNo')               { exportRow[col.label] = (idx + 1).toString(); return; }
+                            if (col.key === '_escReceivedDate')    { exportRow[col.label] = ''; return; }
+                            if (col.key === '_escalationSource')   { exportRow[col.label] = ''; return; }
+                            if (col.key === '_escalatedBy')        { exportRow[col.label] = ''; return; }
+                            if (col.key === '_escalatedTo')        { exportRow[col.label] = ''; return; }
+                            if (col.key === '_allAspectsFollowed') { exportRow[col.label] = ''; return; }
+                            if (col.key === '_correctiveAction')   { exportRow[col.label] = ''; return; }
+                            if (col.key === '_escRemarks')         { exportRow[col.label] = ''; return; }
                         }
                         exportRow[col.label] = d[col.key] || '';
                     });
@@ -10522,12 +10638,25 @@
             const drillDownHtml = drillDownData.map((d, index) => {
                 const globalIndex = processedData.findIndex(p => p.incidentId === d.incidentId);
                 const computed = CASE_VOL_KEYS.has(kpi) ? _computeCaseVolFields(d) : null;
+                const isEsc    = kpi === 'openEscalation';
                 
                 if (drillDownColumns[kpi]) {
                     const cells = drillDownColumns[kpi].map(col => {
                         const value = d[col.key] || '';
                         let cellClass = '';
-                        
+
+                        // Escalation user-fill columns
+                        if (isEsc) {
+                            if (col.key === '_slNo')               return `<td style="min-width:50px;text-align:center;">${index + 1}</td>`;
+                            if (col.key === '_escReceivedDate')    return `<td style="min-width:130px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel —</td>`;
+                            if (col.key === '_escalationSource')   return `<td style="min-width:120px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel —</td>`;
+                            if (col.key === '_escalatedBy')        return `<td style="min-width:120px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel —</td>`;
+                            if (col.key === '_escalatedTo')        return `<td style="min-width:120px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel —</td>`;
+                            if (col.key === '_allAspectsFollowed') return `<td style="min-width:130px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel —</td>`;
+                            if (col.key === '_correctiveAction')   return `<td style="min-width:140px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel —</td>`;
+                            if (col.key === '_escRemarks')         return `<td style="min-width:120px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel —</td>`;
+                        }
+
                         // Engineer Action Date — blank in UI, date selection only in exported Excel
                         if (col.key === '_engineerActionDate') {
                             return `<td style="min-width:130px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel export —</td>`;
@@ -10545,6 +10674,12 @@
                             if (col.key === '_delegationEligible') {
                                 const cls = computed.delegationStatus === 'Applicable' ? 'text-success fw-bold' : 'text-muted';
                                 return `<td class="${cls}" style="min-width:120px;">${computed.delegationStatus}</td>`;
+                            }
+                            if (col.key === '_custFollowupClosure') {
+                                const v = computed.custFollowupClosure;
+                                if (!v) return `<td style="min-width:160px;">—</td>`;
+                                const cls = v === 'Yes' ? 'text-danger fw-bold' : 'text-success fw-bold';
+                                return `<td class="${cls}" style="min-width:160px;">${v}</td>`;
                             }
                         }
 
@@ -11371,15 +11506,19 @@
             if (!drillDownExportData.length) { alert("No data to export."); return; }
 
             const filename = `${drillDownTitleForExport.replace(/[^a-zA-Z0-9]/g,'_')}_Export_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`;
-            const headers   = Object.keys(drillDownExportData[0]);
-            const engActIdx = headers.indexOf('Engineer Action Date');
+            const headers      = Object.keys(drillDownExportData[0]);
+            const engActIdx    = headers.indexOf('Engineer Action Date');
+            const escDateIdx   = headers.indexOf('Esc Received Date');
+            const allAspIdx    = headers.indexOf('All Aspects Followed (Y/N)');
+            // Use the first date-picker column found (Engineer Action Date or Esc Received Date)
+            const datePickerIdx = engActIdx !== -1 ? engActIdx : escDateIdx;
 
             // Build the xlsx from scratch so all dropdowns and date validation are guaranteed
-            _buildXlsxWithDropdown(drillDownExportData, headers, engActIdx, filename);
+            _buildXlsxWithDropdown(drillDownExportData, headers, datePickerIdx, escDateIdx, allAspIdx, filename);
         }
 
         // ── Build xlsx from scratch with Categorization Type dropdown, Engineer Action Date, Progress Made Yes/No ──
-        function _buildXlsxWithDropdown(rows, headers, engActIdx, filename) {
+        function _buildXlsxWithDropdown(rows, headers, engActIdx, escDateIdx, allAspIdx, filename) {
 
             function colLetter(n) { // 0-based index → letter
                 let r = '';
@@ -11393,14 +11532,7 @@
                     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             }
 
-            const CAT_OPTIONS = [
-                'Type 1 - Solvable by L1 with EDOC',
-                'Type 2 - Handover to L2 with possible details',
-                'Type 3 - 50/50, to move to Type 1 or Type 2 within 2 days',
-                'Type 4 - New or non-profiled cases, to profile within 24hrs'
-            ];
-
-            const PROGRESS_OPTIONS = ['Yes', 'No'];
+            const CAT_OPTIONS = [];    // retained for safety, no longer used
 
             // ── sheet1.xml (DrillDownExport) ──────────────────────────────────────
             function buildSheet1() {
@@ -11413,6 +11545,7 @@
                 const emailMissedColIdx  = headers.indexOf('Email Response Missed');
                 const emailFollowColIdx  = headers.indexOf('Email Follow-up Missed');
                 const frComplianceColIdx = headers.indexOf('FR Compliance Status');
+                const custFollowupColIdx = headers.indexOf('Customer Follow-up on Closure Calls');
 
                 let sheetData = '';
                 // Header row
@@ -11430,7 +11563,7 @@
                         const val = row[h];
                         const c   = colLetter(ci);
                         if (ci === engActIdx) {
-                            // Blank — DateList dropdown provides date selection
+                            // Blank plain cell — user types any date freely
                             sheetData += `<c r="${c}${rowNum}"/>`;
                         } else if (ci === closureColIdx && val) {
                             const s = val === 'Breached' ? '1' : '2';
@@ -11442,8 +11575,10 @@
                             const s = val === 'Yes' ? '1' : '2';
                             sheetData += `<c r="${c}${rowNum}" t="inlineStr" s="${s}"><is><t>${xmlEsc(val)}</t></is></c>`;
                         } else if (ci === frComplianceColIdx && val) {
-                            // Violated = red, Non-Violated = green
                             const s = val === 'Violated' ? '1' : '2';
+                            sheetData += `<c r="${c}${rowNum}" t="inlineStr" s="${s}"><is><t>${xmlEsc(val)}</t></is></c>`;
+                        } else if (ci === custFollowupColIdx && val) {
+                            const s = val === 'Yes' ? '1' : '2';
                             sheetData += `<c r="${c}${rowNum}" t="inlineStr" s="${s}"><is><t>${xmlEsc(val)}</t></is></c>`;
                         } else if (val === '' || val == null) {
                             sheetData += `<c r="${c}${rowNum}"/>`;
@@ -11454,14 +11589,30 @@
                     sheetData += `</row>`;
                 });
 
-                // Data validation — Engineer Action Date dropdown from DateList sheet
+                // All Aspects Followed uses Yes/No dropdown; Engineer Action Date uses inline date list
                 let dvEntries = '';
                 let dvCount = 0;
-                if (engActIdx !== -1) {
+                // Build inline date list (today + 364 days)
+                if (engActIdx != null && engActIdx !== -1) {
+                    const _today = new Date();
+                    const _dates = [];
+                    for (let i = 0; i < 365; i++) {
+                        const _d = new Date(_today); _d.setDate(_today.getDate() + i);
+                        _dates.push(`${String(_d.getDate()).padStart(2,'0')}/${String(_d.getMonth()+1).padStart(2,'0')}/${_d.getFullYear()}`);
+                    }
+                    const _dateFormula = `"${_dates.join(',')}"`;
                     const eaCol = colLetter(engActIdx);
                     dvEntries += `<dataValidation sqref="${eaCol}2:${eaCol}1048576" `
                         + `showDropDown="0" showInputMessage="1" showErrorMessage="1" allowBlank="1" type="list">`
-                        + `<formula1>DateList!$A$2:$A$366</formula1>`
+                        + `<formula1>${xmlEsc(_dateFormula)}</formula1>`
+                        + `</dataValidation>`;
+                    dvCount++;
+                }
+                if (allAspIdx != null && allAspIdx !== -1) {
+                    const col = colLetter(allAspIdx);
+                    dvEntries += `<dataValidation sqref="${col}2:${col}1048576" `
+                        + `showDropDown="0" showInputMessage="1" showErrorMessage="1" allowBlank="1" type="list">`
+                        + `<formula1>"Yes,No"</formula1>`
                         + `</dataValidation>`;
                     dvCount++;
                 }
@@ -11480,43 +11631,6 @@
                     + `</worksheet>`;
             }
 
-            // ── sheet2.xml (CatTypes) ─────────────────────────────────────────────
-            function buildSheet2() {
-                let rows2 = `<row r="1"><c r="A1" t="inlineStr"><is><t>Categorization Type</t></is></c></row>`;
-                CAT_OPTIONS.forEach((opt, i) => {
-                    rows2 += `<row r="${i+2}"><c r="A${i+2}" t="inlineStr"><is><t>${xmlEsc(opt)}</t></is></c></row>`;
-                });
-                return `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
-                    + `<dimension ref="A1:A5"/>`
-                    + `<sheetViews><sheetView workbookViewId="0"><selection activeCell="A1" sqref="A1"/></sheetView></sheetViews>`
-                    + `<sheetFormatPr baseColWidth="8" defaultRowHeight="15"/>`
-                    + `<sheetData>${rows2}</sheetData>`
-                    + `<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/>`
-                    + `</worksheet>`;
-            }
-
-            // ── sheet3.xml (DateList) — next 365 days as dd/mm/yyyy strings ────────
-            function buildSheet3() {
-                const today = new Date();
-                let rows3 = `<row r="1"><c r="A1" t="inlineStr"><is><t>Engineer Action Date</t></is></c></row>`;
-                for (let i = 0; i < 365; i++) {
-                    const d = new Date(today);
-                    d.setDate(today.getDate() + i);
-                    const dd   = String(d.getDate()).padStart(2,'0');
-                    const mm   = String(d.getMonth()+1).padStart(2,'0');
-                    const yyyy = d.getFullYear();
-                    const label = `${dd}/${mm}/${yyyy}`;
-                    rows3 += `<row r="${i+2}"><c r="A${i+2}" t="inlineStr"><is><t>${label}</t></is></c></row>`;
-                }
-                return `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
-                    + `<dimension ref="A1:A366"/>`
-                    + `<sheetViews><sheetView workbookViewId="0"><selection activeCell="A1" sqref="A1"/></sheetView></sheetViews>`
-                    + `<sheetFormatPr baseColWidth="12" defaultRowHeight="15"/>`
-                    + `<sheetData>${rows3}</sheetData>`
-                    + `<pageMargins left="0.75" right="0.75" top="1" bottom="1" header="0.5" footer="0.5"/>`
-                    + `</worksheet>`;
-            }
-
             const FILES = {
                 '[Content_Types].xml':
                     `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
@@ -11524,8 +11638,6 @@
                     + `<Default Extension="xml" ContentType="application/xml"/>`
                     + `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>`
                     + `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
-                    + `<Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
-                    + `<Override PartName="/xl/worksheets/sheet3.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`
                     + `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>`
                     + `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>`
                     + `<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>`
@@ -11543,21 +11655,15 @@
                     + `<workbookPr/><bookViews><workbookView/></bookViews>`
                     + `<sheets>`
                     + `<sheet name="DrillDownExport" sheetId="1" r:id="rId1"/>`
-                    + `<sheet name="CatTypes" sheetId="2" r:id="rId2"/>`
-                    + `<sheet name="DateList" sheetId="3" r:id="rId4"/>`
                     + `</sheets></workbook>`,
 
                 'xl/_rels/workbook.xml.rels':
                     `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`
                     + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet1.xml" Id="rId1"/>`
-                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet2.xml" Id="rId2"/>`
                     + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml" Id="rId3"/>`
-                    + `<Relationship Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="/xl/worksheets/sheet3.xml" Id="rId4"/>`
                     + `</Relationships>`,
 
                 'xl/worksheets/sheet1.xml': buildSheet1(),
-                'xl/worksheets/sheet2.xml': buildSheet2(),
-                'xl/worksheets/sheet3.xml': buildSheet3(),
 
                 'xl/styles.xml':
                     `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
