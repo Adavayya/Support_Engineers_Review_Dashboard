@@ -2427,6 +2427,30 @@
                             </div>
                         </div>
 
+                        <!-- ═══ SECTION 7: Escalation Tracker ═══ -->
+                        <div class="accordion-item" id="accordion-section-7">
+                            <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven">
+                                <i class="bi bi-exclamation-octagon me-2"></i>7. Escalation Tracker
+                            </button></h2>
+                            <div id="collapseSeven" class="accordion-collapse collapse">
+                                <div class="accordion-body">
+                                    <div class="sub-section-header mb-2">
+                                        <i class="bi bi-flag me-1" style="color:var(--primary);"></i>
+                                        <strong>Escalations</strong>
+                                        <span class="badge ms-2" style="background:var(--primary-soft);color:var(--primary);font-size:0.68rem;">Based on Escalation Type column</span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-3"><div class="kpi-card" id="kpi-open-escalation-card" style="border-left-color:#EF4444;cursor:pointer;" onclick="openDrillDown('openEscalation','Open Escalation')">
+                                            <span class="kpi-status-tag bg-good" id="kpi-open-escalation-tag">GOOD</span>
+                                            <div class="kpi-title">Open Escalation</div>
+                                            <div class="kpi-value" id="kpi-open-escalation">0</div>
+                                            <div class="kpi-recommendation" id="kpi-open-escalation-rec">No open cases have an Escalation Type recorded.</div>
+                                        </div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- ═══════════════════════════════════════════════ -->
@@ -5763,6 +5787,27 @@
                 { key: 'lastEmailFrom', label: 'Last Email From' },
                 { key: 'resolvedDateDisplay', label: 'Resolved Date' },
                 { key: 'closedAgingDisplay', label: 'Closure Aging' }
+            ],
+            'openEscalation': [
+                { key: '_slNo',                          label: 'SL No' },
+                { key: 'incidentId',                     label: 'Support ID' },
+                { key: 'title',                          label: 'Title' },
+                { key: 'loggedDateRaw',                   label: 'Logged Date' },
+                { key: 'escReceivedDateDisplay',          label: 'Esc Received Date' },
+                { key: 'customerName',                    label: 'Customer Name' },
+                { key: 'escalationSource',                label: 'Escalation Source' },
+                { key: 'escalatedBy',                     label: 'Escalated By' },
+                { key: 'escalatedTo',                     label: 'Escalated To' },
+                { key: 'escalationType',                  label: 'Escalation Type' },
+                { key: 'severityPriority',                label: 'Severity/Priority' },
+                { key: 'escalationReason',                label: 'Escalation Reason' },
+                { key: 'allAspectsFollowed',               label: 'All Aspects Followed (Y/N)' },
+                { key: 'owner',                           label: 'Owner' },
+                { key: 'assignmentLevel',                 label: 'Level' },
+                { key: 'correctiveAction',                label: 'Corrective Action' },
+                { key: 'resolutionDatePlannedDisplay',    label: 'Resolution Date Planned' },
+                { key: 'currentStatus',                   label: 'Current Status' },
+                { key: 'escalationRemarks',               label: 'Remarks' }
             ]
         };
 
@@ -6372,6 +6417,18 @@
                 firstResponseSlaTargetEnd:    findColExact(['first_response_sla_target_end_time'],    ['first_response_sla_target_end_time']),
                 // ── New column: Strike Count ──
                 strikeCount:                  findColExact(['strike_count'],                           ['strike_count', 'Strike Count']),
+                // ── Escalation Tracker columns (Section 7) ──
+                escalationType:                findColExact(['escalation_type'],                        ['escalation_type', 'Escalation Type']),
+                escReceivedDate:               findCol(['esc_received_date', 'escalation_received_date', 'Esc Received Date', 'Escalation Received Date']),
+                escalationSource:              findCol(['escalation_source', 'Escalation Source']),
+                escalatedBy:                   findCol(['escalated_by', 'Escalated By']),
+                escalatedTo:                   findCol(['escalated_to', 'Escalated To']),
+                escalationReason:              findColExact(['reason_for_escalation'],                  ['reason_for_escalation', 'Reason for Escalation', 'escalation_reason', 'Escalation Reason']),
+                allAspectsFollowed:            findCol(['all_aspects_followed', 'All Aspects Followed']),
+                escalationLevel:               findCol(['escalation_level', 'Level']),
+                correctiveAction:              findCol(['corrective_action', 'Corrective Action']),
+                resolutionDatePlanned:         findCol(['resolution_date_planned', 'planned_resolution_date', 'Resolution Date Planned']),
+                escalationRemarks:             findCol(['escalation_remarks', 'Remarks']),
             };
 
             // Open statuses (include in open cases analysis)
@@ -6874,6 +6931,29 @@
                         return lfrom.includes('@sapphireims.com') ? 'No' : 'Yes';
                     })(),
                     remarks: '',
+                    // ── Escalation Tracker fields (Section 7) ──
+                    escalationType:      (row[colMap.escalationType]     != null ? row[colMap.escalationType].toString().trim()     : ''),
+                    escalationSource:    (row[colMap.escalationSource]   != null ? row[colMap.escalationSource].toString().trim()   : ''),
+                    escalatedBy:         (row[colMap.escalatedBy]        != null ? row[colMap.escalatedBy].toString().trim()        : ''),
+                    escalatedTo:         (row[colMap.escalatedTo]        != null ? row[colMap.escalatedTo].toString().trim()        : ''),
+                    escalationReason:    (row[colMap.escalationReason]   != null ? row[colMap.escalationReason].toString().trim()   : ''),
+                    allAspectsFollowed:  (row[colMap.allAspectsFollowed] != null ? row[colMap.allAspectsFollowed].toString().trim() : ''),
+                    escalationLevel:     (row[colMap.escalationLevel]    != null ? row[colMap.escalationLevel].toString().trim()    : ''),
+                    correctiveAction:    (row[colMap.correctiveAction]   != null ? row[colMap.correctiveAction].toString().trim()   : ''),
+                    escalationRemarks:   (row[colMap.escalationRemarks]  != null ? row[colMap.escalationRemarks].toString().trim()  : ''),
+                    escReceivedDateDisplay: (() => {
+                        const dd = parseAKDate(row[colMap.escReceivedDate]);
+                        if (dd) return dd.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+                        return row[colMap.escReceivedDate] ? row[colMap.escReceivedDate].toString() : '';
+                    })(),
+                    resolutionDatePlannedDisplay: (() => {
+                        const dd = parseAKDate(row[colMap.resolutionDatePlanned]);
+                        if (dd) return dd.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+                        return row[colMap.resolutionDatePlanned] ? row[colMap.resolutionDatePlanned].toString() : '';
+                    })(),
+                    isEscalated: !!(row[colMap.escalationType] != null && row[colMap.escalationType].toString().trim() !== ''),
+                    // Raw, unmodified value from the creation_time column — used for Escalation Tracker "Logged Date"
+                    loggedDateRaw: (row[colMap.creationDate] != null ? row[colMap.creationDate].toString().trim() : ''),
                     emailRespDueTodayYN:    isEmailRespToday    ? 'Yes' : 'No',
                     emailRespMissedYN:      isEmailRespMissed   ? 'Yes' : 'No',
                     emailFollowupMissedYN:  isEmailFollowupMissed ? 'Yes' : 'No',
@@ -7195,8 +7275,9 @@
         }
 
         // ── Timescale helper ──────────────────────────────────────────────────
-        function _timescaleMatch(creationDate, ts) {
-            if (!creationDate || !(creationDate instanceof Date) || isNaN(creationDate.getTime())) return true;
+        // Returns { from, to } Date range for a given timescale value, or
+        // { from: null, to: null } when the timescale imposes no bound (e.g. 'all').
+        function _timescaleRange(ts) {
             const now = new Date();
             const y = now.getFullYear();
             const m = now.getMonth(); // 0-based
@@ -7224,8 +7305,6 @@
                 const matchOnly = ts.match(/^last_(\d+)$/);
                 if (matchPlus) {
                     const n = parseInt(matchPlus[1]);
-                    const startM = ((m - n) % 12 + 12) % 12;
-                    const startY = y - Math.ceil((n - m) / 12) - (m < n ? 0 : 0);
                     // Calculate correct start year
                     let sm = m - n; let sy = y;
                     while (sm < 0) { sm += 12; sy--; }
@@ -7240,6 +7319,12 @@
                 }
             }
 
+            return { from, to };
+        }
+
+        function _timescaleMatch(creationDate, ts) {
+            if (!creationDate || !(creationDate instanceof Date) || isNaN(creationDate.getTime())) return true;
+            const { from, to } = _timescaleRange(ts);
             if (!from || !to) return true;
             return creationDate >= from && creationDate <= to;
         }
@@ -9284,6 +9369,8 @@
                 edocToday: filteredData.filter(d => d.isEdocDueToday).length,
                 edocTomorrow: filteredData.filter(d => d.isEdocDueTomorrow).length,
                 edocMissing: filteredData.filter(d => d.isEdocMissing).length,
+                // Section 7: Escalation Tracker
+                openEscalation: filteredData.filter(d => d.isOpenCase && d.isEscalated).length,
                 // Engineers Compliance metrics — respects all global filters (l1team, owner, service, mspaccount, timescale)
                 ecEmailRespDue:        _ecGlobalFiltered().filter(d => d.isEcEmailRespDue).length,
                 ecEmailRespMissed:     _ecGlobalFiltered().filter(d => d.isEcEmailRespMissed).length,
@@ -9504,6 +9591,24 @@
             updateCard('kpi-edoc-today', m.edocToday, edocTodayRec);
             updateCard('kpi-edoc-tomorrow', m.edocTomorrow, edocTomorrowRec);
             updateCard('kpi-edoc-missing', m.edocMissing, edocMissingRec);
+
+            // Section 7: Escalation Tracker — update directly (keeps the inline onclick in HTML intact)
+            (function() {
+                const valEl = document.getElementById('kpi-open-escalation');
+                const tagEl = document.getElementById('kpi-open-escalation-tag');
+                const recEl = document.getElementById('kpi-open-escalation-rec');
+                if (!valEl) return;
+                valEl.textContent = m.openEscalation;
+                if (m.openEscalation > 0) {
+                    tagEl.textContent = 'ACTION NEEDED';
+                    tagEl.className = 'kpi-status-tag bg-action-needed';
+                    recEl.textContent = `${m.openEscalation} open case${m.openEscalation !== 1 ? 's' : ''} currently escalated — review Escalation Type entries.`;
+                } else {
+                    tagEl.textContent = 'GOOD';
+                    tagEl.className = 'kpi-status-tag bg-good';
+                    recEl.textContent = 'No open cases have an Escalation Type recorded.';
+                }
+            })();
             
             // #1 FIX: Update section RAG status with corrected logic
             updateSectionRAGStatus(1, [infoRec, srRec, incRec]);
@@ -9512,6 +9617,7 @@
             updateSectionRAGStatus(4, [efuMissedRec, efuTodayRec, efuTomorrowRec, erMissedRec, erTodayRec]);
             updateSectionRAGStatus(5, [subRespRec, subRespTodayRec, subRespTomorrowRec, subSLARec]);
             updateSectionRAGStatus(6, [idle3Rec, edocRec, edocTodayRec, edocTomorrowRec]);
+            updateSectionRAGStatus(7, [{ status: m.openEscalation > 0 ? 'ACTION NEEDED' : 'INFO' }]);
 
             // ── Engineers Compliance section cards ───────────────────────────
             const _setEcCard = (id, val, tag, tagCls, rec, drillKey) => {
@@ -10288,6 +10394,9 @@
                 case 'edocMissing':
                     drillDownData = filteredData.filter(d => d.isEdocMissing);
                     break;
+                case 'openEscalation':
+                    drillDownData = filteredData.filter(d => d.isOpenCase && d.isEscalated);
+                    break;
                 case 'l1ActionItems':
                     drillDownData = filteredData.filter(d => d.isOpenCase && d.isL1ActionItem);
                     break;
@@ -10524,11 +10633,12 @@
                 return { targetDateDisplay, closureStatus, delegationStatus };
             }
 
-            drillDownExportData = drillDownData.map(d => {
+            drillDownExportData = drillDownData.map((d, idx) => {
                 const exportRow = {};
                 if (drillDownColumns[kpi]) {
                     const computed = CASE_VOL_KEYS.has(kpi) ? _computeCaseVolFields(d) : null;
                     drillDownColumns[kpi].forEach(col => {
+                        if (col.key === '_slNo') { exportRow[col.label] = idx + 1; return; }
                         if (computed) {
                             if (col.key === '_engineerActionDate')      { exportRow[col.label] = ''; return; }
                             if (col.key === '_targetDateForClosure')    { exportRow[col.label] = computed.targetDateDisplay; return; }
@@ -10581,6 +10691,11 @@
                         // Engineer Action Date — blank in UI, date selection only in exported Excel
                         if (col.key === '_engineerActionDate') {
                             return `<td style="min-width:130px;color:#9CA3AF;font-style:italic;font-size:0.72rem;">— fill in Excel export —</td>`;
+                        }
+
+                        // SL No — sequential row number
+                        if (col.key === '_slNo') {
+                            return `<td style="min-width:50px;">${index + 1}</td>`;
                         }
 
                         // Computed columns
@@ -15975,6 +16090,12 @@ ${bodyHTML}
                 }
             });
 
+            // Bound the resolve-month bucketing to the selected timescale's date range.
+            // Without this, a case that was logged within the selected range (e.g. "Last Month")
+            // but only resolved in the current month would still add a "current month" data
+            // point to the trend charts below, even though current month wasn't selected.
+            const { from: marTsFrom, to: marTsTo } = _timescaleRange(globalFilters.timescale || 'all');
+
             closedCases.forEach(d => {
                 let resolveDate = null;
                 if (d.resolvedDateDisplay && d.resolvedDateDisplay !== '—') {
@@ -15983,6 +16104,7 @@ ${bodyHTML}
                 }
                 if (!resolveDate && d._creationDate) resolveDate = d._creationDate;
                 if (resolveDate && !isNaN(resolveDate.getTime())) {
+                    if (marTsFrom && marTsTo && (resolveDate < marTsFrom || resolveDate > marTsTo)) return;
                     const key = `${resolveDate.getMonth()+1}-${resolveDate.getFullYear()}`;
                     if (!monthlyClosedMap[key]) monthlyClosedMap[key] = { closed:0, violated:0, tatTotal:0, tatCount:0, slaTargetDays:0, slaTargetCount:0 };
                     monthlyClosedMap[key].closed++;
