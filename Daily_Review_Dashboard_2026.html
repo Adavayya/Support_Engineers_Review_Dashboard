@@ -1263,6 +1263,8 @@
                 box-shadow: none !important;
                 width: 100% !important;
                 height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
                 margin: 0 !important;
                 page-break-after: always;
             }
@@ -1273,7 +1275,8 @@
             .mar-content-grid   { padding: 10px 40px 15px 40px !important; page-break-inside: avoid; }
             .mar-charts-section { padding: 15px 40px !important; page-break-inside: avoid; }
             .mar-open-cases-grid{ padding: 15px 40px 20px 40px !important; page-break-inside: avoid; }
-            .mar-bottom-section { padding: 15px 40px 20px 40px !important; margin-top: auto; }
+            .mar-bottom-section { padding: 15px 40px 20px 40px !important; margin-top: 0 !important; page-break-inside: avoid; }
+            .mar-footer         { page-break-inside: avoid; }
             .mar-table td, .mar-table th { padding: 10px 12px !important; }
             .mar-period-value   { background-color: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .mar-row-total td   { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
