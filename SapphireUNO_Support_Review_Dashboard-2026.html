@@ -431,7 +431,7 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
   border:1.5px dashed var(--border-strong);
   border-radius:var(--radius-lg);
   background:var(--bg-surface);
-  padding:52px 24px;
+  padding:24px 24px;
   text-align:center;
   cursor:pointer;
   transition:all var(--transition-fast);
@@ -445,16 +445,16 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
 }
 .dropzone.has-error{ border-color:var(--status-bad); background:var(--status-bad-bg); }
 .dropzone .dz-icon{
-  width:64px; height:64px; border-radius:50%; margin:0 auto 18px;
+  width:42px; height:42px; border-radius:50%; margin:0 auto 10px;
   background:var(--accent-glow); color:var(--accent);
-  display:flex; align-items:center; justify-content:center; font-size:26px;
+  display:flex; align-items:center; justify-content:center; font-size:18px;
   transition:all var(--transition-fast);
 }
 .dropzone.drag-over .dz-icon{ transform:scale(1.08); }
-.dropzone .dz-title{ font-size:15.5px; font-weight:700; color:var(--text-primary); margin-bottom:5px; }
-.dropzone .dz-sub{ font-size:12.5px; color:var(--text-muted); margin-bottom:18px; }
+.dropzone .dz-title{ font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:4px; }
+.dropzone .dz-sub{ font-size:12px; color:var(--text-muted); margin-bottom:12px; }
 .dropzone .dz-formats{
-  display:flex; align-items:center; justify-content:center; gap:8px; margin-top:16px; flex-wrap:wrap;
+  display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; flex-wrap:wrap;
 }
 .fmt-chip{
   font-family:var(--font-mono); font-size:10.5px; font-weight:700; letter-spacing:0.03em;
@@ -470,6 +470,32 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
 }
 .browse-btn:hover{ filter:brightness(1.08); transform:translateY(-1px); }
 #fileInput{ display:none; }
+
+/* ---- OR divider between upload methods ---- */
+.upload-or-divider{ display:flex; align-items:center; gap:14px; margin:22px 0; }
+.upload-or-divider::before, .upload-or-divider::after{ content:""; flex:1; height:1px; background:var(--border-subtle); }
+.upload-or-divider span{ font-size:11px; font-weight:800; letter-spacing:0.08em; color:var(--text-muted); text-transform:uppercase; }
+
+/* ---- Repository file selection ---- */
+.repo-select-card{
+  background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg);
+  padding:22px 24px; text-align:center;
+}
+.repo-select-title{
+  font-family:var(--font-display); font-weight:700; font-size:14px; color:var(--accent-dim);
+  display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:6px;
+}
+.repo-select-sub{ font-size:12.5px; color:var(--text-muted); margin-bottom:16px; max-width:480px; margin-left:auto; margin-right:auto; }
+.repo-select-row{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px; max-width:560px; margin:0 auto; }
+.repo-select{
+  flex:1; min-width:220px; padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle);
+  background:var(--bg-surface-2); color:var(--text-primary); font-size:13px; cursor:pointer;
+}
+.repo-select:focus{ outline:none; border-color:var(--accent); }
+.repo-select:disabled{ opacity:0.6; cursor:not-allowed; }
+#loadRepositoryFileBtn:disabled{ opacity:0.5; cursor:not-allowed; filter:none; transform:none; }
+.repo-select-note{ font-size:11.5px; color:var(--text-muted); margin-top:14px; }
+.repo-select-note i{ color:var(--accent); }
 
 /* Processing / progress state */
 .ingest-progress{ margin-top:20px; }
@@ -1364,6 +1390,31 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
             </div>
           </div>
 
+          <!-- OR Divider -->
+          <div class="upload-or-divider"><span>OR</span></div>
+
+          <!-- Repository File Selection -->
+          <div class="repo-select-card">
+            <div class="repo-select-title"><i class="fa-solid fa-folder-open"></i> Select Data File from Repository</div>
+            <p class="repo-select-sub">Choose an Excel file already published in this repository to load it directly.</p>
+            <div class="repo-select-row">
+              <select class="repo-select" id="repositoryFileSelect">
+                <option value="">-- Select an Excel file --</option>
+                <!-- Add your Excel file names from the MSPData folder below.
+                     Each option's value is the file's path relative to this
+                     HTML file, and must be committed to the same repo. -->
+                <option value="MSPData/SupportCalls_ApriltoJuly-2026.xlsx">SupportCalls_April_TO_July-2026</option>
+                <option value="MSPData/SupportCalls_April_May_June_2026.xlsx">SupportCalls_April_May_June_2026</option>
+                <!-- Add more <option> entries here, following the same
+                     MSPData/filename.xlsx pattern, e.g.:
+                <option value="MSPData/MSPMonthlyReview_January2026.xlsx">MSP January 2026</option>
+                -->
+              </select>
+              <button class="btn-primary-gov" id="loadRepositoryFileBtn" disabled><i class="fa-solid fa-circle-check"></i> Load Selected File</button>
+            </div>
+            <p class="repo-select-note"><i class="fa-solid fa-circle-info"></i> <span id="repoStatus">Checking connection…</span></p>
+          </div>
+
           <!-- Ingestion progress -->
           <div class="gcard gcard-pad ingest-progress" id="progressCard" style="display:none;">
             <div class="progress-row" id="stepRead">
@@ -1428,18 +1479,20 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           <div id="loadedSection" style="display:none;">
             <div class="loaded-summary" id="loadedStats"></div>
 
-            <div class="dt-wrap" id="previewTableWrap" style="margin-top:20px;">
+            <div class="action-row" style="margin-top:20px;">
+              <button class="btn-ghost-gov" id="discardBtn"><i class="fa-solid fa-trash"></i> Discard &amp; Re-upload</button>
+              <button class="btn-ghost-gov" id="exportGridBtn"><i class="fa-solid fa-file-excel"></i> Export to Excel — Complete Dump</button>
+            </div>
+
+            <div class="dt-wrap" id="previewTableWrap" style="margin-top:14px;">
               <table class="table" id="previewTable" style="width:100%;">
                 <thead id="previewHead"></thead>
                 <tbody id="previewBody"></tbody>
               </table>
             </div>
-
-            <div class="action-row">
-              <button class="btn-primary-gov" id="proceedBtn"><i class="fa-solid fa-arrow-right"></i> Load Dashboard</button>
-              <button class="btn-ghost-gov" id="discardBtn"><i class="fa-solid fa-trash"></i> Discard &amp; Re-upload</button>
-              <button class="btn-ghost-gov" id="exportGridBtn"><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
-            </div>
+          </div>
+          <div id="autoLoadedNotice" class="pill pill-good" style="display:none;margin-top:14px;">
+            <i class="fa-solid fa-circle-check"></i> Data loaded automatically — use the sidebar to explore the dashboard, or Discard &amp; Re-upload above to start over.
           </div>
 
         </div>
@@ -3548,6 +3601,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       lengthMenu: [10, 25, 50, 100],
       language: { searchPlaceholder: 'Search the full data grid…' }
     });
+
+    autoLoadDashboard();
   }
 
   // ---- Export the full uploaded dataset (all columns, all rows) to Excel ----
@@ -3594,23 +3649,93 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     if(file) handleFile(file);
   });
 
+  // ---------------------------------------------------------------
+  // REPOSITORY FILE SELECTION — an alternative to manual upload/drag-
+  // drop for a GitHub-hosted deployment: pick a file already committed
+  // to this repo (see the <option> list above) instead of browsing
+  // for one locally. Fetches the file, wraps it in a synthetic File
+  // object, then hands off to the exact same handleFile() pipeline
+  // manual upload uses — so validation, the preview table, and
+  // auto-load all behave identically either way.
+  // ---------------------------------------------------------------
+  const repoSelect = document.getElementById('repositoryFileSelect');
+  const repoLoadBtn = document.getElementById('loadRepositoryFileBtn');
+  const repoStatus = document.getElementById('repoStatus');
+  const repoLoadBtnDefaultHTML = repoLoadBtn.innerHTML;
+
+  function updateRepoConnectionStatus(){
+    if(location.protocol === 'file:'){
+      // fetch() to a relative path is blocked by most browsers when the
+      // page itself was opened directly from disk (file://) rather than
+      // served over http(s) — e.g. via GitHub Pages. Manual upload and
+      // drag-drop still work fine in that case; only this option needs
+      // a real web server.
+      repoStatus.textContent = 'Repository loading needs this dashboard to be served from a web server.';
+      repoSelect.disabled = true;
+      repoLoadBtn.disabled = true;
+    } else {
+      repoStatus.textContent = 'Select a file above, then click Load Selected File.';
+    }
+  }
+  updateRepoConnectionStatus();
+
+  repoSelect.addEventListener('change', function(){
+    repoLoadBtn.disabled = !repoSelect.value;
+  });
+
+  repoLoadBtn.addEventListener('click', function(){
+    const path = repoSelect.value;
+    if(!path) return;
+    const filename = path.split('/').pop();
+
+    repoLoadBtn.disabled = true;
+    repoSelect.disabled = true;
+    repoLoadBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading…';
+    repoStatus.textContent = 'Fetching ' + filename + '…';
+
+    fetch(path)
+      .then(function(res){
+        if(!res.ok) throw new Error('HTTP ' + res.status + ' — file not found in the repository at "' + path + '"');
+        return res.blob();
+      })
+      .then(function(blob){
+        const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
+        repoLoadBtn.disabled = false;
+        repoSelect.disabled = false;
+        repoLoadBtn.innerHTML = repoLoadBtnDefaultHTML;
+        repoStatus.textContent = 'Select a file above, then click Load Selected File.';
+        handleFile(file);
+      })
+      .catch(function(err){
+        repoLoadBtn.disabled = false;
+        repoSelect.disabled = false;
+        repoLoadBtn.innerHTML = repoLoadBtnDefaultHTML;
+        repoStatus.textContent = 'Could not load "' + filename + '" — ' + (err.message || 'check the file exists in the repository') + '.';
+      });
+  });
+
   document.getElementById('discardBtn').addEventListener('click', function(){
     window.GovData.isLoaded = false;
     resetUIState();
     fileInput.value = '';
+    if(location.protocol !== 'file:'){ repoSelect.value = ''; repoLoadBtn.disabled = true; }
     reloadRow.style.display = 'none';
+    document.getElementById('autoLoadedNotice').style.display = 'none';
     document.dispatchEvent(new CustomEvent('govdata:reset'));
   });
 
-  document.getElementById('proceedBtn').addEventListener('click', function(){
+  // Data loads automatically the moment parsing/validation finishes — no
+  // manual "Load Dashboard" click needed. The user stays on this page
+  // (Discard & Re-upload / Export to Excel sit right above the preview
+  // table) rather than being auto-navigated away, since every other
+  // module is already live in the background once isLoaded is true —
+  // they can jump to any section via the sidebar whenever they're ready.
+  function autoLoadDashboard(){
     window.GovData.isLoaded = true;
     reloadRow.style.display = 'block';
-    // Module 3+ (data processing core / filters) will hook in here and
-    // repaint every dashboard section. For now, jump to Executive Summary
-    // so the loaded state is visible.
-    if(window.GovShell) window.GovShell.navigateTo('executive');
+    document.getElementById('autoLoadedNotice').style.display = 'flex';
     document.dispatchEvent(new CustomEvent('govdata:loaded', { detail: window.GovData }));
-  });
+  }
 
   document.getElementById('uploadNewBtn').addEventListener('click', function(){
     if(window.GovShell) window.GovShell.navigateTo('dashboard');
