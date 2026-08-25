@@ -855,6 +855,29 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
 
 .pro-section-desc{ font-size:12.5px; color:var(--text-muted); margin:-4px 0 12px; max-width:900px; line-height:1.5; }
 .pro-export-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px; }
+
+/* ---- Risk ranking filter chips (Customer Risk / Engineer Risk) ---- */
+.pro-risk-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+.pro-risk-chip{
+  padding:6px 14px; border-radius:999px; border:1px solid var(--border-subtle);
+  background:var(--bg-surface-2); color:var(--text-secondary); font-size:12px; font-weight:700;
+  cursor:pointer; transition:all var(--transition-fast);
+}
+.pro-risk-chip:hover{ border-color:var(--accent); color:var(--text-primary); }
+.pro-risk-chip.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+/* ---- Team overview mini-grid (Engineer Risk section) ---- */
+.pro-team-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; margin-bottom:16px; }
+.pro-team-card{
+  background:var(--bg-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
+  padding:12px 14px; position:relative; overflow:hidden;
+}
+.pro-team-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--status-good); }
+.pro-team-card.tone-warn::before{ background:var(--status-warn); }
+.pro-team-card.tone-bad::before{ background:var(--status-bad); }
+.pro-team-card .ptc-name{ font-weight:700; font-size:12.5px; color:var(--text-primary); margin-bottom:6px; }
+.pro-team-card .ptc-score{ font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--text-primary); }
+.pro-team-card .ptc-sub{ font-size:11px; color:var(--text-muted); margin-top:2px; }
 .pro-export-btn{
   display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:var(--radius-md);
   border:1px solid var(--border-subtle); background:var(--bg-surface-2); color:var(--text-secondary);
@@ -1028,6 +1051,113 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 .ticket-detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 24px; }
 .ticket-detail-grid .tdg-full{ grid-column:1 / -1; }
 .tdg-item{ padding:9px 0; border-bottom:1px solid var(--border-subtle); }
+
+/* ---- Customer Report (printable "Monthly Account Review" PDF preview) ----
+   Deliberately styled as a plain light document/sheet regardless of the
+   dashboard's own light/dark theme, since it's meant to be read (and
+   printed) the same way a real PDF would be. */
+.btn-mini-report{
+  display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:6px;
+  border:1px solid var(--border-subtle); background:var(--bg-surface-2); color:var(--accent-dim);
+  font-size:11.5px; font-weight:700; cursor:pointer; transition:all var(--transition-fast); white-space:nowrap;
+}
+.btn-mini-report:hover{ background:var(--accent-glow); border-color:var(--accent); }
+
+.cust-report-sheet{
+  background:#FFFFFF; color:#1A1A2E; border-radius:var(--radius-lg); padding:26px 30px; border:1px solid var(--border-subtle);
+}
+.cust-report-sheet h2{ color:#1A1A2E; }
+.cr-topbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; border-bottom:2px solid #1A1A2E; padding-bottom:14px; margin-bottom:20px; }
+.cr-brand{ display:flex; align-items:center; gap:10px; }
+.cr-brand-icon{ height:34px; max-width:150px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.cr-brand-icon img{ max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block; }
+.cr-title{ font-family:var(--font-display); font-size:18px; font-weight:800; letter-spacing:0.01em; }
+.cr-period-pill{ font-size:10.5px; font-weight:700; background:#1A1A2E; color:#fff; padding:6px 14px; border-radius:999px; white-space:nowrap; }
+.cr-cust-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+.cr-cust-row h2{ font-size:21px; font-weight:800; margin:0; }
+.cr-tam{ display:flex; align-items:center; gap:8px; background:#F4F5F9; border:1px solid #E2E4EC; border-radius:8px; padding:7px 12px; font-size:12px; color:#555; }
+.cr-tam input{ border:none; background:transparent; outline:none; font-size:12px; font-weight:700; color:#1A1A2E; min-width:150px; }
+.cr-kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.cr-kpi-card{ border:1.5px solid #E2E4EC; border-radius:10px; padding:13px 15px; }
+.cr-kpi-card.good{ border-color:var(--status-good); }
+.cr-kpi-label{ font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.03em; color:#7A7E8C; }
+.cr-kpi-value{ font-family:var(--font-display); font-size:24px; font-weight:800; margin-top:6px; color:#1A1A2E; }
+.cr-kpi-sub{ font-size:10.5px; color:#7A7E8C; margin-top:2px; }
+.cr-kpi-card.good .cr-kpi-sub{ color:var(--status-good); font-weight:700; }
+.cr-tables-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
+.cr-table-card{ border:1px solid #E2E4EC; border-radius:10px; overflow:hidden; }
+.cr-table-head{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#444; background:#F4F5F9; padding:9px 14px; display:flex; align-items:center; gap:7px; }
+.cr-table-card table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.cr-table-card th, .cr-table-card td{ padding:8px 14px; text-align:right; border-top:1px solid #EEF0F5; color:#1A1A2E; }
+.cr-table-card th:first-child, .cr-table-card td:first-child{ text-align:left; }
+.cr-table-card thead th{ color:#7A7E8C; font-weight:700; font-size:10.5px; border-top:none; }
+.cr-table-card tbody tr:last-child td{ font-weight:800; border-top:1.5px solid #E2E4EC; }
+.cr-chart-card{ border:1px solid #E2E4EC; border-radius:10px; padding:14px 16px; margin-bottom:16px; }
+.cr-chart-head{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#444; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
+.cr-chart-card canvas{ max-height:190px; }
+.cr-scorebar-wrap{ height:280px; }
+.cr-scorebar-wrap canvas{ max-height:280px !important; }
+.cr-open-status{ font-weight:800; font-size:11px; }
+.cr-open-status.low{ color:var(--status-good); }
+.cr-open-status.medium{ color:var(--status-warn); }
+.cr-open-status.high{ color:var(--status-bad); }
+.cr-footer{ text-align:center; font-size:10px; font-weight:700; letter-spacing:0.04em; color:#9497A3; border-top:2px solid #1A1A2E; padding-top:12px; margin-top:4px; text-transform:uppercase; }
+
+@media (max-width: 900px){
+  .cr-kpi-grid{ grid-template-columns:repeat(2,1fr); }
+  .cr-tables-row{ grid-template-columns:1fr; }
+}
+
+/* Printing a report modal (Customer Report or Engineer Report) reuses
+   window.print() (see the generic PDF export system below), but needs
+   the OPPOSITE of what that system does: its generic rule (".modal,
+   .modal-backdrop{ display:none }") hides every modal outright, since
+   normal prints are always FROM a page, not a modal. So "Download as
+   PDF" toggles this body class right before/after calling print() —
+   mirroring the file's own beforeprint/afterprint convention — which
+   swaps that around: hide the whole app shell, show only the report
+   modal, full-page, with its scroll/position/height constraints
+   removed so content flows naturally across MULTIPLE print pages
+   instead of being clipped to a single screen-height.
+   Both report modals share the ".gov-print-report" class, but only
+   ONE is ever open at a time — the rules below additionally require
+   Bootstrap's own ".show" class (present only on the modal actually
+   on screen), so the other, never-populated report modal stays hidden
+   under the generic ".modal{ display:none }" rule instead of also
+   being forced visible and printing as blank/near-empty pages ahead
+   of the real content. The compound selector still outranks the plain
+   ".modal" class rule regardless of print-CSS source order. A named
+   page (below, paired with the "page:" property here) gives these
+   reports their own A4-portrait page box, independent of the generic
+   dashboard-page print's own @page rule (landscape) further down —
+   printing a page never touches the other. */
+@page reportPage{ size:A4 portrait; margin:12mm 10mm; }
+@media print{
+  html, body{ height:auto !important; overflow:visible !important; }
+  body.printing-report .app-shell{ display:none !important; }
+  body.printing-report .gov-print-report.show{
+    display:block !important; position:static !important; background:#fff;
+    height:auto !important; max-height:none !important; overflow:visible !important;
+    page:reportPage;
+  }
+  body.printing-report .gov-print-report.show .modal-dialog{
+    max-width:100% !important; width:100% !important; margin:0 !important; transform:none !important; position:static !important;
+    height:auto !important; max-height:none !important; overflow:visible !important;
+  }
+  body.printing-report .gov-print-report.show .modal-content{
+    border:none !important; box-shadow:none !important; position:static !important;
+    height:auto !important; max-height:none !important; overflow:visible !important;
+  }
+  body.printing-report .gov-print-report.show .modal-header,
+  body.printing-report .gov-print-report.show .modal-footer{ display:none !important; }
+  body.printing-report .gov-print-report.show .modal-body{
+    padding:0 !important; height:auto !important; max-height:none !important; overflow:visible !important;
+  }
+  body.printing-report .gov-print-report.show .cust-report-sheet{ border:none; border-radius:0; padding:14px 22px; }
+  body.printing-report .gov-print-report.show .cr-chart-card,
+  body.printing-report .gov-print-report.show .cr-table-card,
+  body.printing-report .gov-print-report.show .cr-kpi-grid{ break-inside:avoid; }
+}
 .tdg-item .tdl{ font-size:10.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:3px; }
 .tdg-item .tdv{ font-size:13px; color:var(--text-primary); font-weight:500; word-break:break-word; }
 .tdg-item .tdv.mono{ font-family:var(--font-mono); }
@@ -1547,6 +1677,25 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
             <div class="kpi-grid" id="kpiGridPeople"></div>
           </div>
 
+          <!-- ============ OPEN / CLOSED SERVICE — SR & INC AGING ============
+               Std SR target = 3 days, Non-Std SR target = 5 days, INC target
+               = 5 days (calendar days, using the same _age_days every other
+               module already computes). Open Service surfaces breaches
+               (still open past the target); Closed Service surfaces on-time
+               closures (closed within the target). Both groups read from the
+               same globally-filtered rows as the rest of Executive Summary,
+               and every card drills down to its exact contributing tickets
+               with Excel export. -->
+          <div id="execGroupOpenService">
+            <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-headset"></i> Open Service</div>
+            <div class="kpi-grid" id="kpiGridOpenService"></div>
+          </div>
+
+          <div id="execGroupClosedService">
+            <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-headset"></i> Closed Service</div>
+            <div class="kpi-grid" id="kpiGridClosedService"></div>
+          </div>
+
           <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-chart-column"></i> Executive Charts</div>
           <div class="chart-grid">
 
@@ -1802,7 +1951,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
             <table class="table" id="customerTable" style="width:100%;">
               <thead>
                 <tr>
-                  <th>Customer</th><th>Health</th>
+                  <th>Customer</th><th>Report</th><th>Health</th>
                   <th>Total Assigned</th><th>Assigned INC</th><th>Assigned SR</th>
                   <th>Total Closed</th><th>Closed INC</th><th>Closed SR</th>
                   <th>Total Open</th><th>Open INC</th><th>Open SR</th>
@@ -1938,7 +2087,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
             <table class="table" id="engineerTable" style="width:100%;">
               <thead>
                 <tr>
-                  <th>Engineer</th><th>Score</th>
+                  <th>Engineer</th><th>Report</th><th>Score</th>
                   <th>Total Assigned</th><th>Assigned INC</th><th>Assigned SR</th>
                   <th>Total Closed</th><th>Closed INC</th><th>Closed SR</th>
                   <th>Total Open</th><th>Open INC</th><th>Open SR</th>
@@ -1949,7 +2098,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
                   <th>Total KB Refer</th><th>KB Reference %</th>
                   <th>Total Delegated &gt; 2 Days</th><th>Delegated % (&gt; 2 Days)</th>
                   <th>Total Delegated &lt;= 2 Days</th><th>Delegated % (&lt;= 2 Days)</th>
-                  <th>Delegation Avg time (d)</th><th>Rating (0 to 10)</th>
+                  <th>Delegation Avg time (d)</th>
+                  <th>SR Open Std ≤3</th><th>SR Open Std &gt;3</th><th>SR Open Std Compliance %</th>
+                  <th>SR Open Non-Std ≤5</th><th>SR Open Non-Std &gt;5</th><th>SR Open Non-Std Compliance %</th>
+                  <th>SR Close Std ≤3</th><th>SR Close Std &gt;3</th><th>SR Close Std Compliance %</th>
+                  <th>SR Close Non-Std ≤5</th><th>SR Close Non-Std &gt;5</th><th>SR Close Non-Std Compliance %</th>
+                  <th>INC Open ≤5</th><th>INC Open &gt;5</th><th>INC Open Compliance %</th>
+                  <th>INC Close ≤5</th><th>INC Close &gt;5</th><th>INC Close Compliance %</th>
+                  <th>Rating (0 to 10)</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -2009,7 +2165,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       <!-- ============ ENGINEER PERFORMANCE ============ -->
       <section class="page-section" data-page="engineerperf">
         <div class="section-header">
-          <div><div class="eyebrow">People</div><h2>Engineer Performance</h2><p>Weighted performance score: SLA 25% · Tickets Closed 15% · Escalation 15% · Reopen 10% · Resolution Time 15% · Response Time 10% · Rating 10%.</p></div>
+          <div><div class="eyebrow">People</div><h2>Engineer Performance</h2><p>Weighted performance score: SLA 15% · Service Compliance 10% · Tickets Closed 15% · Escalation 15% · Reopen 10% · Resolution Time 15% · Response Time 10% · Rating 10%.</p></div>
         </div>
 
         <div id="engPerfNoData" class="no-data-hint">
@@ -2046,7 +2202,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           <div class="dt-wrap">
             <table class="table" id="engPerfTable" style="width:100%;">
               <thead>
-                <tr><th>Engineer</th><th>Score</th><th>SLA (25%)</th><th>Closed (15%)</th><th>Escalation (15%)</th><th>Reopen (10%)</th><th>Resolution Time (15%)</th><th>Response Time (10%)</th><th>Rating (10%)</th></tr>
+                <tr><th>Engineer</th><th>Score</th><th>SLA (15%)</th><th>Service Compliance (10%)</th><th>Closed (15%)</th><th>Escalation (15%)</th><th>Reopen (10%)</th><th>Resolution Time (15%)</th><th>Response Time (10%)</th><th>Rating (10%)</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -2781,15 +2937,30 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
           <!-- 9. CUSTOMER RISK -->
           <div class="kpi-group-label" style="margin-top:24px;"><i class="fa-solid fa-building-shield"></i> Customers Requiring Proactive Attention</div>
+          <p class="pro-section-desc">Ranked by a risk score weighting each ticket's most severe open finding (Breach &gt; Data Gap &gt; At Risk/Action Required), normalized per ticket so busy and quiet accounts are compared fairly. <strong>Needs Attention / Watch / Healthy</strong> split the current account population into thirds by that score — relative standing this run, not a fixed pass/fail line.</p>
+          <div class="pro-risk-chips" id="custRiskChips">
+            <button type="button" class="pro-risk-chip active" data-filter="all">All accounts</button>
+            <button type="button" class="pro-risk-chip" data-filter="Needs Attention">Needs Attention</button>
+            <button type="button" class="pro-risk-chip" data-filter="Watch">Watch</button>
+            <button type="button" class="pro-risk-chip" data-filter="Healthy">Healthy</button>
+          </div>
           <div class="dt-wrap"><table class="table" id="proCustomerRiskTable" style="width:100%;">
-            <thead><tr><th>Customer</th><th>Open Cases</th><th>Act Now</th><th>Action Today</th><th>SLA Risks</th><th>Delegation Risks</th><th>Communication Risks</th><th>Escalations</th><th>Data Gaps</th><th>Overall Risk</th></tr></thead>
+            <thead><tr><th>Customer</th><th>Open Cases</th><th>Act Now</th><th>Action Today</th><th>SLA Risks</th><th>Delegation Risks</th><th>Communication Risks</th><th>Escalations</th><th>Data Gaps</th><th>Risk Score</th><th>Health</th><th>Why</th><th>What's Needed for "Healthy"</th></tr></thead>
             <tbody></tbody>
           </table></div>
 
           <!-- 10. ENGINEER / TEAM ACTION -->
           <div class="kpi-group-label" style="margin-top:24px;"><i class="fa-solid fa-user-gear"></i> Engineers / Teams Requiring Attention</div>
+          <p class="pro-section-desc">Team overview first (risk score per ticket, by team), then every engineer ranked the same way. <strong>Doing Good / Needs Improvement / Doing Bad</strong> are relative thirds across the current engineer population, not fixed targets.</p>
+          <div class="pro-team-grid" id="proTeamGrid"></div>
+          <div class="pro-risk-chips" id="engRiskChips">
+            <button type="button" class="pro-risk-chip active" data-filter="all">All engineers</button>
+            <button type="button" class="pro-risk-chip" data-filter="Doing Bad">Doing Bad</button>
+            <button type="button" class="pro-risk-chip" data-filter="Needs Improvement">Needs Improvement</button>
+            <button type="button" class="pro-risk-chip" data-filter="Doing Good">Doing Good</button>
+          </div>
           <div class="dt-wrap"><table class="table" id="proEngineerRiskTable" style="width:100%;">
-            <thead><tr><th>Engineer</th><th>Team</th><th>Open Cases</th><th>Act Now</th><th>Action Today</th><th>SLA Risks</th><th>Delegation Risks</th><th>Aging/Stale</th><th>Data Gaps</th><th>Primary Action</th></tr></thead>
+            <thead><tr><th>Engineer</th><th>Team</th><th>Open Cases</th><th>Act Now</th><th>Action Today</th><th>SLA Risks</th><th>Delegation Risks</th><th>Aging/Stale</th><th>Data Gaps</th><th>Risk Score</th><th>Performance</th><th>Why</th><th>What's Needed for "Doing Good"</th></tr></thead>
             <tbody></tbody>
           </table></div>
 
@@ -3219,7 +3390,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     'first_response_sla_status','first_response_sla_target_minutes','first_response_sla_start_time',
     'first_response_sla_target_end_time','first_response_sla_actual_end_time','first_response_sla_breached',
     'resolution_sla_status','resolution_sla_target_minutes','resolution_sla_start_time',
-    'resolution_sla_target_end_time','resolution_sla_actual_end_time','resolution_sla_breached'
+    'resolution_sla_target_end_time','resolution_sla_actual_end_time','resolution_sla_breached',
+    'service_delivery_name'
   ];
 
   // Columns critical enough that, if missing, we warn hard (but still allow
@@ -3254,7 +3426,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     support_category:     ['category'],
     support_feature:      ['feature'],
     support_subfeature:   ['sub feature', 'subfeature'],
-    closed_time:          ['closure time', 'close time']
+    closed_time:          ['closure time', 'close time'],
+    service_delivery_name:['service delivery', 'service delivery manager', 'technical account manager', 'account manager', 'tam', 'delivery manager']
   };
 
   const ACCEPTED_EXT = ['xlsx','xls','csv'];
@@ -3866,6 +4039,90 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 </div>
 
 <!-- ============================================================
+     CUSTOMER REPORT MODAL (Module 5)
+     A print-ready "Monthly Account Review" per customer, styled after
+     the sample MSP compliance report. Previews on screen first — the
+     person reviews it here, then "Download as PDF" triggers the
+     browser's own print dialog (destination "Save as PDF"), scoped via
+     @media print to just this sheet, so no server or extra library is
+     needed to produce the PDF.
+     ============================================================ -->
+<div class="modal fade gov-modal gov-print-report" id="customerReportModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Monthly Account Review — Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="cust-report-sheet" id="custReportSheet">
+          <div class="cr-topbar">
+            <div class="cr-brand">
+              <div class="cr-brand-icon"><img src="https://sapphireuno.com/wp-content/uploads/2025/11/SapphireUno-Logo-Web-min.png" alt="SapphireUNO" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'SU',style:'font-family:var(--font-display);font-weight:800;font-size:16px;color:#1A1A2E;'}));"></div>
+              <div class="cr-title">MONTHLY ACCOUNT REVIEW</div>
+            </div>
+            <div class="cr-period-pill" id="crPeriod">—</div>
+          </div>
+
+          <div class="cr-cust-row">
+            <h2 id="crCustName">—</h2>
+            <label class="cr-tam"><i class="fa-solid fa-user-tie"></i>&nbsp;Technical Account Manager:
+              <input type="text" id="crTamInput" placeholder="Add name…">
+            </label>
+          </div>
+
+          <div class="cr-kpi-grid" id="crKpiGrid"></div>
+
+          <div class="cr-tables-row">
+            <div class="cr-table-card">
+              <div class="cr-table-head"><i class="fa-solid fa-list-check"></i> Ticket Volume Analysis</div>
+              <table>
+                <thead><tr><th>Category</th><th>Open</th><th>Logged</th><th>Resolved</th></tr></thead>
+                <tbody id="crVolumeBody"></tbody>
+              </table>
+            </div>
+            <div class="cr-table-card">
+              <div class="cr-table-head"><i class="fa-solid fa-clock"></i> Performance (Avg Days)</div>
+              <table>
+                <thead><tr><th>Metric</th><th>Incident</th><th>SR</th></tr></thead>
+                <tbody id="crPerfBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cr-chart-card">
+            <div class="cr-chart-head"><i class="fa-solid fa-chart-area"></i> Overall Volume Trend (Logged vs Closed)</div>
+            <canvas id="chartCrVolume"></canvas>
+          </div>
+          <div class="cr-chart-card">
+            <div class="cr-chart-head"><i class="fa-solid fa-shield-halved"></i> SLA Compliance Trend</div>
+            <canvas id="chartCrSla"></canvas>
+          </div>
+          <div class="cr-chart-card">
+            <div class="cr-chart-head"><i class="fa-solid fa-arrow-trend-up"></i> Average Resolution Trend</div>
+            <canvas id="chartCrResTrend"></canvas>
+          </div>
+
+          <div class="cr-table-card" style="margin-bottom:8px;">
+            <div class="cr-table-head"><i class="fa-solid fa-folder-open"></i> Open Cases Overview</div>
+            <table>
+              <thead><tr><th>Metric</th><th>Count</th><th>Status</th></tr></thead>
+              <tbody id="crOpenBody"></tbody>
+            </table>
+          </div>
+
+          <div class="cr-footer">Generated by SapphireUNO Customer Success — MSP Support</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="text-secondary" id="crTicketCount" style="font-size:12px;margin-right:auto;"></span>
+        <button class="btn-primary-gov" id="crDownloadPdfBtn"><i class="fa-solid fa-file-pdf"></i> Download as PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
      ENGINEER DRILL-DOWN MODAL (Module 6)
      ============================================================ -->
 <div class="modal fade gov-modal" id="engineerDrillModal" tabindex="-1">
@@ -3901,6 +4158,106 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       <div class="modal-footer">
         <span class="text-secondary" id="engModalCount" style="font-size:12px;margin-right:auto;"></span>
         <button class="btn-primary-gov" id="engModalExportBtn"><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ENGINEER REPORT MODAL (Module 6)
+     A print-ready "Engineer Performance Review" — every KPI shown as
+     a column in the Engineer Table, organized into readable sections
+     instead of one wide row, plus a Score Breakdown chart so the
+     person can see at a glance where this engineer is strong or
+     needs support. Same preview-then-print pattern as the Customer
+     Report: reviews on screen first, "Download as PDF" reuses the
+     browser's print dialog via the shared .gov-print-report print CSS.
+     ============================================================ -->
+<div class="modal fade gov-modal gov-print-report" id="engineerReportModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Engineer Performance Review — Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="cust-report-sheet" id="engReportSheet">
+          <div class="cr-topbar">
+            <div class="cr-brand">
+              <div class="cr-brand-icon"><img src="https://sapphireuno.com/wp-content/uploads/2025/11/SapphireUno-Logo-Web-min.png" alt="SapphireUNO" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'SU',style:'font-family:var(--font-display);font-weight:800;font-size:16px;color:#1A1A2E;'}));"></div>
+              <div class="cr-title">ENGINEER PERFORMANCE REVIEW</div>
+            </div>
+            <div class="cr-period-pill" id="erPeriod">—</div>
+          </div>
+
+          <div class="cr-cust-row">
+            <h2 id="erEngName">—</h2>
+            <div id="erScoreBadge"></div>
+          </div>
+
+          <div class="cr-kpi-grid" id="erKpiGrid"></div>
+
+          <div class="cr-chart-card">
+            <div class="cr-chart-head"><i class="fa-solid fa-chart-simple"></i> Score Breakdown — Weighted Performance (% of each component's maximum)</div>
+            <div class="cr-scorebar-wrap"><canvas id="chartErScore"></canvas></div>
+          </div>
+
+          <div class="cr-tables-row">
+            <div class="cr-table-card">
+              <div class="cr-table-head"><i class="fa-solid fa-list-check"></i> Ticket Volume</div>
+              <table>
+                <thead><tr><th>Category</th><th>Total</th><th>Incident</th><th>SR</th></tr></thead>
+                <tbody id="erVolumeBody"></tbody>
+              </table>
+            </div>
+            <div class="cr-table-card">
+              <div class="cr-table-head"><i class="fa-solid fa-clock"></i> SLA &amp; Quality</div>
+              <table>
+                <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+                <tbody id="erQualityBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cr-tables-row">
+            <div class="cr-table-card">
+              <div class="cr-table-head"><i class="fa-solid fa-people-arrows"></i> Delegation</div>
+              <table>
+                <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+                <tbody id="erDelegationBody"></tbody>
+              </table>
+            </div>
+            <div class="cr-table-card">
+              <div class="cr-table-head"><i class="fa-solid fa-hourglass-half"></i> Effort Hours</div>
+              <table>
+                <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+                <tbody id="erEffortBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cr-table-card" style="margin-bottom:16px;">
+            <div class="cr-table-head"><i class="fa-solid fa-headset"></i> Open Service Compliance</div>
+            <table>
+              <thead><tr><th>Segment</th><th>Within Target</th><th>Breached</th><th>Compliance %</th></tr></thead>
+              <tbody id="erOpenSvcBody"></tbody>
+            </table>
+          </div>
+
+          <div class="cr-table-card" style="margin-bottom:8px;">
+            <div class="cr-table-head"><i class="fa-solid fa-headset"></i> Closed Service Compliance</div>
+            <table>
+              <thead><tr><th>Segment</th><th>Within Target</th><th>Breached</th><th>Compliance %</th></tr></thead>
+              <tbody id="erClosedSvcBody"></tbody>
+            </table>
+          </div>
+
+          <div class="cr-footer">Generated by SapphireUNO Customer Success — MSP Support</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="text-secondary" id="erTicketCount" style="font-size:12px;margin-right:auto;"></span>
+        <button class="btn-primary-gov" id="erDownloadPdfBtn"><i class="fa-solid fa-file-pdf"></i> Download as PDF</button>
       </div>
     </div>
   </div>
@@ -4898,6 +5255,35 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     return set;
   }
 
+  // ---- SR / INC classification ----
+  // service === 'Service Request' is an SR; service === 'Incident
+  // Management' is an INC. Within SR, sr_service holds exactly two
+  // values in the data — 'Standard' and 'Non-Standard'. Anything that
+  // isn't explicitly 'Standard' (including a blank/missing value) is
+  // treated as Non-Standard.
+  function isSR(r){ return String(r.service||'').trim() === 'Service Request'; }
+  function isINC(r){ return String(r.service||'').trim() === 'Incident Management'; }
+  function isNonStdSR(r){ return String(r.sr_service||'').trim().toLowerCase() !== 'standard'; }
+
+  // ---- SLA Target (Days), by policy ----
+  // resolution_sla_target_minutes turned out to reflect one flat,
+  // company-wide value in the source file rather than a value that
+  // actually varies by ticket type — averaging it always converged to
+  // the same number regardless of scope. The real, ticket-type-aware
+  // targets are the same fixed policy used by the "Open Service" /
+  // "Closed Service" KPI groups elsewhere on this page: Standard SR =
+  // 3 days, Non-Standard SR = 5 days, INC = 5 days. Using those here
+  // instead means "SLA Target (Days)" for a mixed set of tickets is a
+  // real weighted blend that moves with the actual Std/Non-Std SR mix,
+  // not a flat number.
+  const SR_STD_TARGET_DAYS = 3, SR_NONSTD_TARGET_DAYS = 5, INC_TARGET_DAYS = 5;
+  function policyTargetDaysFor(r){
+    const t = classifyTicketType(r);
+    if(t === 'incident') return INC_TARGET_DAYS;
+    if(t === 'sr') return isNonStdSR(r) ? SR_NONSTD_TARGET_DAYS : SR_STD_TARGET_DAYS;
+    return null;
+  }
+
   // ---- Theme-aware chart color palette, re-read on every (re)build ----
   function chartColors(){
     const css = getComputedStyle(document.documentElement);
@@ -5029,6 +5415,84 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { icon:'fa-user-gear', label:'Total Engineers', value: fmtN(k.totalEngineers), tone:'', drillKey:'totalEngineers' }
     ];
     document.getElementById('kpiGridPeople').innerHTML = peopleCards.map(kpiCard).join('');
+  }
+
+  // ================================================================
+  // OPEN / CLOSED SR & INC SERVICE — "Open Service" / "Closed Service"
+  // KPI groups
+  // ----------------------------------------------------------------
+  // Age reuses the same _age_days every other module already computes
+  // (calendar days): for an open ticket that's days-since-creation-to-
+  // today; for a closed ticket it's days-from-creation-to-close/resolve
+  // (its TAT). Targets: Standard SR = 3 days, Non-Standard SR = 5 days,
+  // INC = 5 days.
+  //
+  // Each of the six "3/5-day target" cards is really a PAIR of numbers
+  // shown together: Non-Violated (age <= target) and Violated (age >
+  // target), out of that segment's total — for both Open (still-open
+  // aging) and Closed (turnaround-time) tickets alike. The "count"
+  // card shows both raw counts; the "%" card shows both percentages
+  // of the same segment. Both cards in a pair drill into the same
+  // underlying ticket set.
+  // ================================================================
+  function renderSrIncKPIs(rows){
+    const live = rows.filter(function(r){ return !r._is_excluded; });
+
+    const openSR   = live.filter(function(r){ return r._is_open   && isSR(r); });
+    const closedSR = live.filter(function(r){ return r._is_closed && isSR(r); });
+    const openINC  = live.filter(function(r){ return r._is_open   && isINC(r); });
+    const closedINC= live.filter(function(r){ return r._is_closed && isINC(r); });
+
+    const openStdSR    = openSR.filter(function(r){ return !isNonStdSR(r); });
+    const openNonStdSR = openSR.filter(isNonStdSR);
+    const closedStdSR    = closedSR.filter(function(r){ return !isNonStdSR(r); });
+    const closedNonStdSR = closedSR.filter(isNonStdSR);
+
+    const agedOver = function(list, n){ return list.filter(function(r){ return r._age_days !== null && r._age_days > n; }).length; };
+    const agedWithin = function(list, n){ return list.filter(function(r){ return r._age_days !== null && r._age_days <= n; }).length; };
+
+    // Builds the {count value, pct value} pair of strings for one
+    // Non-Violated / Violated split, colored green / red.
+    function violationPair(nonViolated, violated){
+      const denom = nonViolated + violated;
+      const nvPct = denom ? nonViolated/denom*100 : null;
+      const vPct  = denom ? violated/denom*100 : null;
+      const sep = '<span style="color:var(--text-muted);font-weight:400;font-size:0.6em;"> / </span>';
+      return {
+        countValue: '<span style="color:var(--status-good)">' + fmtN(nonViolated) + '</span>' + sep + '<span style="color:var(--status-bad)">' + fmtN(violated) + '</span>',
+        pctValue: '<span style="color:var(--status-good)">' + (nvPct===null?'—':fmtN(nvPct,1)+'%') + '</span>' + sep + '<span style="color:var(--status-bad)">' + (vPct===null?'—':fmtN(vPct,1)+'%') + '</span>',
+        sub: 'Non-Violated / Violated · of ' + fmtN(denom)
+      };
+    }
+
+    const openStd    = violationPair(agedWithin(openStdSR, 3),    agedOver(openStdSR, 3));
+    const openNonStd = violationPair(agedWithin(openNonStdSR, 5), agedOver(openNonStdSR, 5));
+    const openInc     = violationPair(agedWithin(openINC, 5),     agedOver(openINC, 5));
+    const closedStd    = violationPair(agedWithin(closedStdSR, 3),    agedOver(closedStdSR, 3));
+    const closedNonStd = violationPair(agedWithin(closedNonStdSR, 5), agedOver(closedNonStdSR, 5));
+    const closedInc     = violationPair(agedWithin(closedINC, 5),     agedOver(closedINC, 5));
+
+    document.getElementById('kpiGridOpenService').innerHTML = [
+      { icon:'fa-headset', label:'Total Open SR', value: fmtN(openSR.length), sub: fmtN(openStdSR.length) + ' Std · ' + fmtN(openNonStdSR.length) + ' Non-Std', tone:'', drillKey:'totalOpenSR' },
+      { icon:'fa-triangle-exclamation', label:'Total Open INC', value: fmtN(openINC.length), sub: 'All open incidents', tone:'', drillKey:'totalOpenINC' },
+      { icon:'fa-hourglass-half', label:'Open SR – Std 3 Days', value: openStd.countValue, sub: openStd.sub + ' open Std SR', tone:'', drillKey:'openSrStd' },
+      { icon:'fa-percent', label:'Open SR – Std 3 Days %', value: openStd.pctValue, sub: openStd.sub + ' open Std SR', tone:'', drillKey:'openSrStd' },
+      { icon:'fa-clock', label:'Open SR – Non-Std 5 Days', value: openNonStd.countValue, sub: openNonStd.sub + ' open Non-Std SR', tone:'', drillKey:'openSrNonStd' },
+      { icon:'fa-percent', label:'Open SR – Non-Std 5 Days %', value: openNonStd.pctValue, sub: openNonStd.sub + ' open Non-Std SR', tone:'', drillKey:'openSrNonStd' },
+      { icon:'fa-triangle-exclamation', label:'Open INC – 5 Days', value: openInc.countValue, sub: openInc.sub + ' open INC', tone:'', drillKey:'openInc' },
+      { icon:'fa-percent', label:'Open INC – 5 Days %', value: openInc.pctValue, sub: openInc.sub + ' open INC', tone:'', drillKey:'openInc' }
+    ].map(kpiCard).join('');
+
+    document.getElementById('kpiGridClosedService').innerHTML = [
+      { icon:'fa-headset', label:'Total Closed SR', value: fmtN(closedSR.length), sub: fmtN(closedStdSR.length) + ' Std · ' + fmtN(closedNonStdSR.length) + ' Non-Std', tone:'', drillKey:'totalClosedSR' },
+      { icon:'fa-triangle-exclamation', label:'Total Closed INC', value: fmtN(closedINC.length), sub: 'All closed incidents', tone:'', drillKey:'totalClosedINC' },
+      { icon:'fa-circle-check', label:'Closed SR – Std 3 Days', value: closedStd.countValue, sub: closedStd.sub + ' closed Std SR', tone:'', drillKey:'closedSrStd' },
+      { icon:'fa-percent', label:'Closed SR – Std 3 Days %', value: closedStd.pctValue, sub: closedStd.sub + ' closed Std SR', tone:'', drillKey:'closedSrStd' },
+      { icon:'fa-circle-check', label:'Closed SR – Non-Std 5 Days', value: closedNonStd.countValue, sub: closedNonStd.sub + ' closed Non-Std SR', tone:'', drillKey:'closedSrNonStd' },
+      { icon:'fa-percent', label:'Closed SR – Non-Std 5 Days %', value: closedNonStd.pctValue, sub: closedNonStd.sub + ' closed Non-Std SR', tone:'', drillKey:'closedSrNonStd' },
+      { icon:'fa-circle-check', label:'Closed INC – 5 Days', value: closedInc.countValue, sub: closedInc.sub + ' closed INC', tone:'', drillKey:'closedInc' },
+      { icon:'fa-percent', label:'Closed INC – 5 Days %', value: closedInc.pctValue, sub: closedInc.sub + ' closed INC', tone:'', drillKey:'closedInc' }
+    ].map(kpiCard).join('');
   }
 
   function slaTone(pct, inverse){
@@ -5301,6 +5765,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const rows = window.GovData.filteredRows || [];
     const k = computeKPIs(rows);
     renderKPIs(k);
+    renderSrIncKPIs(rows);
     renderCharts(rows);
     renderExecAnalysis(rows);
   }
@@ -5420,8 +5885,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const resDaysVals = closedInPeriod.map(function(r){ return toNum(r.tat_days); }).filter(function(v){ return v !== null; });
     const avgResDays = resDaysVals.length ? avg(resDaysVals) : null;
 
-    const targetVals = periodRows.map(function(r){ return toNum(r.resolution_sla_target_minutes); }).filter(function(v){ return v !== null; });
-    const avgTargetDays = targetVals.length ? (avg(targetVals) / 1440) : null;
+    const targetVals = closedInPeriod.map(policyTargetDaysFor).filter(function(v){ return v !== null; });
+    const avgTargetDays = targetVals.length ? avg(targetVals) : null;
 
     return { total: total, slaPct: slaPct, fcrPct: fcrPct, agingPct: agingPct, edocPct: edocPct, emailPct: emailPct,
       subMissPct: subMissPct, l1AgingPct: l1AgingPct, avgResDays: avgResDays, avgTargetDays: avgTargetDays,
@@ -5548,8 +6013,10 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   });
 
   // ---- Performance (Avg Days): Incident vs Service Request ----
+  // Reads service ONLY (sr_service holds Standard/Non-Standard, not the
+  // ticket type, so it must never be checked here).
   function classifyTicketType(r){
-    const v = String(r.sr_service || r.service || '').trim().toLowerCase();
+    const v = String(r.service || '').trim().toLowerCase();
     if(v.indexOf('incident') !== -1) return 'incident';
     if(v.indexOf('service request') !== -1 || v === 'sr' || v.indexOf(' sr ') !== -1) return 'sr';
     return null;
@@ -5557,8 +6024,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function renderPerfAvgTable(rows){
     const incidentRows = rows.filter(function(r){ return classifyTicketType(r) === 'incident'; });
     const srRows = rows.filter(function(r){ return classifyTicketType(r) === 'sr'; });
-    function actualAvg(list){ const v = list.map(function(r){ return toNum(r.tat_days); }).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
-    function targetAvg(list){ const v = list.map(function(r){ return toNum(r.resolution_sla_target_minutes); }).filter(function(x){ return x!==null; }); return v.length ? avg(v)/1440 : null; }
+    function actualAvg(list){ const v = list.filter(function(r){ return r._is_closed; }).map(function(r){ return toNum(r.tat_days); }).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
+    function targetAvg(list){ const v = list.filter(function(r){ return r._is_closed; }).map(policyTargetDaysFor).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
     const hasType = incidentRows.length > 0 || srRows.length > 0;
     const rowsHtml = [
       ['Actual (24/7)', hasType && incidentRows.length ? fmtDays(actualAvg(incidentRows)) : 'Data unavailable', hasType && srRows.length ? fmtDays(actualAvg(srRows)) : 'Data unavailable'],
@@ -5601,11 +6068,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     }).sort(function(a,b){ return b.total - a.total; });
   }
 
-  // Reuses the exact same weighted-composite formula as the existing
-  // Engineer Dashboard / Delegation "Performance Score" (SLA 25% ·
+  // Uses the same weighted-composite formula the Engineer Dashboard used
+  // before its Service Compliance component was added (SLA 25% ·
   // Closed volume 15% · Escalation-inverse 15% · Reopen-inverse 10% ·
-  // Resolution-time-inverse 15% · Response-time-inverse 10% · Rating 10%)
-  // — not a new scoring methodology.
+  // Resolution-time-inverse 15% · Response-time-inverse 10% · Rating 10%).
+  // Kept as-is here — Customer Dashboard has no per-customer Open/Closed
+  // Service (SR Std/Non-Std, INC) segments to derive a Service Compliance
+  // figure from, so this score intentionally stays on the original weights.
   function computePerfScores(list){
     if(!list.length) return list;
     function minMax(vals){
@@ -5795,13 +6264,33 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   }
 
   // Ticket Type classification (Incident vs Service Request), shared by the
-  // INC/SR breakdown columns below — mirrors classifyTicketType() in the
-  // Executive Summary module exactly (reads sr_service, falls back to
-  // service), kept local per this file's one-module-one-scope convention.
+  // INC/SR breakdown columns below — reads service ONLY (sr_service holds
+  // Standard/Non-Standard, not the ticket type, so it must never be
+  // checked here), kept local per this file's one-module-one-scope
+  // convention.
   function classifyTicketType(r){
-    const v = String(r.sr_service || r.service || '').trim().toLowerCase();
+    const v = String(r.service || '').trim().toLowerCase();
     if(v.indexOf('incident') !== -1) return 'incident';
     if(v.indexOf('service request') !== -1 || v === 'sr' || v.indexOf(' sr ') !== -1) return 'sr';
+    return null;
+  }
+  // Standard vs Non-Standard split within SR tickets — sr_service holds
+  // exactly two values in the data ('Standard' / 'Non-Standard'); a
+  // blank/missing value is treated as Non-Standard.
+  function isNonStdSR(r){ return String(r.sr_service||'').trim().toLowerCase() !== 'standard'; }
+  // SLA Target (Days), by policy — resolution_sla_target_minutes turned
+  // out to reflect one flat, company-wide value in the source file
+  // rather than a value that varies by ticket type, so averaging it
+  // always converged to the same number regardless of scope. Uses the
+  // same fixed policy as the "Open Service"/"Closed Service" KPI groups
+  // on Executive Summary instead: Standard SR = 3 days, Non-Standard SR
+  // = 5 days, INC = 5 days — a real weighted blend that moves with the
+  // actual Std/Non-Std SR mix, not a flat number.
+  const SR_STD_TARGET_DAYS = 3, SR_NONSTD_TARGET_DAYS = 5, INC_TARGET_DAYS = 5;
+  function policyTargetDaysFor(r){
+    const t = classifyTicketType(r);
+    if(t === 'incident') return INC_TARGET_DAYS;
+    if(t === 'sr') return isNonStdSR(r) ? SR_NONSTD_TARGET_DAYS : SR_STD_TARGET_DAYS;
     return null;
   }
   function boolish(v){
@@ -6117,6 +6606,189 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   });
 
   // ---------------------------------------------------------------
+  // CUSTOMER REPORT — "Monthly Account Review" preview + PDF export
+  // ----------------------------------------------------------------
+  // Fixed (non-theme) colors so the report reads like a document
+  // regardless of the dashboard's own light/dark mode.
+  const CR_COLORS = { blue:'#2F6FED', green:'#22C55E', teal:'#06B6D4', orange:'#F59E0B', red:'#EF4444', text:'#7A7E8C', grid:'#EEF0F5' };
+
+  // Technical Account Manager isn't a fixed field in most tickets — the
+  // dashboard reads it from the same column used for "Service Delivery
+  // Name" in the source file (see service_delivery_name / its aliases
+  // in COLUMN_ALIASES). Auto-derived from that customer's tickets (most
+  // common non-blank value); still editable per customer for the cases
+  // where the file doesn't carry that column, in-memory only for this
+  // session (same "not persisted" convention as window.GovSettings
+  // elsewhere in this file) — a manual edit always wins over the
+  // auto-derived value.
+  let custReportTAM = {};
+  let activeReportCustomer = null;
+  function mostCommonNonBlank(values){
+    const counts = {};
+    values.forEach(function(v){
+      const s = String(v||'').trim();
+      if(s) counts[s] = (counts[s]||0) + 1;
+    });
+    let best = '', bestCount = 0;
+    Object.keys(counts).forEach(function(k){ if(counts[k] > bestCount){ best = k; bestCount = counts[k]; } });
+    return best;
+  }
+
+  function crMonthKeyOf(date){
+    return date ? (date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0')) : null;
+  }
+  function crMonthLabel(key){
+    const parts = key.split('-');
+    return new Date(+parts[0], +parts[1]-1, 1).toLocaleDateString('en-US', { month:'short', year:'numeric' });
+  }
+  // Low/Medium/High is a simple, clearly-labeled convention for this
+  // report only (small per-customer open-ticket counts) — not tied to
+  // any SLA policy elsewhere in the app.
+  function crOpenStatus(n){
+    if(n <= 2) return { label:'Low', cls:'low' };
+    if(n <= 5) return { label:'Medium', cls:'medium' };
+    return { label:'High', cls:'high' };
+  }
+
+  function openCustomerReport(name){
+    const c = customerLookup[name];
+    if(!c) return;
+    activeReportCustomer = name;
+
+    document.getElementById('crCustName').textContent = name;
+    document.getElementById('crTamInput').value = custReportTAM[name] !== undefined ? custReportTAM[name] : mostCommonNonBlank(c.rows.map(function(r){ return r.service_delivery_name; }));
+    document.getElementById('crTicketCount').textContent = fmtN(c.rows.length) + ' ticket' + (c.rows.length===1?'':'s') + ' in scope';
+
+    // ---- Report period — earliest to latest creation date among this
+    // customer's currently-filtered tickets ----
+    const dates = c.rows.map(function(r){ return r._creation_date; }).filter(Boolean);
+    let periodText = '—';
+    if(dates.length){
+      const minD = new Date(Math.min.apply(null, dates.map(function(d){ return d.getTime(); })));
+      const maxD = new Date(Math.max.apply(null, dates.map(function(d){ return d.getTime(); })));
+      periodText = minD.toLocaleDateString('en-US',{month:'short',year:'numeric'}) + ' – ' + maxD.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+    }
+    document.getElementById('crPeriod').textContent = periodText;
+
+    // ---- Ticket Type split (Incident / SR) for this customer ----
+    const incRows = c.rows.filter(function(r){ return classifyTicketType(r) === 'incident'; });
+    const srRows = c.rows.filter(function(r){ return classifyTicketType(r) === 'sr'; });
+    function volOf(list){ return { open:list.filter(function(r){ return r._is_open; }).length, logged:list.length, resolved:list.filter(function(r){ return r._is_closed; }).length }; }
+    const incVol = volOf(incRows), srVol = volOf(srRows);
+    const totalVol = { open:incVol.open+srVol.open, logged:incVol.logged+srVol.logged, resolved:incVol.resolved+srVol.resolved };
+
+    // ---- KPI cards ----
+    const slaLabel = c.slaPct===null ? '—' : (c.slaPct>=90 ? 'On Track' : (c.slaPct>=75 ? 'Needs Attention' : 'At Risk'));
+    const kpis = [
+      { label:'SLA Compliance', value: c.slaPct===null?'—':fmtN(c.slaPct,0)+'%', sub: slaLabel, good: c.slaPct!==null && c.slaPct>=90 },
+      { label:'CSAT Score', value:'N/A', sub:'0 Surveys', good:false },
+      { label:'Tickets Logged', value: fmtN(c.total), sub:'All Categories', good:false },
+      { label:'Tickets Resolved', value: fmtN(c.closed), sub:'This Period', good:false }
+    ];
+    document.getElementById('crKpiGrid').innerHTML = kpis.map(function(k){
+      return '<div class="cr-kpi-card' + (k.good?' good':'') + '"><div class="cr-kpi-label">' + k.label + '</div><div class="cr-kpi-value">' + k.value + '</div><div class="cr-kpi-sub">' + k.sub + '</div></div>';
+    }).join('');
+
+    // ---- Ticket Volume Analysis table ----
+    document.getElementById('crVolumeBody').innerHTML =
+      '<tr><td>Incident</td><td>' + fmtN(incVol.open) + '</td><td>' + fmtN(incVol.logged) + '</td><td>' + fmtN(incVol.resolved) + '</td></tr>' +
+      '<tr><td>Service Req</td><td>' + fmtN(srVol.open) + '</td><td>' + fmtN(srVol.logged) + '</td><td>' + fmtN(srVol.resolved) + '</td></tr>' +
+      '<tr><td>Total</td><td>' + fmtN(totalVol.open) + '</td><td>' + fmtN(totalVol.logged) + '</td><td>' + fmtN(totalVol.resolved) + '</td></tr>';
+
+    // ---- Performance (Avg Days) table ----
+    function actualAvgDays(list){ const v = list.filter(function(r){ return r._is_closed; }).map(function(r){ return toNum(r.tat_days); }).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
+    function targetAvgDays(list){ const v = list.filter(function(r){ return r._is_closed; }).map(policyTargetDaysFor).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
+    const incActual = actualAvgDays(incRows), srActual = actualAvgDays(srRows);
+    const incTarget = targetAvgDays(incRows), srTarget = targetAvgDays(srRows);
+    document.getElementById('crPerfBody').innerHTML =
+      '<tr><td>Avg Closure (Days)</td><td>' + (incActual===null?'—':fmtN(incActual,1)) + '</td><td>' + (srActual===null?'—':fmtN(srActual,1)) + '</td></tr>' +
+      '<tr><td>SLA Target (Days)</td><td>' + (incTarget===null?'—':fmtN(incTarget,1)) + '</td><td>' + (srTarget===null?'—':fmtN(srTarget,1)) + '</td></tr>';
+
+    // ---- Open Cases Overview table ----
+    document.getElementById('crOpenBody').innerHTML = [
+      ['Total Open Calls', c.open], ['Incident (INC) Open', incVol.open], ['Service Request (SR) Open', srVol.open]
+    ].map(function(row){
+      const st = crOpenStatus(row[1]);
+      return '<tr><td>' + row[0] + '</td><td>' + fmtN(row[1]) + '</td><td><span class="cr-open-status ' + st.cls + '">' + st.label + '</span></td></tr>';
+    }).join('');
+
+    // ---- Monthly trend charts (grouped by creation month) ----
+    const months = Array.from(new Set(c.rows.map(function(r){ return r._month_key; }).filter(Boolean))).sort();
+    const labels = months.map(crMonthLabel);
+    const loggedSeries = months.map(function(m){ return c.rows.filter(function(r){ return r._month_key===m; }).length; });
+    const closedSeries = months.map(function(m){ return c.rows.filter(function(r){ return r._is_closed && crMonthKeyOf(r._closed_date)===m; }).length; });
+    const slaSeries = months.map(function(m){
+      const mrows = c.rows.filter(function(r){ return r._month_key===m; });
+      if(!mrows.length) return null;
+      const breached = mrows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; }).length;
+      return 100 - (breached/mrows.length*100);
+    });
+    const actualResSeries = months.map(function(m){
+      const v = c.rows.filter(function(r){ return r._month_key===m && r._is_closed; }).map(function(r){ return toNum(r.tat_days); }).filter(function(x){ return x!==null; });
+      return v.length ? avg(v) : null;
+    });
+    const targetResSeries = months.map(function(m){
+      const v = c.rows.filter(function(r){ return r._month_key===m && r._is_closed; }).map(policyTargetDaysFor).filter(function(x){ return x!==null; });
+      return v.length ? avg(v) : null;
+    });
+
+    destroyChart('chartCrVolume');
+    destroyChart('chartCrSla');
+    destroyChart('chartCrResTrend');
+    if(!months.length){
+      ['chartCrVolume','chartCrSla','chartCrResTrend'].forEach(function(id){
+        const ctx = document.getElementById(id).getContext('2d');
+        ctx.clearRect(0,0,9999,9999);
+      });
+    } else {
+      charts.chartCrVolume = new Chart(document.getElementById('chartCrVolume'), {
+        type:'line',
+        data:{ labels: labels, datasets:[
+          { label:'Logged Cases (by Creation Date)', data: loggedSeries, borderColor:CR_COLORS.blue, backgroundColor:CR_COLORS.blue+'26', fill:true, tension:0.35, pointRadius:3 },
+          { label:'Closed Cases (by Resolve Date)', data: closedSeries, borderColor:CR_COLORS.green, backgroundColor:CR_COLORS.green+'26', fill:true, tension:0.35, pointRadius:3 }
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
+          scales:{ y:{ beginAtZero:true, ticks:{ color:CR_COLORS.text }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
+        }
+      });
+      charts.chartCrSla = new Chart(document.getElementById('chartCrSla'), {
+        type:'line',
+        data:{ labels: labels, datasets:[
+          { label:'SLA Compliance %', data: slaSeries, borderColor:CR_COLORS.teal, backgroundColor:CR_COLORS.teal+'26', fill:true, tension:0.3, pointRadius:3, spanGaps:true }
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
+          scales:{ y:{ min:0, max:100, ticks:{ color:CR_COLORS.text, callback:function(v){ return v+'%'; } }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
+        }
+      });
+      charts.chartCrResTrend = new Chart(document.getElementById('chartCrResTrend'), {
+        type:'line',
+        data:{ labels: labels, datasets:[
+          { label:'24/7 Performance (Avg Days)', data: actualResSeries, borderColor:CR_COLORS.orange, backgroundColor:'transparent', tension:0.35, pointRadius:3, spanGaps:true },
+          { label:'Actual SLA Performance (Avg Days)', data: targetResSeries, borderColor:CR_COLORS.red, backgroundColor:'transparent', borderDash:[6,4], tension:0.35, pointRadius:3, spanGaps:true }
+        ]},
+        options:{ responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
+          scales:{ y:{ beginAtZero:true, ticks:{ color:CR_COLORS.text }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
+        }
+      });
+    }
+
+    new bootstrap.Modal(document.getElementById('customerReportModal')).show();
+  }
+  document.getElementById('crTamInput').addEventListener('input', function(){
+    if(activeReportCustomer) custReportTAM[activeReportCustomer] = this.value;
+  });
+  document.getElementById('crDownloadPdfBtn').addEventListener('click', function(){
+    document.body.classList.add('printing-report');
+    window.print();
+  });
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('printing-report');
+  });
+
+  // ---------------------------------------------------------------
   // pctPill — renders a percentage as a RAG-coloured pill.
   // normal direction (inverse=false): higher is better (e.g. SLA %, FCR %)
   // inverse direction (inverse=true): lower is better (e.g. Reopened %, Pending %)
@@ -6375,8 +7047,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const resDaysVals = closedInPeriod.map(function(r){ return toNum(r.tat_days); }).filter(function(v){ return v!==null; });
     const avgResDays = resDaysVals.length ? avg(resDaysVals) : null; // "24/7 TAT — Actual"
 
-    const targetVals = periodRows.map(function(r){ return toNum(r.resolution_sla_target_minutes); }).filter(function(v){ return v!==null; });
-    const avgTargetDays = targetVals.length ? (avg(targetVals)/1440) : null; // "SLA Target"
+    const targetVals = closedInPeriod.map(policyTargetDaysFor).filter(function(v){ return v!==null; });
+    const avgTargetDays = targetVals.length ? avg(targetVals) : null; // "SLA Target"
 
     return { total:total, closedCount:closedInPeriod.length, frSlaPct:frSlaPct, resSlaPct:resSlaPct, slaPct:slaPct, fcrPct:fcrPct, avgResDays:avgResDays, avgTargetDays:avgTargetDays };
   }
@@ -6517,6 +7189,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     $tbl.find('tbody').html(customers.map(function(c){
       return '<tr data-customer="' + esc(c.name) + '">' +
         '<td>' + esc(c.name) + '</td>' +
+        '<td><button type="button" class="btn-mini-report" data-customer="' + esc(c.name) + '"><i class="fa-solid fa-file-pdf"></i> Report</button></td>' +
         '<td data-order="' + c.healthScore + '">' + healthBadge(c) + '</td>' +
         '<td>' + fmtN(c.total) + '</td><td>' + fmtN(c.assignedInc) + '</td><td>' + fmtN(c.assignedSr) + '</td>' +
         '<td>' + fmtN(c.closed) + '</td><td>' + fmtN(c.closedInc) + '</td><td>' + fmtN(c.closedSr) + '</td>' +
@@ -6538,9 +7211,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         '<td>' + c.avgRating.toFixed(1) + '</td>' +
         '</tr>';
     }).join(''));
-    $tbl.DataTable({ pageLength: (window.GovSettings && window.GovSettings.tablePageLength) || 10, order:[[1,'desc']], language:{ searchPlaceholder:'Search customers…' }, scrollX:true });
+    $tbl.DataTable({ pageLength: (window.GovSettings && window.GovSettings.tablePageLength) || 10, order:[[2,'desc']], language:{ searchPlaceholder:'Search customers…' }, scrollX:true });
     $tbl.find('tbody').off('click').on('click', 'tr', function(){
       openCustomerDrill($(this).attr('data-customer'));
+    });
+    $tbl.find('tbody').off('click', '.btn-mini-report').on('click', '.btn-mini-report', function(e){
+      e.stopPropagation();
+      openCustomerReport($(this).attr('data-customer'));
     });
   }
 
@@ -6673,12 +7350,19 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
    (Tickets Closed, Avg Resolution Time, Avg Response Time, SLA
    Compliance, Escalations, Reopens, Customer Rating, Effort) but
    doesn't fix weights the way the Customer Health formula does. I
-   chose: SLA 25% · Tickets Closed 15% · Escalations 15% · Reopens
-   10% · Resolution Time 15% · Response Time 10% · Rating 10%
-   (=100%). "Effort" is intentionally NOT folded into the score —
-   rewarding low effort-per-ticket would penalize engineers who take
-   on harder tickets, so Effort stays visible as its own L1/L2/SME/
-   Total Hours KPI cards instead. Flagging both calls for review.
+   chose: SLA 15% · Service Compliance 10% · Tickets Closed 15% ·
+   Escalations 15% · Reopens 10% · Resolution Time 15% · Response
+   Time 10% · Rating 10% (=100%). "Effort" is intentionally NOT
+   folded into the score — rewarding low effort-per-ticket would
+   penalize engineers who take on harder tickets, so Effort stays
+   visible as its own L1/L2/SME/Total Hours KPI cards instead.
+   Service Compliance is new — the Non-Violated share across the
+   "Open Service"/"Closed Service" segments (Std SR <=3d, Non-Std SR
+   <=5d, INC <=5d) also added to this table, per instruction. It's
+   carved out of what was previously SLA's full 25% (now 15% + 10%)
+   since both measure breach rates and this keeps that combined
+   weight unchanged rather than diluting the other components.
+   Flagging both calls for review.
    ================================================================ */
 (function(){
   'use strict';
@@ -6728,14 +7412,34 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     };
   }
 
-  // Ticket Type classification (Incident vs Service Request) — mirrors
-  // classifyTicketType() in the Executive Summary module exactly (reads
-  // sr_service, falls back to service), kept local per this file's
-  // one-module-one-scope convention.
+  // Ticket Type classification (Incident vs Service Request) — reads
+  // service ONLY (sr_service holds Standard/Non-Standard, not the
+  // ticket type, so it must never be checked here — see fix note
+  // below), kept local per this file's one-module-one-scope convention.
   function classifyTicketType(r){
-    const v = String(r.sr_service || r.service || '').trim().toLowerCase();
+    const v = String(r.service || '').trim().toLowerCase();
     if(v.indexOf('incident') !== -1) return 'incident';
     if(v.indexOf('service request') !== -1 || v === 'sr' || v.indexOf(' sr ') !== -1) return 'sr';
+    return null;
+  }
+  // Standard vs Non-Standard split within SR tickets — sr_service holds
+  // exactly two values in the data ('Standard' / 'Non-Standard'); a
+  // blank/missing value is treated as Non-Standard. Mirrors the same
+  // rule used by the "Open Service" / "Closed Service" KPI groups on
+  // Executive Summary.
+  function isNonStdSR(r){ return String(r.sr_service||'').trim().toLowerCase() !== 'standard'; }
+  // SLA Target (Days), by policy — resolution_sla_target_minutes turned
+  // out to reflect one flat, company-wide value in the source file
+  // rather than a value that varies by ticket type, so averaging it
+  // always converged to the same number regardless of scope. Uses the
+  // same fixed policy as the "Open Service"/"Closed Service" KPI groups
+  // on Executive Summary instead: Standard SR = 3 days, Non-Standard SR
+  // = 5 days, INC = 5 days.
+  const SR_STD_TARGET_DAYS = 3, SR_NONSTD_TARGET_DAYS = 5, INC_TARGET_DAYS = 5;
+  function policyTargetDaysFor(r){
+    const t = classifyTicketType(r);
+    if(t === 'incident') return INC_TARGET_DAYS;
+    if(t === 'sr') return isNonStdSR(r) ? SR_NONSTD_TARGET_DAYS : SR_STD_TARGET_DAYS;
     return null;
   }
   function boolish(v){
@@ -6841,6 +7545,50 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const openInc     = erows.filter(function(r){ return r._is_open && classifyTicketType(r) === 'incident'; }).length;
       const openSr      = erows.filter(function(r){ return r._is_open && classifyTicketType(r) === 'sr'; }).length;
 
+      // ---- Open Service / Closed Service (mirrors Executive Summary) ----
+      // Same 6 segments (Open/Closed × SR-Std/SR-Non-Std/INC), each split
+      // into Non-Violated (age <= target) vs Violated (age > target).
+      // Targets: Std SR = 3 days, Non-Std SR = 5 days, INC = 5 days.
+      // These sub-split the same openSr/closedSr/openInc/closedInc rows
+      // above, so e.g. openStdSrNV + openStdSrV + openNonStdSrNV +
+      // openNonStdSrV always sums to openSr.
+      const openSrRows = erows.filter(function(r){ return r._is_open && classifyTicketType(r) === 'sr'; });
+      const closedSrRows = erows.filter(function(r){ return r._is_closed && classifyTicketType(r) === 'sr'; });
+      const openIncRows = erows.filter(function(r){ return r._is_open && classifyTicketType(r) === 'incident'; });
+      const closedIncRows = erows.filter(function(r){ return r._is_closed && classifyTicketType(r) === 'incident'; });
+      const openStdSrRows = openSrRows.filter(function(r){ return !isNonStdSR(r); });
+      const openNonStdSrRows = openSrRows.filter(isNonStdSR);
+      const closedStdSrRows = closedSrRows.filter(function(r){ return !isNonStdSR(r); });
+      const closedNonStdSrRows = closedSrRows.filter(isNonStdSR);
+      const nonViolated = function(list, n){ return list.filter(function(r){ return r._age_days !== null && r._age_days <= n; }).length; };
+      const violated = function(list, n){ return list.filter(function(r){ return r._age_days !== null && r._age_days > n; }).length; };
+
+      const openStdSrNV = nonViolated(openStdSrRows, 3), openStdSrV = violated(openStdSrRows, 3);
+      const openNonStdSrNV = nonViolated(openNonStdSrRows, 5), openNonStdSrV = violated(openNonStdSrRows, 5);
+      const openIncNV = nonViolated(openIncRows, 5), openIncV = violated(openIncRows, 5);
+      const closedStdSrNV = nonViolated(closedStdSrRows, 3), closedStdSrV = violated(closedStdSrRows, 3);
+      const closedNonStdSrNV = nonViolated(closedNonStdSrRows, 5), closedNonStdSrV = violated(closedNonStdSrRows, 5);
+      const closedIncNV = nonViolated(closedIncRows, 5), closedIncV = violated(closedIncRows, 5);
+
+      // Single aggregate Service Compliance % across all 6 segments —
+      // feeds the "Service Compliance" scoring component (not shown as
+      // its own column any more; the table now shows per-segment
+      // Compliance % instead, computed below).
+      const svcTotalNV = openStdSrNV + openNonStdSrNV + openIncNV + closedStdSrNV + closedNonStdSrNV + closedIncNV;
+      const svcTotalV = openStdSrV + openNonStdSrV + openIncV + closedStdSrV + closedNonStdSrV + closedIncV;
+      const serviceCompliancePct = (svcTotalNV + svcTotalV) ? (svcTotalNV/(svcTotalNV+svcTotalV)*100) : null;
+
+      // Per-segment Compliance % — Non-Violated share of that segment
+      // alone (e.g. SR Open Std Compliance % = openStdSrNV / (openStdSrNV
+      // + openStdSrV)). Shown as its own column per segment.
+      const pctOf = function(nv, v){ return (nv+v) ? (nv/(nv+v)*100) : null; };
+      const openStdSrPct = pctOf(openStdSrNV, openStdSrV);
+      const openNonStdSrPct = pctOf(openNonStdSrNV, openNonStdSrV);
+      const closedStdSrPct = pctOf(closedStdSrNV, closedStdSrV);
+      const closedNonStdSrPct = pctOf(closedNonStdSrNV, closedNonStdSrV);
+      const openIncPct = pctOf(openIncNV, openIncV);
+      const closedIncPct = pctOf(closedIncNV, closedIncV);
+
       const avgResolutionDays = avg(erows.map(function(r){ return toNum(r.tat_days); }));
       const avgResponseDays = avg(erows.map(function(r){ return toNum(r.first_response_days); }));
 
@@ -6883,6 +7631,10 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       return {
         name, total, open, closed, pending, escalated, reopened,
         assignedInc, assignedSr, closedInc, closedSr, openInc, openSr,
+        openStdSrNV, openStdSrV, openNonStdSrNV, openNonStdSrV, openIncNV, openIncV,
+        closedStdSrNV, closedStdSrV, closedNonStdSrNV, closedNonStdSrV, closedIncNV, closedIncV,
+        openStdSrPct, openNonStdSrPct, closedStdSrPct, closedNonStdSrPct, openIncPct, closedIncPct,
+        serviceCompliancePct,
         escalationRate: total ? escalated/total : 0,
         reopenRate: total ? reopened/total : 0,
         avgResolutionDays, avgResponseDays, slaPct, classSlaPct, resSlaPct, frSlaPct, slaBreachCount,
@@ -6921,9 +7673,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const reopenInvMM = minMax(engineers.map(function(e){ return 1 - e.reopenRate; }));
     const resInvMM = minMax(engineers.map(function(e){ return -(e.avgResolutionDays===null ? fallbackResDays : e.avgResolutionDays); }));
     const respInvMM = minMax(engineers.map(function(e){ return -(e.avgResponseDays===null ? fallbackRespDays : e.avgResponseDays); }));
+    const svcVals = engineers.map(function(e){ return e.serviceCompliancePct; }).filter(function(v){ return v !== null; });
+    const fallbackSvc = svcVals.length ? avg(svcVals) : 100;
+    const svcMM = minMax(engineers.map(function(e){ return e.serviceCompliancePct===null ? fallbackSvc : e.serviceCompliancePct; }));
 
     engineers.forEach(function(e){
-      const slaScore = norm(e.slaPct, slaMM) * 25;
+      const slaScore = norm(e.slaPct, slaMM) * 15;
       const closedScore = norm(e.closed, closedMM) * 15;
       const escScore = norm(1 - e.escalationRate, escInvMM) * 15;
       const reopenScore = norm(1 - e.reopenRate, reopenInvMM) * 10;
@@ -6932,9 +7687,11 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const respDaysForScore = e.avgResponseDays===null ? fallbackRespDays : e.avgResponseDays;
       const respScore = norm(-respDaysForScore, respInvMM) * 10;
       const ratingScore = Math.max(0, Math.min(1, e.avgRating/5)) * 10;
+      const svcPctForScore = e.serviceCompliancePct===null ? fallbackSvc : e.serviceCompliancePct;
+      const svcScore = norm(svcPctForScore, svcMM) * 10;
 
-      e.scoreComponents = { sla:slaScore, closed:closedScore, escalation:escScore, reopen:reopenScore, resolution:resScore, response:respScore, rating:ratingScore };
-      e.perfScore = Math.round(slaScore + closedScore + escScore + reopenScore + resScore + respScore + ratingScore);
+      e.scoreComponents = { sla:slaScore, closed:closedScore, escalation:escScore, reopen:reopenScore, resolution:resScore, response:respScore, rating:ratingScore, serviceCompliance:svcScore };
+      e.perfScore = Math.round(slaScore + closedScore + escScore + reopenScore + resScore + respScore + ratingScore + svcScore);
       e.perfBand = e.perfScore >= 75 ? 'green' : e.perfScore >= 50 ? 'amber' : 'red';
       e.perfLabel = e.perfBand === 'green' ? 'Top Performer' : e.perfBand === 'amber' ? 'On Track' : 'Needs Support';
     });
@@ -7087,6 +7844,156 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   });
 
   // ---------------------------------------------------------------
+  // ENGINEER REPORT — consolidated "Engineer Performance Review"
+  // ----------------------------------------------------------------
+  // Every KPI already shown as a column in the Engineer Table, laid
+  // out as readable sections instead of one wide row, plus a Score
+  // Breakdown chart so the person can see at a glance where this
+  // engineer is strong and where they need support.
+  const ER_COLORS = { green:'#22C55E', orange:'#F59E0B', red:'#EF4444', text:'#7A7E8C', grid:'#EEF0F5' };
+
+  function openEngineerReport(name){
+    const e = engineerLookup[name];
+    if(!e) return;
+
+    document.getElementById('erEngName').textContent = name;
+    document.getElementById('erScoreBadge').innerHTML = scoreBadge(e);
+    document.getElementById('erTicketCount').textContent = fmtN(e.rows.length) + ' ticket' + (e.rows.length===1?'':'s') + ' in scope';
+
+    // ---- Report period — earliest to latest creation date among this
+    // engineer's currently-filtered tickets ----
+    const dates = e.rows.map(function(r){ return r._creation_date; }).filter(Boolean);
+    let periodText = '—';
+    if(dates.length){
+      const minD = new Date(Math.min.apply(null, dates.map(function(d){ return d.getTime(); })));
+      const maxD = new Date(Math.max.apply(null, dates.map(function(d){ return d.getTime(); })));
+      periodText = minD.toLocaleDateString('en-US',{month:'short',year:'numeric'}) + ' – ' + maxD.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+    }
+    document.getElementById('erPeriod').textContent = periodText;
+
+    // ---- KPI cards ----
+    const kpis = [
+      { label:'Total Assigned', value: fmtN(e.total), sub:'All tickets', good:false },
+      { label:'Total Closed', value: fmtN(e.closed), sub:'Resolved', good:false },
+      { label:'Total Open', value: fmtN(e.open), sub:'In progress', good:false },
+      { label:'Escalated', value: fmtN(e.escalated), sub: fmtN(e.escalationRate*100,1)+'% of assigned', good: e.escalationRate*100<=10 },
+      { label:'Reopened', value: fmtN(e.reopened), sub: fmtN(e.reopenRate*100,1)+'% reopen rate', good: e.reopenRate*100<=5 },
+      { label:'Avg Resolution', value: e.avgResolutionDays===null?'—':fmtN(e.avgResolutionDays,1)+'d', sub:'Closure time', good:false },
+      { label:'Avg Response', value: e.avgResponseDays===null?'—':fmtN(e.avgResponseDays,1)+'d', sub:'First response', good:false },
+      { label:'Overall Rating', value: fmtN(e.perfScore/10,1)+'/10', sub: e.perfLabel, good: e.perfBand==='green' }
+    ];
+    document.getElementById('erKpiGrid').innerHTML = kpis.map(function(k){
+      return '<div class="cr-kpi-card' + (k.good?' good':'') + '"><div class="cr-kpi-label">' + k.label + '</div><div class="cr-kpi-value">' + k.value + '</div><div class="cr-kpi-sub">' + k.sub + '</div></div>';
+    }).join('');
+
+    // ---- Ticket Volume table ----
+    document.getElementById('erVolumeBody').innerHTML =
+      '<tr><td>Assigned</td><td>' + fmtN(e.total) + '</td><td>' + fmtN(e.assignedInc) + '</td><td>' + fmtN(e.assignedSr) + '</td></tr>' +
+      '<tr><td>Closed</td><td>' + fmtN(e.closed) + '</td><td>' + fmtN(e.closedInc) + '</td><td>' + fmtN(e.closedSr) + '</td></tr>' +
+      '<tr><td>Open</td><td>' + fmtN(e.open) + '</td><td>' + fmtN(e.openInc) + '</td><td>' + fmtN(e.openSr) + '</td></tr>';
+
+    // ---- SLA & Quality table ----
+    document.getElementById('erQualityBody').innerHTML = [
+      ['First Response SLA %', fmtN(e.frSlaPct,1)+'%'],
+      ['Resolution SLA %', fmtN(e.resSlaPct,1)+'%'],
+      ['Total FCR', fmtN(e.totalFcr) + ' (' + fmtN(e.fcrPct,1) + '%)'],
+      ['Total KB Referred', fmtN(e.totalKbRefer) + ' (' + fmtN(e.kbReferPct,1) + '%)']
+    ].map(function(row){ return '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td></tr>'; }).join('');
+
+    // ---- Delegation table ----
+    document.getElementById('erDelegationBody').innerHTML = [
+      ['Delegated > 2 Days', fmtN(e.delegatedOver2) + ' (' + fmtN(e.delegatedOver2Pct,1) + '%)'],
+      ['Delegated ≤ 2 Days', fmtN(e.delegatedUpto2) + ' (' + fmtN(e.delegatedUpto2Pct,1) + '%)'],
+      ['Avg Delegation Time', e.delegationAvgDays===null?'—':fmtN(e.delegationAvgDays,1)+' days']
+    ].map(function(row){ return '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td></tr>'; }).join('');
+
+    // ---- Effort Hours table ----
+    document.getElementById('erEffortBody').innerHTML = [
+      ['L1 Hours', fmtN(e.l1Hours,0)],
+      ['L2 Hours', fmtN(e.l2Hours,0)],
+      ['SME Hours', fmtN(e.smeHours,0)],
+      ['Total Hours', fmtN(e.l1Hours+e.l2Hours+e.smeHours,0)]
+    ].map(function(row){ return '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td></tr>'; }).join('');
+
+    // ---- Open / Closed Service Compliance tables ----
+    function svcRow(label, nv, v, pct){
+      return '<tr><td>' + label + '</td><td>' + fmtN(nv) + '</td><td>' + fmtN(v) + '</td>' +
+        '<td data-order="' + (pct===null?-1:pct) + '">' + (pct===null?'—':pctPill(pct, 90, 75, false)) + '</td></tr>';
+    }
+    document.getElementById('erOpenSvcBody').innerHTML =
+      svcRow('SR — Standard (≤3 Days)', e.openStdSrNV, e.openStdSrV, e.openStdSrPct) +
+      svcRow('SR — Non-Standard (≤5 Days)', e.openNonStdSrNV, e.openNonStdSrV, e.openNonStdSrPct) +
+      svcRow('INC (≤5 Days)', e.openIncNV, e.openIncV, e.openIncPct);
+    document.getElementById('erClosedSvcBody').innerHTML =
+      svcRow('SR — Standard (≤3 Days)', e.closedStdSrNV, e.closedStdSrV, e.closedStdSrPct) +
+      svcRow('SR — Non-Standard (≤5 Days)', e.closedNonStdSrNV, e.closedNonStdSrV, e.closedNonStdSrPct) +
+      svcRow('INC (≤5 Days)', e.closedIncNV, e.closedIncV, e.closedIncPct);
+
+    // ---- Score Breakdown chart — each component as % of its own max,
+    // so all 8 sit on the same 0-100 scale regardless of weight. A
+    // horizontal bar, one per component, sorted worst-to-best with the
+    // exact points achieved labeled directly on each bar, gives an
+    // unambiguous read of exactly where this engineer is strong or
+    // needs support — clearer at a glance than overlaying shapes. ----
+    const sc = e.scoreComponents;
+    const scDefs = [
+      { label:'SLA', val: sc.sla, max:15 },
+      { label:'Service Compliance', val: sc.serviceCompliance, max:10 },
+      { label:'Closed Volume', val: sc.closed, max:15 },
+      { label:'Escalation', val: sc.escalation, max:15 },
+      { label:'Reopen', val: sc.reopen, max:10 },
+      { label:'Resolution Time', val: sc.resolution, max:15 },
+      { label:'Response Time', val: sc.response, max:10 },
+      { label:'Rating', val: sc.rating, max:10 }
+    ];
+    scDefs.forEach(function(d){ d.pct = d.max ? (d.val/d.max*100) : 0; });
+    scDefs.sort(function(a,b){ return a.pct - b.pct; }); // worst-to-best, top to bottom
+    const scLabels = scDefs.map(function(d){ return d.label; });
+    const scPct = scDefs.map(function(d){ return d.pct; });
+    const scColors = scPct.map(function(p){ return p>=75 ? ER_COLORS.green : (p>=50 ? ER_COLORS.orange : ER_COLORS.red); });
+
+    destroyChart('chartErScore');
+    const erDL = window.ChartDataLabels;
+    charts.chartErScore = new Chart(document.getElementById('chartErScore'), {
+      type:'bar',
+      data:{ labels: scLabels, datasets:[{
+        data: scPct,
+        backgroundColor: scColors,
+        borderRadius:4,
+        barPercentage:0.65,
+        categoryPercentage:0.85
+      }]},
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ right: erDL ? 74 : 12 } },
+        plugins:{
+          legend:{ display:false },
+          datalabels: erDL ? {
+            anchor:'end', align:'right', clip:false, color:'#1A1A2E', font:{ weight:'700', size:11 },
+            formatter:function(v, ctx){
+              const d = scDefs[ctx.dataIndex];
+              return fmtN(v,0) + '%  (' + fmtN(d.val,1) + '/' + d.max + ')';
+            }
+          } : { display:false }
+        },
+        scales:{
+          x:{ min:0, max:100, ticks:{ color:ER_COLORS.text, callback:function(v){ return v+'%'; } }, grid:{ color:ER_COLORS.grid } },
+          y:{ ticks:{ color:'#1A1A2E', font:{size:11.5, weight:'600'} }, grid:{ display:false } }
+        }
+      },
+      plugins: erDL ? [erDL] : []
+    });
+
+    new bootstrap.Modal(document.getElementById('engineerReportModal')).show();
+  }
+  document.getElementById('erDownloadPdfBtn').addEventListener('click', function(){
+    document.body.classList.add('printing-report');
+    window.print();
+  });
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('printing-report');
+  });
+
+  // ---------------------------------------------------------------
   // pctPill — renders a percentage as a RAG-coloured pill.
   // normal direction (inverse=false): higher is better (e.g. SLA %, FCR %)
   // inverse direction (inverse=true): lower is better (e.g. Reopened %,
@@ -7114,7 +8021,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       'Escalated','Total Reopened','Reopened %','First Response SLA %','Resolution SLA %',
       'Avg Resolution (d)','Avg Response (d)','Total FCR','FCR %','Total KB Refer','KB Reference %',
       'Total Delegated > 2 Days','Delegated % (> 2 Days)','Total Delegated <= 2 Days','Delegated % (<= 2 Days)',
-      'Delegation Avg time (d)','Rating (0 to 10)'
+      'Delegation Avg time (d)',
+      'SR Open Std <=3','SR Open Std >3','SR Open Std Compliance %',
+      'SR Open Non-Std <=5','SR Open Non-Std >5','SR Open Non-Std Compliance %',
+      'SR Close Std <=3','SR Close Std >3','SR Close Std Compliance %',
+      'SR Close Non-Std <=5','SR Close Non-Std >5','SR Close Non-Std Compliance %',
+      'INC Open <=5','INC Open >5','INC Open Compliance %',
+      'INC Close <=5','INC Close >5','INC Close Compliance %',
+      'Rating (0 to 10)'
     ];
     const numFmts = [
       null, null, '#,##0','#,##0','#,##0',
@@ -7122,7 +8036,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       '#,##0','#,##0','0.0%','0.0%','0.0%',
       '0.0','0.0','#,##0','0.0%','#,##0','0.0%',
       '#,##0','0.0%','#,##0','0.0%',
-      '0.0','0.0'
+      '0.0',
+      '#,##0','#,##0','0.0%',
+      '#,##0','#,##0','0.0%',
+      '#,##0','#,##0','0.0%',
+      '#,##0','#,##0','0.0%',
+      '#,##0','#,##0','0.0%',
+      '#,##0','#,##0','0.0%',
+      '0.0'
     ];
     const rows = [];
     const cellColors = [];
@@ -7139,6 +8060,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         e.totalFcr, e.fcrPct/100, e.totalKbRefer, e.kbReferPct/100,
         e.delegatedOver2, e.delegatedOver2Pct/100, e.delegatedUpto2, e.delegatedUpto2Pct/100,
         e.delegationAvgDays===null?null:+e.delegationAvgDays.toFixed(1),
+        e.openStdSrNV, e.openStdSrV, e.openStdSrPct===null?null:e.openStdSrPct/100,
+        e.openNonStdSrNV, e.openNonStdSrV, e.openNonStdSrPct===null?null:e.openNonStdSrPct/100,
+        e.closedStdSrNV, e.closedStdSrV, e.closedStdSrPct===null?null:e.closedStdSrPct/100,
+        e.closedNonStdSrNV, e.closedNonStdSrV, e.closedNonStdSrPct===null?null:e.closedNonStdSrPct/100,
+        e.openIncNV, e.openIncV, e.openIncPct===null?null:e.openIncPct/100,
+        e.closedIncNV, e.closedIncV, e.closedIncPct===null?null:e.closedIncPct/100,
         +(e.perfScore/10).toFixed(1)
       ]);
       cellColors.push([
@@ -7151,6 +8078,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         null, e.fcrPct>=50?'GREEN':e.fcrPct>=35?'AMBER':'RED', null, null,
         null, (e.delegatedOver2Pct<=25?'GREEN':e.delegatedOver2Pct<=40?'AMBER':'RED'), null, null,
         null,
+        null, null, e.openStdSrPct===null?null:(e.openStdSrPct>=90?'GREEN':e.openStdSrPct>=75?'AMBER':'RED'),
+        null, null, e.openNonStdSrPct===null?null:(e.openNonStdSrPct>=90?'GREEN':e.openNonStdSrPct>=75?'AMBER':'RED'),
+        null, null, e.closedStdSrPct===null?null:(e.closedStdSrPct>=90?'GREEN':e.closedStdSrPct>=75?'AMBER':'RED'),
+        null, null, e.closedNonStdSrPct===null?null:(e.closedNonStdSrPct>=90?'GREEN':e.closedNonStdSrPct>=75?'AMBER':'RED'),
+        null, null, e.openIncPct===null?null:(e.openIncPct>=90?'GREEN':e.openIncPct>=75?'AMBER':'RED'),
+        null, null, e.closedIncPct===null?null:(e.closedIncPct>=90?'GREEN':e.closedIncPct>=75?'AMBER':'RED'),
         e.perfScore>=75?'GREEN':e.perfScore>=50?'AMBER':'RED'
       ]);
     });
@@ -7347,8 +8280,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const resDaysVals = closedInPeriod.map(function(r){ return toNum(r.tat_days); }).filter(function(v){ return v!==null; });
     const avgResDays = resDaysVals.length ? avg(resDaysVals) : null; // "24/7 TAT — Actual"
 
-    const targetVals = periodRows.map(function(r){ return toNum(r.resolution_sla_target_minutes); }).filter(function(v){ return v!==null; });
-    const avgTargetDays = targetVals.length ? (avg(targetVals)/1440) : null; // "SLA Target"
+    const targetVals = closedInPeriod.map(policyTargetDaysFor).filter(function(v){ return v!==null; });
+    const avgTargetDays = targetVals.length ? avg(targetVals) : null; // "SLA Target"
 
     return { total:total, closedCount:closedInPeriod.length, frSlaPct:frSlaPct, resSlaPct:resSlaPct, slaPct:slaPct, fcrPct:fcrPct, avgResDays:avgResDays, avgTargetDays:avgTargetDays };
   }
@@ -7510,6 +8443,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     $tbl.find('tbody').html(engineers.map(function(e){
       return '<tr data-engineer="' + esc(e.name) + '">' +
         '<td>' + esc(e.name) + '</td>' +
+        '<td><button type="button" class="btn-mini-report" data-engineer="' + esc(e.name) + '"><i class="fa-solid fa-file-pdf"></i> Report</button></td>' +
         '<td data-order="' + e.perfScore + '">' + scoreBadge(e) + '</td>' +
         '<td>' + fmtN(e.total) + '</td><td>' + fmtN(e.assignedInc) + '</td><td>' + fmtN(e.assignedSr) + '</td>' +
         '<td>' + fmtN(e.closed) + '</td><td>' + fmtN(e.closedInc) + '</td><td>' + fmtN(e.closedSr) + '</td>' +
@@ -7529,12 +8463,28 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         '<td>' + fmtN(e.delegatedUpto2) + '</td>' +
         '<td>' + e.delegatedUpto2Pct.toFixed(1) + '%</td>' +
         '<td>' + (e.delegationAvgDays===null?'—':e.delegationAvgDays.toFixed(1)) + '</td>' +
+        '<td>' + fmtN(e.openStdSrNV) + '</td><td>' + fmtN(e.openStdSrV) + '</td>' +
+        '<td data-order="' + (e.openStdSrPct===null?-1:e.openStdSrPct) + '">' + (e.openStdSrPct===null?'—':pctPill(e.openStdSrPct, 90, 75, false)) + '</td>' +
+        '<td>' + fmtN(e.openNonStdSrNV) + '</td><td>' + fmtN(e.openNonStdSrV) + '</td>' +
+        '<td data-order="' + (e.openNonStdSrPct===null?-1:e.openNonStdSrPct) + '">' + (e.openNonStdSrPct===null?'—':pctPill(e.openNonStdSrPct, 90, 75, false)) + '</td>' +
+        '<td>' + fmtN(e.closedStdSrNV) + '</td><td>' + fmtN(e.closedStdSrV) + '</td>' +
+        '<td data-order="' + (e.closedStdSrPct===null?-1:e.closedStdSrPct) + '">' + (e.closedStdSrPct===null?'—':pctPill(e.closedStdSrPct, 90, 75, false)) + '</td>' +
+        '<td>' + fmtN(e.closedNonStdSrNV) + '</td><td>' + fmtN(e.closedNonStdSrV) + '</td>' +
+        '<td data-order="' + (e.closedNonStdSrPct===null?-1:e.closedNonStdSrPct) + '">' + (e.closedNonStdSrPct===null?'—':pctPill(e.closedNonStdSrPct, 90, 75, false)) + '</td>' +
+        '<td>' + fmtN(e.openIncNV) + '</td><td>' + fmtN(e.openIncV) + '</td>' +
+        '<td data-order="' + (e.openIncPct===null?-1:e.openIncPct) + '">' + (e.openIncPct===null?'—':pctPill(e.openIncPct, 90, 75, false)) + '</td>' +
+        '<td>' + fmtN(e.closedIncNV) + '</td><td>' + fmtN(e.closedIncV) + '</td>' +
+        '<td data-order="' + (e.closedIncPct===null?-1:e.closedIncPct) + '">' + (e.closedIncPct===null?'—':pctPill(e.closedIncPct, 90, 75, false)) + '</td>' +
         '<td>' + (e.perfScore/10).toFixed(1) + '</td>' +
         '</tr>';
     }).join(''));
-    $tbl.DataTable({ pageLength: (window.GovSettings && window.GovSettings.tablePageLength) || 10, order:[[1,'desc']], language:{ searchPlaceholder:'Search engineers…' }, scrollX:true });
+    $tbl.DataTable({ pageLength: (window.GovSettings && window.GovSettings.tablePageLength) || 10, order:[[2,'desc']], language:{ searchPlaceholder:'Search engineers…' }, scrollX:true });
     $tbl.find('tbody').off('click').on('click', 'tr', function(){
       openEngineerDrill($(this).attr('data-engineer'));
+    });
+    $tbl.find('tbody').off('click', '.btn-mini-report').on('click', '.btn-mini-report', function(e){
+      e.stopPropagation();
+      openEngineerReport($(this).attr('data-engineer'));
     });
   }
 
@@ -7578,7 +8528,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       return '<tr data-engineer="' + esc(e.name) + '">' +
         '<td>' + esc(e.name) + '</td>' +
         '<td data-order="' + e.perfScore + '">' + scoreBadge(e) + '</td>' +
-        '<td>' + sc.sla.toFixed(1) + ' / 25</td>' +
+        '<td>' + sc.sla.toFixed(1) + ' / 15</td>' +
+        '<td>' + sc.serviceCompliance.toFixed(1) + ' / 10</td>' +
         '<td>' + sc.closed.toFixed(1) + ' / 15</td>' +
         '<td>' + sc.escalation.toFixed(1) + ' / 15</td>' +
         '<td>' + sc.reopen.toFixed(1) + ' / 10</td>' +
@@ -9318,11 +10269,24 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     l2eng:   { key:'assign_to_l2_engineer', label:'L2 Engineer' },
     smeeng:  { key:'assign_to_sme', label:'SME Engineer' },
     edoc:    { key:'edoc', label:'EDOC', isDate:true },
-    mspAccount:{ key:'customer_name', label:'MSP Account' }
+    mspAccount:{ key:'customer_name', label:'MSP Account' },
+    srService:{ key:'sr_service', label:'SR Service' }
   };
   function cols(){ return Array.prototype.slice.call(arguments); }
   window.GovDrillCol = COL;
   window.GovDrillCols = cols;
+
+  // ---------------------------------------------------------------
+  // SR / INC CLASSIFICATION — shared by the "Open Service" and
+  // "Closed Service" KPI groups below. service === 'Service Request'
+  // is an SR; service === 'Incident Management' is an INC. Within SR,
+  // sr_service holds exactly two values in the data — 'Standard' and
+  // 'Non-Standard'. Anything that isn't explicitly 'Standard'
+  // (including a blank/missing value) is treated as Non-Standard.
+  // ---------------------------------------------------------------
+  function isSR(r){ return String(r.service||'').trim() === 'Service Request'; }
+  function isINC(r){ return String(r.service||'').trim() === 'Incident Management'; }
+  function isNonStdSR(r){ return String(r.sr_service||'').trim().toLowerCase() !== 'standard'; }
 
   // ---------------------------------------------------------------
   // EXECUTIVE SUMMARY — PER-KPI-CARD DRILL-DOWN
@@ -9419,6 +10383,94 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       return { title:'Total Engineers — All Contributing Tickets', filenameBase:'Executive_Total_Engineers', rows: rows,
         columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.created ],
         summary:[['Unique Engineers', fmtN(k.totalEngineers)], ['Total Tickets', fmtN(rows.length)]] };
+    },
+
+    // -------------------------------------------------------------
+    // OPEN / CLOSED SR & INC SERVICE — Age (in calendar days) reuses
+    // the same _age_days every other module already computes: for an
+    // open ticket that's days-since-creation-to-today; for a closed
+    // ticket it's days-from-creation-to-close/resolve (i.e. its TAT).
+    // Each drill shows the FULL base segment (e.g. all Open Std SR),
+    // with a summary breakdown of Non-Violated (within target) vs.
+    // Violated (past target) — the same pair of numbers both the
+    // count card and the % card for that segment are built from, so
+    // both cards in a pair share this one drill.
+    // -------------------------------------------------------------
+    openSrStd: function(rows, k){
+      const base = rows.filter(function(r){ return r._is_open && !r._is_excluded && isSR(r) && !isNonStdSR(r); });
+      const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 3; }).length;
+      const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 3; }).length;
+      return { title:'Open SR — Standard (3-Day Target)', filenameBase:'Executive_Open_SR_Std', rows: base,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.age, COL.created ],
+        summary:[['Non-Violated (≤3 Days)', fmtN(nonViolated)], ['Violated (>3 Days)', fmtN(violated)], ['Total Open Std SR', fmtN(base.length)]] };
+    },
+    openSrNonStd: function(rows, k){
+      const base = rows.filter(function(r){ return r._is_open && !r._is_excluded && isSR(r) && isNonStdSR(r); });
+      const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 5; }).length;
+      const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 5; }).length;
+      return { title:'Open SR — Non-Standard (5-Day Target)', filenameBase:'Executive_Open_SR_NonStd', rows: base,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.age, COL.created ],
+        summary:[['Non-Violated (≤5 Days)', fmtN(nonViolated)], ['Violated (>5 Days)', fmtN(violated)], ['Total Open Non-Std SR', fmtN(base.length)]] };
+    },
+    openInc: function(rows, k){
+      const base = rows.filter(function(r){ return r._is_open && !r._is_excluded && isINC(r); });
+      const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 5; }).length;
+      const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 5; }).length;
+      return { title:'Open INC (5-Day Target)', filenameBase:'Executive_Open_INC', rows: base,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.age, COL.created ],
+        summary:[['Non-Violated (≤5 Days)', fmtN(nonViolated)], ['Violated (>5 Days)', fmtN(violated)], ['Total Open INC', fmtN(base.length)]] };
+    },
+    closedSrStd: function(rows, k){
+      const base = rows.filter(function(r){ return r._is_closed && !r._is_excluded && isSR(r) && !isNonStdSR(r); });
+      const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 3; }).length;
+      const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 3; }).length;
+      return { title:'Closed SR — Standard (3-Day Target)', filenameBase:'Executive_Closed_SR_Std', rows: base,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.created, COL.closed ],
+        summary:[['Non-Violated (≤3 Days)', fmtN(nonViolated)], ['Violated (>3 Days)', fmtN(violated)], ['Total Closed Std SR', fmtN(base.length)]] };
+    },
+    closedSrNonStd: function(rows, k){
+      const base = rows.filter(function(r){ return r._is_closed && !r._is_excluded && isSR(r) && isNonStdSR(r); });
+      const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 5; }).length;
+      const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 5; }).length;
+      return { title:'Closed SR — Non-Standard (5-Day Target)', filenameBase:'Executive_Closed_SR_NonStd', rows: base,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.created, COL.closed ],
+        summary:[['Non-Violated (≤5 Days)', fmtN(nonViolated)], ['Violated (>5 Days)', fmtN(violated)], ['Total Closed Non-Std SR', fmtN(base.length)]] };
+    },
+    closedInc: function(rows, k){
+      const base = rows.filter(function(r){ return r._is_closed && !r._is_excluded && isINC(r); });
+      const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 5; }).length;
+      const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 5; }).length;
+      return { title:'Closed INC (5-Day Target)', filenameBase:'Executive_Closed_INC', rows: base,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.tat, COL.created, COL.closed ],
+        summary:[['Non-Violated (≤5 Days)', fmtN(nonViolated)], ['Violated (>5 Days)', fmtN(violated)], ['Total Closed INC', fmtN(base.length)]] };
+    },
+    totalOpenSR: function(rows, k){
+      const sub = rows.filter(function(r){ return r._is_open && !r._is_excluded && isSR(r); });
+      const std = sub.filter(function(r){ return !isNonStdSR(r); }).length;
+      const nonStd = sub.filter(isNonStdSR).length;
+      return { title:'Total Open SR', filenameBase:'Executive_Total_Open_SR', rows: sub,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.age, COL.created ],
+        summary:[['Total Open SR', fmtN(sub.length)], ['Standard', fmtN(std)], ['Non-Standard', fmtN(nonStd)]] };
+    },
+    totalOpenINC: function(rows, k){
+      const sub = rows.filter(function(r){ return r._is_open && !r._is_excluded && isINC(r); });
+      return { title:'Total Open INC', filenameBase:'Executive_Total_Open_INC', rows: sub,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.age, COL.created ],
+        summary:[['Total Open INC', fmtN(sub.length)]] };
+    },
+    totalClosedSR: function(rows, k){
+      const sub = rows.filter(function(r){ return r._is_closed && !r._is_excluded && isSR(r); });
+      const std = sub.filter(function(r){ return !isNonStdSR(r); }).length;
+      const nonStd = sub.filter(isNonStdSR).length;
+      return { title:'Total Closed SR', filenameBase:'Executive_Total_Closed_SR', rows: sub,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.created, COL.closed ],
+        summary:[['Total Closed SR', fmtN(sub.length)], ['Standard', fmtN(std)], ['Non-Standard', fmtN(nonStd)]] };
+    },
+    totalClosedINC: function(rows, k){
+      const sub = rows.filter(function(r){ return r._is_closed && !r._is_excluded && isINC(r); });
+      return { title:'Total Closed INC', filenameBase:'Executive_Total_Closed_INC', rows: sub,
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.tat, COL.created, COL.closed ],
+        summary:[['Total Closed INC', fmtN(sub.length)]] };
     }
   };
 
@@ -9432,7 +10484,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const k = window.GovComputeKPIs(rows);
     window.GovOpenDrillModal(KPI_DRILL_CONFIG[key](rows, k));
   }
-  ['kpiGridVolume', 'kpiGridSla', 'kpiGridPeople'].forEach(function(id){
+  ['kpiGridVolume', 'kpiGridSla', 'kpiGridPeople', 'kpiGridOpenService', 'kpiGridClosedService'].forEach(function(id){
     const el = document.getElementById(id);
     if(el) el.addEventListener('click', handleKpiCardClick);
   });
@@ -9656,6 +10708,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           const sev = String(r.severity||'').trim(), pri = String(r.priority||'').trim();
           if(sev && pri) return sev + ' / ' + pri;
           return sev || pri || '';
+        }, ragGet:function(r){
+          const sev = String(r.severity||'').trim().toLowerCase(), pri = String(r.priority||'').trim().toLowerCase();
+          return (sev.indexOf('critical')!==-1 || sev.indexOf('hotsite')!==-1 || pri.indexOf('critical')!==-1 || pri.indexOf('hotsite')!==-1) ? 'RED' : null;
         } },
       { key:'resolutionTypeDisplay', label:'Resolution Type', get:function(r){ return String(r.resolution_type||'').trim(); } },
       { key:'currentStatus', label:'Current Status', get:function(r){ return String(r.current_status||'').trim() || 'Unknown'; } },
@@ -9668,9 +10723,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { key:'_delegationEligible', label:'Delegation Eligible', get:function(r){ return computeDelegationEligible(r); }, ragGet:function(r){ const s = computeDelegationEligible(r); return s==='Applicable'?'GREEN':s==='Not Applicable'?'RED':null; } },
       { key:'frComplianceStatus', label:'FR Compliance Status', get:function(r){ return computeFrComplianceStatus(r); }, ragGet:function(r){ const s = computeFrComplianceStatus(r); return s==='Non-Violated'?'GREEN':s==='Violated'?'RED':null; } },
       { key:'frTargetDisplay', label:'FR Target Date/Time', get:function(r){ return String(r.first_response_sla_target_end_time||'').trim(); }, ragGet:function(r){ return futureDateRag(parseDate(r.first_response_sla_target_end_time)); } },
-      { key:'emailRespDueTodayYN', label:'Email Response Due Today', get:function(r){ return computeEmailResponseCompliance(r).dueToday ? 'Yes' : 'No'; } },
-      { key:'emailRespMissedYN', label:'Email Response Missed', get:function(r){ return computeEmailResponseCompliance(r).missed ? 'Yes' : 'No'; } },
-      { key:'emailFollowupMissedYN', label:'Email Follow-up Missed', get:function(r){ return computeEmailFollowupMissed(r) ? 'Yes' : 'No'; } },
+      { key:'emailRespDueTodayYN', label:'Email Response Due Today', get:function(r){ return computeEmailResponseCompliance(r).dueToday ? 'Yes' : 'No'; }, ragGet:function(r){ return computeEmailResponseCompliance(r).dueToday ? 'RED' : 'GREEN'; } },
+      { key:'emailRespMissedYN', label:'Email Response Missed', get:function(r){ return computeEmailResponseCompliance(r).missed ? 'Yes' : 'No'; }, ragGet:function(r){ return computeEmailResponseCompliance(r).missed ? 'RED' : 'GREEN'; } },
+      { key:'emailFollowupMissedYN', label:'Email Follow-up Missed', get:function(r){ return computeEmailFollowupMissed(r) ? 'Yes' : 'No'; }, ragGet:function(r){ return computeEmailFollowupMissed(r) ? 'RED' : 'GREEN'; } },
       { key:'lastEmailFrom', label:'Last Email From', get:function(r){ return String(r.last_email_from||'').trim(); } },
       { key:'lastEmailSentTimeDisplay', label:'Last Email Sent Time', get:function(r){ return fmtDateTimeSpec(r.last_email_sent_time); } },
       { key:'updateTimeDisplay', label:'Update Time', get:function(r){ return fmtDateTimeSpec(r.update_time); } },
@@ -13204,9 +14259,63 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   }
 
   // ================================================================
+  // CUSTOMER RISK / ENGINEER RISK — shared risk-ranking helpers
+  // ----------------------------------------------------------------
+  // risk score = average findingScore() of each ticket's PRIMARY
+  // (most severe) finding, across that customer's/engineer's open
+  // tickets — same Breach > Data Gap > At Risk/Action Required
+  // weighting already used everywhere else in this module, just
+  // normalized per ticket so busy and quiet accounts/engineers are
+  // compared fairly (a customer with 40 open tickets and 4 breaches
+  // isn't automatically "worse" than one with 4 open tickets and 2
+  // breaches).
+  // tertiles = the CURRENT population split into thirds by risk-score
+  // RANK (not a fixed score cutoff) — relative standing this run, not
+  // a pass/fail against a fixed policy number, matching how every
+  // other relative label in this file already works.
+  // ================================================================
+  function computeRiskScore(list){
+    if(!list.length) return 0;
+    const total = list.reduce(function(s,d){ return s + (d.primary ? findingScore(d.primary) : 0); }, 0);
+    return total / list.length;
+  }
+  function assignTertiles(entities, scoreKey, labels){
+    const sorted = entities.slice().sort(function(a,b){ return a[scoreKey]-b[scoreKey]; });
+    const n = sorted.length;
+    sorted.forEach(function(e, i){
+      const pct = n>1 ? i/(n-1) : 0;
+      e.tier = pct < (1/3) ? labels.low : (pct < (2/3) ? labels.mid : labels.high);
+    });
+  }
+  // "Why" / "What's needed" — tallies every finding (not just the
+  // primary one) across the entity's tickets by (category + name),
+  // weighted the same way, and surfaces the top 1-2 by weighted count.
+  function riskWhyAndNeeded(list){
+    const tally = {};
+    list.forEach(function(d){
+      d.findings.forEach(function(f){
+        const key = f.category + ' — ' + f.name;
+        if(!tally[key]) tally[key] = { name:f.name, count:0, weight:0, action:f.action };
+        tally[key].count += 1;
+        tally[key].weight += findingScore(f);
+      });
+    });
+    const top = Object.keys(tally).map(function(k){ return tally[k]; }).sort(function(a,b){ return b.weight-a.weight; }).slice(0,2);
+    if(!top.length) return { why:'No open conditions currently flagged.', needed:'No action required — keep monitoring.' };
+    const why = top.map(function(t){ return t.count + '× ' + t.name; }).join('; ') + ' across ' + list.length + ' open ticket' + (list.length===1?'':'s') + '.';
+    const actions = top.map(function(t){ return t.action; }).filter(Boolean);
+    const needed = actions.length ? actions.join(' ') : ('Resolve the flagged ' + top.map(function(t){ return t.name; }).join(' / ') + ' condition(s).');
+    return { why:why, needed:needed };
+  }
+  function riskPillClass(tier){
+    return (tier==='Needs Attention' || tier==='Doing Bad') ? 'pill-bad' : (tier==='Watch' || tier==='Needs Improvement') ? 'pill-warn' : 'pill-good';
+  }
+
+  // ================================================================
   // CUSTOMER RISK
   // ================================================================
   let custRiskCache = [];
+  let custRiskFilter = 'all';
   function renderCustomerRisk(dataset){
     const groups = {};
     dataset.forEach(function(d){ (groups[d.customer] = groups[d.customer] || []).push(d); });
@@ -13215,20 +14324,31 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const catHas = function(cats){ return list.filter(function(d){ return d.findings.some(function(f){ return cats.indexOf(f.category)!==-1; }); }).length; };
       const p1 = list.filter(function(d){ return d.priority==='P1'; }).length;
       const p2 = list.filter(function(d){ return d.priority==='P2'; }).length;
-      const overall = p1 > 0 ? 'High' : p2 > 0 ? 'Medium' : 'Low';
+      const wn = riskWhyAndNeeded(list);
       return { name:name, total:list.length, p1:p1, p2:p2, sla:catHas(['SLA']), deleg:catHas(['Delegation']), comm:catHas(['Customer Communication']),
-        esc: list.filter(function(d){ return d.hasEscalation; }).length, gap: list.filter(function(d){ return d.priority==='Data Gap'; }).length, overall:overall, items:list };
-    }).sort(function(a,b){ return (b.p1*100+b.p2*10) - (a.p1*100+a.p2*10); });
+        esc: list.filter(function(d){ return d.hasEscalation; }).length, gap: list.filter(function(d){ return d.priority==='Data Gap'; }).length,
+        riskScore: computeRiskScore(list), why:wn.why, needed:wn.needed, items:list };
+    });
+    assignTertiles(custRiskCache, 'riskScore', { low:'Healthy', mid:'Watch', high:'Needs Attention' });
+    custRiskCache.sort(function(a,b){ return b.riskScore - a.riskScore; });
+    renderCustRiskTable();
+  }
+  function renderCustRiskTable(){
+    const rows = custRiskFilter==='all' ? custRiskCache : custRiskCache.filter(function(c){ return c.tier===custRiskFilter; });
     const $tbl = $('#proCustomerRiskTable');
-    $tbl.find('tbody').html(custRiskCache.map(function(c, idx){
+    $tbl.find('tbody').html(rows.map(function(c){
+      const idx = custRiskCache.indexOf(c);
       return '<tr data-idx="' + idx + '"><td>' + esc(c.name) + '</td><td data-order="' + c.total + '">' + fmtN(c.total) + '</td>' +
         '<td data-order="' + c.p1 + '">' + fmtN(c.p1) + '</td><td data-order="' + c.p2 + '">' + fmtN(c.p2) + '</td>' +
         '<td>' + fmtN(c.sla) + '</td><td>' + fmtN(c.deleg) + '</td><td>' + fmtN(c.comm) + '</td><td>' + fmtN(c.esc) + '</td><td>' + fmtN(c.gap) + '</td>' +
-        '<td><span class="pill ' + (c.overall==='High'?'pill-bad':c.overall==='Medium'?'pill-warn':'pill-good') + '">' + c.overall + '</span></td></tr>';
+        '<td data-order="' + c.riskScore.toFixed(3) + '">' + c.riskScore.toFixed(1) + '</td>' +
+        '<td><span class="pill ' + riskPillClass(c.tier) + '">' + c.tier + '</span></td>' +
+        '<td style="max-width:260px;white-space:normal;">' + esc(c.why) + '</td>' +
+        '<td style="max-width:260px;white-space:normal;">' + esc(c.needed) + '</td></tr>';
     }).join(''));
     const $t = $('#proCustomerRiskTable');
     if($.fn.DataTable.isDataTable($t)) $t.DataTable().destroy();
-    $t.DataTable({ pageLength:(window.GovSettings&&window.GovSettings.tablePageLength)||10, order:[[2,'desc']], language:{searchPlaceholder:'Search customer…'} });
+    $t.DataTable({ pageLength:(window.GovSettings&&window.GovSettings.tablePageLength)||10, order:[[9,'desc']], language:{searchPlaceholder:'Search customer…'} });
     $t.find('tbody').off('click').on('click','tr',function(){
       const c = custRiskCache[+$(this).attr('data-idx')];
       if(!c) return;
@@ -13243,14 +14363,39 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           { label:'Recommended Action', get:function(r){ const d=byId[r.ticket_id]; return d&&d.primary?(d.primary.action||''):''; }, truncate:200 },
           GD.created
         ],
-        summary:[['Open Cases', fmtN(c.total)], ['Act Now', fmtN(c.p1)], ['Action Today', fmtN(c.p2)], ['Overall Risk', c.overall]] });
+        summary:[['Open Cases', fmtN(c.total)], ['Act Now', fmtN(c.p1)], ['Action Today', fmtN(c.p2)], ['Risk Score', c.riskScore.toFixed(1)], ['Health', c.tier]] });
     });
   }
+  document.getElementById('custRiskChips').addEventListener('click', function(e){
+    const btn = e.target.closest('.pro-risk-chip');
+    if(!btn) return;
+    document.querySelectorAll('#custRiskChips .pro-risk-chip').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    custRiskFilter = btn.getAttribute('data-filter');
+    renderCustRiskTable();
+  });
 
   // ================================================================
   // ENGINEER / TEAM ACTION
   // ================================================================
   let engRiskCache = [];
+  let engRiskFilter = 'all';
+  function renderTeamOverview(engineers){
+    const teams = {};
+    engineers.forEach(function(e){
+      if(!teams[e.team]) teams[e.team] = { name:e.team, total:0, riskSum:0 };
+      teams[e.team].total += e.total;
+      teams[e.team].riskSum += e.riskScore * e.total; // weight by ticket count for a fair team average
+    });
+    const teamList = Object.keys(teams).map(function(k){ return teams[k]; })
+      .map(function(t){ return { name:t.name, total:t.total, avgRisk: t.total ? t.riskSum/t.total : 0 }; })
+      .sort(function(a,b){ return b.avgRisk - a.avgRisk; });
+    document.getElementById('proTeamGrid').innerHTML = teamList.map(function(t){
+      const tone = t.avgRisk>=30 ? 'tone-bad' : t.avgRisk>=15 ? 'tone-warn' : '';
+      return '<div class="pro-team-card ' + tone + '"><div class="ptc-name">' + esc(t.name) + '</div>' +
+        '<div class="ptc-score">' + t.avgRisk.toFixed(1) + '</div><div class="ptc-sub">Risk/ticket · ' + fmtN(t.total) + ' open tickets</div></div>';
+    }).join('');
+  }
   function renderEngineerRisk(dataset){
     const groups = {};
     dataset.forEach(function(d){ (groups[d.owner] = groups[d.owner] || []).push(d); });
@@ -13261,18 +14406,31 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const p2 = list.filter(function(d){ return d.priority==='P2'; }).length;
       const aging = list.filter(function(d){ return d.ageDays!==null && d.ageDays>15; }).length;
       const gap = list.filter(function(d){ return d.priority==='Data Gap'; }).length;
-      const primaryAction = p1 ? 'Clear Act Now items first' : p2 ? 'Work through Action Today items' : aging ? 'Review aging backlog' : 'Monitor';
-      return { name:name, team: TEAM_MAP[name] || '(Unmapped)', total:list.length, p1:p1, p2:p2, sla:catHas(['SLA']), deleg:catHas(['Delegation']), aging:aging, gap:gap, primaryAction:primaryAction, items:list };
-    }).sort(function(a,b){ return (b.p1*100+b.p2*10) - (a.p1*100+a.p2*10); });
+      const wn = riskWhyAndNeeded(list);
+      return { name:name, team: TEAM_MAP[name] || '(Unmapped)', total:list.length, p1:p1, p2:p2, sla:catHas(['SLA']), deleg:catHas(['Delegation']), aging:aging, gap:gap,
+        riskScore: computeRiskScore(list), why:wn.why, needed:wn.needed, items:list };
+    });
+    assignTertiles(engRiskCache, 'riskScore', { low:'Doing Good', mid:'Needs Improvement', high:'Doing Bad' });
+    engRiskCache.sort(function(a,b){ return b.riskScore - a.riskScore; });
+    renderTeamOverview(engRiskCache);
+    renderEngRiskTable();
+  }
+  function renderEngRiskTable(){
+    const rows = engRiskFilter==='all' ? engRiskCache : engRiskCache.filter(function(e){ return e.tier===engRiskFilter; });
     const $tbl = $('#proEngineerRiskTable');
-    $tbl.find('tbody').html(engRiskCache.map(function(e, idx){
+    $tbl.find('tbody').html(rows.map(function(e){
+      const idx = engRiskCache.indexOf(e);
       return '<tr data-idx="' + idx + '"><td>' + esc(e.name) + '</td><td>' + esc(e.team) + '</td><td data-order="' + e.total + '">' + fmtN(e.total) + '</td>' +
         '<td data-order="' + e.p1 + '">' + fmtN(e.p1) + '</td><td data-order="' + e.p2 + '">' + fmtN(e.p2) + '</td>' +
-        '<td>' + fmtN(e.sla) + '</td><td>' + fmtN(e.deleg) + '</td><td>' + fmtN(e.aging) + '</td><td>' + fmtN(e.gap) + '</td><td>' + esc(e.primaryAction) + '</td></tr>';
+        '<td>' + fmtN(e.sla) + '</td><td>' + fmtN(e.deleg) + '</td><td>' + fmtN(e.aging) + '</td><td>' + fmtN(e.gap) + '</td>' +
+        '<td data-order="' + e.riskScore.toFixed(3) + '">' + e.riskScore.toFixed(1) + '</td>' +
+        '<td><span class="pill ' + riskPillClass(e.tier) + '">' + e.tier + '</span></td>' +
+        '<td style="max-width:260px;white-space:normal;">' + esc(e.why) + '</td>' +
+        '<td style="max-width:260px;white-space:normal;">' + esc(e.needed) + '</td></tr>';
     }).join(''));
     const $t = $('#proEngineerRiskTable');
     if($.fn.DataTable.isDataTable($t)) $t.DataTable().destroy();
-    $t.DataTable({ pageLength:(window.GovSettings&&window.GovSettings.tablePageLength)||10, order:[[3,'desc']], language:{searchPlaceholder:'Search engineer…'} });
+    $t.DataTable({ pageLength:(window.GovSettings&&window.GovSettings.tablePageLength)||10, order:[[9,'desc']], language:{searchPlaceholder:'Search engineer…'} });
     $t.find('tbody').off('click').on('click','tr',function(){
       const e = engRiskCache[+$(this).attr('data-idx')];
       if(!e) return;
@@ -13287,9 +14445,17 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           { label:'Recommended Action', get:function(r){ const d=byId[r.ticket_id]; return d&&d.primary?(d.primary.action||''):''; }, truncate:200 },
           GD.created
         ],
-        summary:[['Open Cases', fmtN(e.total)], ['Act Now', fmtN(e.p1)], ['Action Today', fmtN(e.p2)], ['Team', e.team]] });
+        summary:[['Open Cases', fmtN(e.total)], ['Act Now', fmtN(e.p1)], ['Action Today', fmtN(e.p2)], ['Risk Score', e.riskScore.toFixed(1)], ['Team', e.team], ['Performance', e.tier]] });
     });
   }
+  document.getElementById('engRiskChips').addEventListener('click', function(e){
+    const btn = e.target.closest('.pro-risk-chip');
+    if(!btn) return;
+    document.querySelectorAll('#engRiskChips .pro-risk-chip').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    engRiskFilter = btn.getAttribute('data-filter');
+    renderEngRiskTable();
+  });
 
   // ================================================================
   // CONDITION / RULE COVERAGE
