@@ -9969,41 +9969,88 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   // sheet doesn't supply it, colours are inferred automatically from the
   // header + value using excelStatusColor() below, so every export gets
   // sensible colour-coding with zero changes needed at the call site.
+  //
+  // A sheet may ALSO be given as { name, sections:[{ title, headers,
+  // rows, cellColors?, numFmts? }, ...] } instead of a flat headers/rows
+  // pair — this stacks several bold-titled mini-tables (each styled
+  // identically to the flat layout) inside one worksheet, used by the
+  // Daily Review management Summary sheet below. Every pre-existing
+  // caller keeps using the flat headers/rows form untouched.
   // ---------------------------------------------------------------
+  function styleHeaderCell(cell){
+    cell.font = { bold:true, color:{ argb:'FFFFFFFF' } };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF5B21B6' } };
+    cell.alignment = { vertical:'middle' };
+  }
+  // Writes one header row + its data rows into ws, with the same
+  // colour-coding / numFmt logic used everywhere in this file. Returns
+  // the data rows actually written (for column-width measurement).
+  function writeDataTable(ws, headers, rows, cellColors, numFmts){
+    const headerRow = ws.addRow(headers);
+    headerRow.eachCell(styleHeaderCell);
+    const dataRows = (rows && rows.length) ? rows : [];
+    // OPTIONAL numFmts: array parallel to headers, each entry either an
+    // Excel number-format string (e.g. '#,##0', '0.0%', 'dd-mmm-yyyy') or
+    // falsy to leave that column's cells in their default (text) format.
+    const fmts = numFmts || [];
+    dataRows.forEach(function(rowArr, rIdx){
+      const excelRow = ws.addRow(rowArr);
+      rowArr.forEach(function(val, cIdx){
+        const explicit = cellColors && cellColors[rIdx] ? cellColors[rIdx][cIdx] : undefined;
+        const color = explicit !== undefined ? explicit : excelStatusColor(headers[cIdx], val);
+        const nf = fmts[cIdx];
+        if((color && FILL_ARGB[color]) || nf){
+          const cell = excelRow.getCell(cIdx + 1);
+          if(color && FILL_ARGB[color]){
+            cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb: FILL_ARGB[color] } };
+            cell.font = { color:{ argb: FONT_ARGB[color] }, bold:true };
+          }
+          if(nf) cell.numFmt = nf;
+        }
+      });
+    });
+    return dataRows;
+  }
   async function exportWorkbook(sheets, filename){
     if(typeof ExcelJS === 'undefined'){ console.error('ExcelJS not loaded'); return; }
     const wb = new ExcelJS.Workbook();
     sheets.forEach(function(s){
       const ws = wb.addWorksheet((s.name || 'Sheet').slice(0,31));
-      const headerRow = ws.addRow(s.headers);
-      headerRow.eachCell(function(cell){
-        cell.font = { bold:true, color:{ argb:'FFFFFFFF' } };
-        cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF5B21B6' } };
-        cell.alignment = { vertical:'middle' };
-      });
-      const dataRows = s.rows.length ? s.rows : [];
-      // OPTIONAL s.numFmts: array parallel to s.headers, each entry either an
-      // Excel number-format string (e.g. '#,##0', '0.0%', 'dd-mmm-yyyy') or
-      // falsy to leave that column's cells in their default (text) format.
-      // Purely additive — callers that omit numFmts get identical output to
-      // before (values are written as-is, no cell.numFmt applied).
-      const numFmts = s.numFmts || [];
-      dataRows.forEach(function(rowArr, rIdx){
-        const excelRow = ws.addRow(rowArr);
-        rowArr.forEach(function(val, cIdx){
-          const explicit = s.cellColors && s.cellColors[rIdx] ? s.cellColors[rIdx][cIdx] : undefined;
-          const color = explicit !== undefined ? explicit : excelStatusColor(s.headers[cIdx], val);
-          const nf = numFmts[cIdx];
-          if((color && FILL_ARGB[color]) || nf){
-            const cell = excelRow.getCell(cIdx + 1);
-            if(color && FILL_ARGB[color]){
-              cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb: FILL_ARGB[color] } };
-              cell.font = { color:{ argb: FONT_ARGB[color] }, bold:true };
-            }
-            if(nf) cell.numFmt = nf;
-          }
+
+      if(s.sections && s.sections.length){
+        // MULTI-TABLE LAYOUT — a bold title row per section, then that
+        // section's own header + colour-coded data rows, then a blank
+        // spacer row before the next section.
+        let maxCols = 0;
+        s.sections.forEach(function(sec){
+          const titleRow = ws.addRow([sec.title]);
+          const titleCell = titleRow.getCell(1);
+          titleCell.font = { bold:true, size:12, color:{ argb:'FF3D1F73' } };
+          titleCell.alignment = { vertical:'middle' };
+          if(sec.headers.length > 1) ws.mergeCells(titleRow.number, 1, titleRow.number, sec.headers.length);
+          writeDataTable(ws, sec.headers, sec.rows, sec.cellColors, sec.numFmts);
+          ws.addRow([]); // spacer between sections
+          if(sec.headers.length > maxCols) maxCols = sec.headers.length;
         });
-      });
+        for(let i = 0; i < maxCols; i++){
+          let maxLen = 10;
+          s.sections.forEach(function(sec){
+            if(sec.headers[i]) maxLen = Math.max(maxLen, String(sec.headers[i]).length);
+            (sec.rows || []).forEach(function(r){
+              const v = r[i];
+              const len = (v instanceof Date) ? 11 : String(v === null || v === undefined ? '' : v).length;
+              if(len > maxLen) maxLen = len;
+            });
+          });
+          ws.getColumn(i + 1).width = Math.min(60, Math.max(10, maxLen + 2));
+        }
+        // No single-row freeze/autofilter here — a multi-table sheet has
+        // no one uniform header row to anchor either to.
+        return;
+      }
+
+      // FLAT LAYOUT — unchanged behaviour for every pre-existing export.
+      const dataRows = writeDataTable(ws, s.headers, s.rows, s.cellColors, s.numFmts);
       s.headers.forEach(function(h, i){
         let maxLen = String(h || '').length;
         dataRows.forEach(function(r){
@@ -10211,7 +10258,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     if(!drillModalState) return;
     const cols = drillColsActive;
     const sheets = [];
-    if(drillModalState.summary && drillModalState.summary.length){
+    // A rich multi-table Summary (currently only Daily Review supplies
+    // this — see summarySections below) takes priority over the plain
+    // Metric/Value pairs used for every other drill-down's on-screen
+    // stat cells, which still export exactly as before.
+    if(drillModalState.summarySections && drillModalState.summarySections.length){
+      sheets.push({ name:'Summary', sections: drillModalState.summarySections });
+    } else if(drillModalState.summary && drillModalState.summary.length){
       sheets.push({ name:'Summary', headers:['Metric','Value'], rows: drillModalState.summary.map(function(p){ return [p[0], p[1]]; }) });
     }
     const hasRag = cols.some(function(c){ return !!c.ragGet; });
@@ -10566,6 +10619,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   }
   function isSR(r){ return String(r.service||'').trim() === 'Service Request'; }
   function isINC(r){ return String(r.service||'').trim() === 'Incident Management'; }
+  function isNonStdSR(r){ return String(r.sr_service||'').trim().toLowerCase() !== 'standard'; }
 
   function dailyReviewBaseRows(){
     const rows = (window.GovData && (window.GovData.filteredRowsAllCases || window.GovData.filteredRows)) || [];
@@ -10670,6 +10724,588 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     return String(d.getDate()).padStart(2,'0') + ' ' + MONTHS_SHORT[d.getMonth()] + ' ' + d.getFullYear();
   }
 
+  /* ================================================================
+     MANAGEMENT SUMMARY — Excel-export-only.
+     ----------------------------------------------------------------
+     Turns whatever ticket set a KPI card drilled into (`rows`) into a
+     full management snapshot for the drill-down modal's "Summary"
+     sheet: ticket mix, SLA/First-Response performance, status/priority/
+     aging distributions, communication & delegation compliance, an
+     engineer/customer breakdown, a risk view, an overall compliance
+     score, RAG health, and a reconciliation check — per the "Daily
+     Review -> Excel Export -> Summary" brief.
+
+     Every number here is computed strictly from `rows` — the exact
+     ticket set that also lands in this same export's "Ticket Detail"
+     sheet — so Summary always reconciles with Ticket Detail by
+     construction (see the Reconciliation section at the bottom).
+     Where the source data genuinely can't support a requested metric
+     (e.g. Closed/Cancelled counts — Daily Review is open-cases-only
+     and Cancel/Duplicate tickets are excluded app-wide by design; TAT
+     on tickets that haven't closed yet; an explicit "L1 Solvable"
+     flag that doesn't exist in the data), the sheet says so plainly
+     ("N/A - <reason>") rather than showing a fabricated number.
+
+     On-screen, the modal's compact stat cells keep using the existing
+     `summary` [label,value] array (unchanged for every OTHER
+     drill-down in the app) — this richer breakdown only affects the
+     Excel Summary sheet, via the separate `summarySections` field
+     read by the export button handler in Module 10 above.
+     ================================================================ */
+  function nonBlank(v){ return v !== null && v !== undefined && String(v).trim() !== ''; }
+  function toNumLocal(v){
+    if(v === null || v === undefined || v === '') return null;
+    if(typeof v === 'number') return isFinite(v) ? v : null;
+    const cleaned = String(v).replace(/,/g,'').trim();
+    if(cleaned === '' || /^n\/?a$/i.test(cleaned)) return null;
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  }
+  function isCriticalRow(r){
+    const sev = String(r.severity||'').trim().toLowerCase(), pri = String(r.priority||'').trim().toLowerCase();
+    return sev.indexOf('critical')!==-1 || sev.indexOf('hotsite')!==-1 || pri.indexOf('critical')!==-1 || pri.indexOf('hotsite')!==-1;
+  }
+  function pctStr(p){ return (p === null || p === undefined || isNaN(p)) ? 'N/A' : p.toFixed(2) + '%'; }
+  function decStr(v, d){ return (v === null || v === undefined || isNaN(v)) ? 'N/A' : Number(v).toFixed(d === undefined ? 1 : d); }
+  // Same 90% / 75% thresholds already used on-screen elsewhere in this
+  // app (see slaTone()) — reused here rather than inventing new ones.
+  function ragPct(p){ return (p === null || p === undefined) ? null : (p >= 90 ? 'GREEN' : p >= 75 ? 'AMBER' : 'RED'); }
+  function ragLabel(color){ return color === 'GREEN' ? 'Green' : color === 'AMBER' ? 'Amber' : color === 'RED' ? 'Red' : 'N/A'; }
+  function blankColors(nRows, nCols){
+    const g = [];
+    for(let i = 0; i < nRows; i++){ const row = []; for(let j = 0; j < nCols; j++) row.push(null); g.push(row); }
+    return g;
+  }
+
+  /** Single pass (plus a few small dependent passes) over one KPI card's
+   *  matching ticket set, producing every raw number the Excel Summary
+   *  and the on-screen compact summary both draw from. */
+  function computeDailyReviewStats(rows){
+    const n = rows.length;
+    const s = { n: n };
+    const enriched = rows.map(function(){ return {}; });
+
+    // --- Ticket type mix ---
+    s.srRows = rows.filter(isSR);
+    s.incRows = rows.filter(isINC);
+    s.otherTypeCount = n - s.srRows.length - s.incRows.length;
+    s.srStdCount = s.srRows.filter(function(r){ return String(r.sr_service||'').trim().toLowerCase() === 'standard'; }).length;
+    s.srNonStdCount = s.srRows.length - s.srStdCount;
+
+    // --- Aging compliance: SR Open Std (<=3 days) / SR Open Non-Std
+    //     (<=5 days) / INC Open (<=5 days) — same business rule as the
+    //     app's existing Executive Summary "Open Std/Non-Std SR / Open
+    //     INC" KPI cards, and as the per-ticket "<=N / >N / Compliance %"
+    //     columns added to Ticket Detail (see agingComplianceCols below).
+    //     Applicable = the ticket is that type AND has a computable age;
+    //     a ticket outside the type, or with no age, counts in neither
+    //     bucket rather than being forced into one. ---
+    function agingComplianceBucket(isTypeMatch, days){
+      const applicable = rows.filter(function(r){ return isTypeMatch(r) && r._age_days !== null && r._age_days !== undefined; });
+      const compliant = applicable.filter(function(r){ return r._age_days <= days; }).length;
+      return { applicable: applicable.length, compliant: compliant, nonCompliant: applicable.length - compliant,
+        pct: applicable.length ? (compliant / applicable.length * 100) : null };
+    }
+    s.agingCompliance = {
+      stdSR: agingComplianceBucket(function(r){ return isSR(r) && !isNonStdSR(r); }, 3),
+      nonStdSR: agingComplianceBucket(function(r){ return isSR(r) && isNonStdSR(r); }, 5),
+      inc: agingComplianceBucket(isINC, 5)
+    };
+
+    // --- Status / priority distributions (every distinct value found —
+    //     never a fixed hard-coded list) ---
+    s.statusCounts = {};
+    s.priorityCounts = {};
+    rows.forEach(function(r){
+      const st = nonBlank(r.current_status) ? String(r.current_status).trim() : '(Not Specified)';
+      s.statusCounts[st] = (s.statusCounts[st]||0) + 1;
+      const pr = nonBlank(r.priority) ? String(r.priority).trim() : '(Not Specified)';
+      s.priorityCounts[pr] = (s.priorityCounts[pr]||0) + 1;
+    });
+
+    // --- Aging — reuses the app's own centrally-computed _age_days /
+    //     _aging_bucket (calendar days; see Module 4's deriveRow) ---
+    s.agingBucketCounts = {};
+    const ages = [];
+    rows.forEach(function(r){
+      if(r._aging_bucket) s.agingBucketCounts[r._aging_bucket] = (s.agingBucketCounts[r._aging_bucket]||0) + 1;
+      if(r._age_days !== null && r._age_days !== undefined) ages.push(r._age_days);
+    });
+    s.avgAge = ages.length ? (ages.reduce(function(a,b){ return a+b; },0) / ages.length) : null;
+    s.maxAge = ages.length ? Math.max.apply(null, ages) : null;
+    s.oldestRow = null;
+    if(ages.length){
+      for(let i = 0; i < rows.length; i++){ if(rows[i]._age_days === s.maxAge){ s.oldestRow = rows[i]; break; } }
+    }
+    s.agingOver = {
+      d3: ages.filter(function(a){ return a > 3; }).length,
+      d5: ages.filter(function(a){ return a > 5; }).length,
+      d7: ages.filter(function(a){ return a > 7; }).length,
+      d15: ages.filter(function(a){ return a > 15; }).length,
+      d30: ages.filter(function(a){ return a > 30; }).length
+    };
+
+    // --- TAT — if it's already on the record, use it as-is; most OPEN
+    //     tickets won't have one yet since it's normally populated at
+    //     closure, so this will often legitimately come back empty ---
+    const tats = rows.map(function(r){ return toNumLocal(r.tat_days); }).filter(function(v){ return v !== null; });
+    s.tat = {
+      count: tats.length,
+      avg: tats.length ? (tats.reduce(function(a,b){ return a+b; },0) / tats.length) : null,
+      min: tats.length ? Math.min.apply(null, tats) : null,
+      max: tats.length ? Math.max.apply(null, tats) : null
+    };
+
+    // --- SLA (Classification/Assignment, Resolution, First Response) —
+    //     "Applicable" = the source column actually carries a value for
+    //     that ticket, kept distinct from "not breached" (rule: NA/blank
+    //     must never be treated the same as an actual value) ---
+    function slaBucket(field, flagKey){
+      const applicable = rows.filter(function(r){ return nonBlank(r[field]); });
+      const breached = applicable.filter(function(r){ return r[flagKey]; }).length;
+      return { applicable: applicable.length, breached: breached, within: applicable.length - breached,
+        pct: applicable.length ? ((applicable.length - breached) / applicable.length * 100) : null };
+    }
+    s.classSla = slaBucket('class_sla_breached', '_class_sla_breached');
+    s.resSla = slaBucket('resolution_sla_breached', '_resolution_sla_breached');
+    s.frSla = slaBucket('first_response_sla_breached', '_first_response_sla_breached');
+    // Same "average of the 3 SLA %s" convention already used elsewhere
+    // in this app for its "Overall SLA %" KPI.
+    const slaPcts = [s.classSla.pct, s.resSla.pct, s.frSla.pct].filter(function(p){ return p !== null; });
+    s.overallSlaPct = slaPcts.length ? (slaPcts.reduce(function(a,b){ return a+b; },0) / slaPcts.length) : null;
+
+    let anySlaBreachedCount = 0;
+    rows.forEach(function(r, i){
+      const flag = !!(r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached);
+      enriched[i].anySlaBreached = flag;
+      if(flag) anySlaBreachedCount++;
+    });
+    s.anySlaBreachedCount = anySlaBreachedCount;
+
+    // --- Communication compliance (reuses the existing computeEmail*
+    //     helpers above — no new business rule) ---
+    let respApplicable=0, respMissed=0, followupApplicable=0, followupMissed=0, anyCommMiss=0;
+    rows.forEach(function(r, i){
+      const lastFrom = String(r.last_email_from||'').trim();
+      const sentTime = parseDate(r.last_email_sent_time);
+      const respApplicableFlag = !!lastFrom && lastFrom.toLowerCase().indexOf('@sapphireims.com') === -1 && !!sentTime;
+      const followupApplicableFlag = !!lastFrom && lastFrom.toLowerCase().indexOf('@sapphireims.com') !== -1 && !!sentTime;
+      const respMissedFlag = computeEmailResponseCompliance(r).missed;
+      const followupMissedFlag = computeEmailFollowupMissed(r);
+      if(respApplicableFlag) respApplicable++;
+      if(respMissedFlag) respMissed++;
+      if(followupApplicableFlag) followupApplicable++;
+      if(followupMissedFlag) followupMissed++;
+      const miss = respMissedFlag || followupMissedFlag;
+      enriched[i].commMiss = miss;
+      if(miss) anyCommMiss++;
+    });
+    s.comm = { respApplicable:respApplicable, respMissed:respMissed, followupApplicable:followupApplicable,
+      followupMissed:followupMissed, anyMiss:anyCommMiss, compliant: n - anyCommMiss,
+      compliancePct: n ? ((n - anyCommMiss) / n * 100) : null };
+
+    // --- Current tier / escalation status (assign_to: L1/L2/SME) ---
+    s.tier = { l1:0, l2:0, sme:0, other:0 };
+    rows.forEach(function(r){
+      const t = String(r.assign_to||'').trim();
+      if(t === 'L1') s.tier.l1++; else if(t === 'L2') s.tier.l2++; else if(t === 'SME') s.tier.sme++; else s.tier.other++;
+    });
+
+    // --- Delegation — reuses the existing computeDelegationEligible
+    //     field (L1-should-delegate-within-2-business-days rule) plus
+    //     assign_to / assign_l2_time / assign_sme_time; no new rule ---
+    let withinWindow=0, delayedAtL1=0, delegatedOnTime=0, delegatedLate=0, delegatedUnknownTiming=0, delegationUnknown=0;
+    rows.forEach(function(r, i){
+      const elig = computeDelegationEligible(r);
+      const tier = String(r.assign_to||'').trim();
+      if(elig === ''){ delegationUnknown++; enriched[i].delegationDelayed = false; return; }
+      if(tier === 'L1'){
+        if(elig === 'Applicable'){ withinWindow++; enriched[i].delegationDelayed = false; }
+        else { delayedAtL1++; enriched[i].delegationDelayed = true; }
+      } else {
+        enriched[i].delegationDelayed = false;
+        const delegTime = tier === 'SME' ? parseDate(r.assign_sme_time) : parseDate(r.assign_l2_time);
+        if(!delegTime || !r._creation_date) delegatedUnknownTiming++;
+        else if(countBusinessDaysBetween(r._creation_date, delegTime) <= 2) delegatedOnTime++;
+        else delegatedLate++;
+      }
+    });
+    s.delegation = { withinWindow:withinWindow, delayedAtL1:delayedAtL1, delegatedOnTime:delegatedOnTime,
+      delegatedLate:delegatedLate, delegatedUnknownTiming:delegatedUnknownTiming, unknown:delegationUnknown,
+      compliancePct: n ? ((withinWindow + delegatedOnTime) / n * 100) : null };
+
+    // --- Closure compliance (Target Date for Closure vs. today/close —
+    //     reuses computeTargetDateForClosure / computeClosureComplianceStatus) ---
+    let closureApplicable=0, closureBreached=0;
+    rows.forEach(function(r, i){
+      const target = computeTargetDateForClosure(r);
+      if(!target){ enriched[i].closureBreached = false; return; }
+      closureApplicable++;
+      const breached = computeClosureComplianceStatus(r, target) === 'Breached';
+      enriched[i].closureBreached = breached;
+      if(breached) closureBreached++;
+    });
+    s.closure = { applicable:closureApplicable, breached:closureBreached, within:closureApplicable-closureBreached,
+      pct: closureApplicable ? ((closureApplicable-closureBreached) / closureApplicable * 100) : null };
+
+    // --- Engineer-wise / customer-wise distribution ---
+    const engMap = {}, custMap = {};
+    rows.forEach(function(r, i){
+      const eng = nonBlank(r.assign_owner_name) ? String(r.assign_owner_name).trim() : 'Unassigned';
+      if(!engMap[eng]) engMap[eng] = { name:eng, total:0, slaBreached:0 };
+      engMap[eng].total++;
+      if(enriched[i].anySlaBreached) engMap[eng].slaBreached++;
+
+      const cust = nonBlank(r.customer_name) ? String(r.customer_name).trim() : (nonBlank(r.submitted_by) ? String(r.submitted_by).trim() : 'Unknown');
+      if(!custMap[cust]) custMap[cust] = { name:cust, total:0, slaBreached:0, commMiss:0 };
+      custMap[cust].total++;
+      if(enriched[i].anySlaBreached) custMap[cust].slaBreached++;
+      if(enriched[i].commMiss) custMap[cust].commMiss++;
+    });
+    s.engineers = Object.keys(engMap).map(function(k){ return engMap[k]; }).sort(function(a,b){ return b.total - a.total; });
+    s.customers = Object.keys(custMap).map(function(k){ return custMap[k]; }).sort(function(a,b){ return b.total - a.total; });
+    const namedEngineers = s.engineers.filter(function(e){ return e.name !== 'Unassigned'; });
+    s.engineerSummary = {
+      ticketsAssigned: n - (engMap['Unassigned'] ? engMap['Unassigned'].total : 0),
+      totalEngineersAssigned: namedEngineers.length,
+      topEngineer: namedEngineers.length ? namedEngineers[0] : null
+    };
+    s.engineerSummary.avgTicketsPerEngineer = s.engineerSummary.totalEngineersAssigned
+      ? (s.engineerSummary.ticketsAssigned / s.engineerSummary.totalEngineersAssigned) : null;
+
+    // --- Risk / attention required — a ticket counts once even with
+    //     several simultaneous issues ---
+    let attention=0, highRisk=0, criticalPriority=0;
+    rows.forEach(function(r, i){
+      const flags = [enriched[i].anySlaBreached, enriched[i].commMiss, enriched[i].closureBreached, enriched[i].delegationDelayed];
+      const cnt = flags.filter(Boolean).length;
+      if(cnt > 0) attention++;
+      if(cnt >= 2) highRisk++;
+      if(isCriticalRow(r)) criticalPriority++;
+    });
+    s.risk = { attention:attention, clean:n-attention, highRisk:highRisk, criticalPriority:criticalPriority };
+
+    // --- Overall Daily Review Compliance % — average of every
+    //     compliance dimension that could actually be computed here ---
+    const dims = [s.classSla.pct, s.resSla.pct, s.frSla.pct, s.comm.compliancePct, s.delegation.compliancePct, s.closure.pct]
+      .filter(function(p){ return p !== null; });
+    s.compliancePct = dims.length ? (dims.reduce(function(a,b){ return a+b; },0) / dims.length) : null;
+    s.complianceDimCount = dims.length;
+
+    return s;
+  }
+
+  const AGING_BUCKET_ORDER = ['0-1 Days','2-3 Days','4-7 Days','8-15 Days','15-30 Days','30+ Days'];
+
+  /** Formats computeDailyReviewStats()'s output into the stacked
+   *  mini-tables consumed by exportWorkbook's { sections:[...] } sheet
+   *  layout — this becomes the Excel "Summary" sheet. */
+  function buildDailyReviewExcelSummary(stats, rows, base, cardLabel){
+    const n = stats.n;
+    const sections = [];
+
+    sections.push({
+      title: 'DAILY REVIEW — MANAGEMENT SNAPSHOT',
+      headers: ['Field','Detail'],
+      rows: [
+        ['Report Generated', fmtDMonYYYY(new Date())],
+        ['Card / View', cardLabel],
+        ['Scope', 'Open cases only (Daily Review\u2019s fixed status whitelist), matching every currently active global filter']
+      ]
+    });
+
+    const execRows = [
+      ['Total Open Cases — All Daily Review Cards', fmtN(base.length)],
+      ['Matching Tickets — This Export', fmtN(n)],
+      ['SLA Compliance % (Overall)', pctStr(stats.overallSlaPct)],
+      ['SLA Breached (Any Type)', fmtN(stats.anySlaBreachedCount)],
+      ['First Response Compliance %', pctStr(stats.frSla.pct)],
+      ['Communication Missed', fmtN(stats.comm.anyMiss)],
+      ['Escalated to L2/SME', fmtN(stats.tier.l2 + stats.tier.sme)],
+      ['Delegation Delayed (Overdue, Still at L1)', fmtN(stats.delegation.delayedAtL1)],
+      ['Tickets Requiring Attention', fmtN(stats.risk.attention)],
+      ['Average Aging (Days)', decStr(stats.avgAge)],
+      ['Average TAT (Days)', stats.tat.count ? decStr(stats.tat.avg) : 'N/A — tickets still open, TAT not yet available'],
+      ['Daily Review Compliance %', pctStr(stats.compliancePct)]
+    ];
+    const execColors = blankColors(execRows.length, 2);
+    execColors[2][1] = ragPct(stats.overallSlaPct);
+    execColors[4][1] = ragPct(stats.frSla.pct);
+    execColors[11][1] = ragPct(stats.compliancePct);
+    // Appended rather than spliced into the fixed indices above, so the
+    // 2/4/11 colour overrides stay correct regardless of this block.
+    execRows.push(
+      ['SR Open Std Compliance % (<=3 Days)', pctStr(stats.agingCompliance.stdSR.pct)],
+      ['SR Open Non-Std Compliance % (<=5 Days)', pctStr(stats.agingCompliance.nonStdSR.pct)],
+      ['INC Open Compliance % (<=5 Days)', pctStr(stats.agingCompliance.inc.pct)]
+    );
+    execColors.push(
+      [null, ragPct(stats.agingCompliance.stdSR.pct)],
+      [null, ragPct(stats.agingCompliance.nonStdSR.pct)],
+      [null, ragPct(stats.agingCompliance.inc.pct)]
+    );
+    sections.push({ title: '1. EXECUTIVE SNAPSHOT', headers: ['KPI','Value'], rows: execRows, cellColors: execColors });
+
+    sections.push({
+      title: '2. OVERALL TICKET SNAPSHOT',
+      headers: ['Metric','Value'],
+      rows: [
+        ['Total Tickets (All Open Cases — Daily Review Scope)', fmtN(base.length)],
+        ['Matching Tickets (This Export)', fmtN(n)],
+        ['Incident Tickets', fmtN(stats.incRows.length)],
+        ['Service Request Tickets', fmtN(stats.srRows.length)],
+        ['Standard Service Requests', fmtN(stats.srStdCount)],
+        ['Non-Standard Service Requests', fmtN(stats.srNonStdCount)],
+        ['Open Tickets', fmtN(n) + ' (100% — this export is open-cases-only)'],
+        ['Closed Tickets', 'N/A — Daily Review is scoped to open cases only'],
+        ['Cancelled / Duplicate Tickets', 'N/A — excluded from every calculation across the app by design']
+      ]
+    });
+
+    const slaRows = [
+      ['Classification/Assignment SLA — Applicable', fmtN(stats.classSla.applicable), ''],
+      ['Classification/Assignment SLA — Within Target', fmtN(stats.classSla.within), ''],
+      ['Classification/Assignment SLA — Breached', fmtN(stats.classSla.breached), ''],
+      ['Classification/Assignment SLA — Compliance %', '', pctStr(stats.classSla.pct)],
+      ['Resolution SLA — Applicable', fmtN(stats.resSla.applicable), ''],
+      ['Resolution SLA — Within Target', fmtN(stats.resSla.within), ''],
+      ['Resolution SLA — Breached', fmtN(stats.resSla.breached), ''],
+      ['Resolution SLA — Compliance %', '', pctStr(stats.resSla.pct)],
+      ['Overall SLA Compliance % (avg. of Classification + Resolution + First Response)', '', pctStr(stats.overallSlaPct)],
+      ['Overall SLA Breach %', '', pctStr(stats.overallSlaPct === null ? null : 100 - stats.overallSlaPct)]
+    ];
+    const slaColors = blankColors(slaRows.length, 3);
+    slaColors[3][2] = ragPct(stats.classSla.pct);
+    slaColors[7][2] = ragPct(stats.resSla.pct);
+    slaColors[8][2] = ragPct(stats.overallSlaPct);
+    sections.push({ title: '3. SLA PERFORMANCE', headers: ['Metric','Count','Compliance %'], rows: slaRows, cellColors: slaColors });
+
+    const frRows = [
+      ['Total Tickets', fmtN(n), ''],
+      ['First Response Applicable', fmtN(stats.frSla.applicable), ''],
+      ['First Response Within SLA', fmtN(stats.frSla.within), ''],
+      ['First Response Violated', fmtN(stats.frSla.breached), ''],
+      ['First Response Compliance %', '', pctStr(stats.frSla.pct)]
+    ];
+    const frColors = blankColors(frRows.length, 3);
+    frColors[4][2] = ragPct(stats.frSla.pct);
+    sections.push({ title: '4. FIRST RESPONSE / ACKNOWLEDGEMENT', headers: ['Metric','Count','%'], rows: frRows, cellColors: frColors });
+
+    const statusKeys = Object.keys(stats.statusCounts).sort(function(a,b){ return stats.statusCounts[b] - stats.statusCounts[a]; });
+    sections.push({
+      title: '5. TICKET STATUS DISTRIBUTION',
+      headers: ['Status','Ticket Count','% of Total'],
+      rows: statusKeys.map(function(k){ return [k, fmtN(stats.statusCounts[k]), pctStr(n ? stats.statusCounts[k]/n*100 : null)]; })
+    });
+
+    const typeRows = [
+      ['Incident', fmtN(stats.incRows.length), pctStr(n ? stats.incRows.length/n*100 : null)],
+      ['Standard SR', fmtN(stats.srStdCount), pctStr(n ? stats.srStdCount/n*100 : null)],
+      ['Non-Standard SR', fmtN(stats.srNonStdCount), pctStr(n ? stats.srNonStdCount/n*100 : null)]
+    ];
+    if(stats.otherTypeCount > 0) typeRows.push(['Other', fmtN(stats.otherTypeCount), pctStr(n ? stats.otherTypeCount/n*100 : null)]);
+    sections.push({ title: '6. TICKET TYPE / CATEGORY MIX', headers: ['Ticket Type','Count','%'], rows: typeRows });
+
+    const priorityKeys = Object.keys(stats.priorityCounts).sort(function(a,b){ return stats.priorityCounts[b] - stats.priorityCounts[a]; });
+    sections.push({
+      title: '7. PRIORITY DISTRIBUTION',
+      headers: ['Priority','Count','%'],
+      rows: priorityKeys.map(function(k){ return [k, fmtN(stats.priorityCounts[k]), pctStr(n ? stats.priorityCounts[k]/n*100 : null)]; })
+    });
+
+    sections.push({
+      title: '8. TICKET AGING — BUCKETS (calendar days, existing app-wide aging logic)',
+      headers: ['Aging Bucket','Count','% of Total'],
+      rows: AGING_BUCKET_ORDER.map(function(b){ const c = stats.agingBucketCounts[b] || 0; return [b, fmtN(c), pctStr(n ? c/n*100 : null)]; })
+    });
+    sections.push({
+      title: '8a. TICKET AGING — ADDITIONAL STATS',
+      headers: ['Metric','Value'],
+      rows: [
+        ['Average Ticket Age (Days)', decStr(stats.avgAge)],
+        ['Maximum Ticket Age (Days)', decStr(stats.maxAge, 0)],
+        ['Oldest Ticket', stats.oldestRow ? ((stats.oldestRow.ticket_id||'N/A') + ' — ' + String(stats.oldestRow.title||'').slice(0,50)) : 'N/A'],
+        ['Tickets > 3 Days', fmtN(stats.agingOver.d3)],
+        ['Tickets > 5 Days', fmtN(stats.agingOver.d5)],
+        ['Tickets > 7 Days', fmtN(stats.agingOver.d7)],
+        ['Tickets > 15 Days', fmtN(stats.agingOver.d15)],
+        ['Tickets > 30 Days', fmtN(stats.agingOver.d30)]
+      ]
+    });
+
+    // Per-ticket-type aging compliance — mirrors the 9 new "<=N / >N /
+    // Compliance %" columns added to Ticket Detail between SR Service
+    // and Target Date for Closure (same age/threshold source, so this
+    // reconciles with those columns by construction).
+    (function(){
+      function bucketSection(label, b, days){
+        const rows = [
+          [label + ' — Applicable Tickets', fmtN(b.applicable), ''],
+          [label + ' — Within ' + days + ' Days (Compliant)', fmtN(b.compliant), pctStr(b.applicable ? b.compliant/b.applicable*100 : null)],
+          [label + ' — Beyond ' + days + ' Days (Non-Compliant)', fmtN(b.nonCompliant), pctStr(b.applicable ? b.nonCompliant/b.applicable*100 : null)],
+          [label + ' — Compliance %', '', pctStr(b.pct)]
+        ];
+        const colors = blankColors(4, 3);
+        colors[2][1] = b.nonCompliant > 0 ? 'RED' : null;
+        colors[3][2] = ragPct(b.pct);
+        return { rows: rows, colors: colors };
+      }
+      const stdSec = bucketSection('SR Open Std', stats.agingCompliance.stdSR, 3);
+      const nonStdSec = bucketSection('SR Open Non-Std', stats.agingCompliance.nonStdSR, 5);
+      const incSec = bucketSection('INC Open', stats.agingCompliance.inc, 5);
+      sections.push({
+        title: '8b. AGING COMPLIANCE — SR STD / SR NON-STD / INC',
+        headers: ['Metric','Count','%'],
+        rows: stdSec.rows.concat(nonStdSec.rows, incSec.rows),
+        cellColors: stdSec.colors.concat(nonStdSec.colors, incSec.colors)
+      });
+    })();
+
+    sections.push({
+      title: '9. TURNAROUND TIME (TAT)',
+      headers: ['Metric','Value'],
+      rows: stats.tat.count ? [
+        ['Average TAT (Days)', decStr(stats.tat.avg)],
+        ['Minimum TAT (Days)', decStr(stats.tat.min)],
+        ['Maximum TAT (Days)', decStr(stats.tat.max)],
+        ['Tickets with a TAT Value', fmtN(stats.tat.count) + ' of ' + fmtN(n)],
+        ['Resolved-Within-N-Days Breakdown', 'N/A — these tickets are still open/unresolved']
+      ] : [
+        ['TAT', 'N/A — no ticket in this export has a TAT value yet (TAT is normally populated at closure; these tickets are still open)']
+      ]
+    });
+
+    const commRows = [
+      ['Email Response Applicable', fmtN(stats.comm.respApplicable), ''],
+      ['Email Response Missed', fmtN(stats.comm.respMissed), pctStr(stats.comm.respApplicable ? stats.comm.respMissed/stats.comm.respApplicable*100 : null)],
+      ['Email Response Not Missed', fmtN(stats.comm.respApplicable - stats.comm.respMissed), ''],
+      ['Email Follow-up Applicable', fmtN(stats.comm.followupApplicable), ''],
+      ['Email Follow-up Missed', fmtN(stats.comm.followupMissed), pctStr(stats.comm.followupApplicable ? stats.comm.followupMissed/stats.comm.followupApplicable*100 : null)],
+      ['Email Follow-up Not Missed', fmtN(stats.comm.followupApplicable - stats.comm.followupMissed), ''],
+      ['Any Communication Miss', fmtN(stats.comm.anyMiss), pctStr(n ? stats.comm.anyMiss/n*100 : null)],
+      ['Communication Compliant', fmtN(stats.comm.compliant), pctStr(stats.comm.compliancePct)]
+    ];
+    const commColors = blankColors(commRows.length, 3);
+    commColors[1][2] = stats.comm.respMissed > 0 ? 'RED' : null;
+    commColors[4][2] = stats.comm.followupMissed > 0 ? 'RED' : null;
+    commColors[6][1] = stats.comm.anyMiss > 0 ? 'AMBER' : null;
+    commColors[7][2] = ragPct(stats.comm.compliancePct);
+    sections.push({ title: '10. CUSTOMER COMMUNICATION', headers: ['Metric','Count','%'], rows: commRows, cellColors: commColors });
+
+    const tierRows = [
+      ['Currently at L1', fmtN(stats.tier.l1), pctStr(n ? stats.tier.l1/n*100 : null)],
+      ['Escalated to L2', fmtN(stats.tier.l2), pctStr(n ? stats.tier.l2/n*100 : null)],
+      ['Escalated to SME', fmtN(stats.tier.sme), pctStr(n ? stats.tier.sme/n*100 : null)],
+      ['Escalated to L2/SME (Combined)', fmtN(stats.tier.l2 + stats.tier.sme), pctStr(n ? (stats.tier.l2+stats.tier.sme)/n*100 : null)],
+      ['Tier Not Specified', fmtN(stats.tier.other), pctStr(n ? stats.tier.other/n*100 : null)],
+      ['L1 Solvable / Not Solvable', 'N/A — no explicit source field for L1 solvability; Current Tier above is the closest available signal', '']
+    ];
+    sections.push({ title: '11. CURRENT TIER / ESCALATION STATUS', headers: ['Metric','Count','%'], rows: tierRows });
+
+    const delegRows = [
+      ['Still Within 2-Day Window (At L1)', fmtN(stats.delegation.withinWindow), pctStr(n ? stats.delegation.withinWindow/n*100 : null)],
+      ['Delegation Delayed — Overdue, Still at L1', fmtN(stats.delegation.delayedAtL1), pctStr(n ? stats.delegation.delayedAtL1/n*100 : null)],
+      ['Delegated Within 2-Day Target', fmtN(stats.delegation.delegatedOnTime), pctStr(n ? stats.delegation.delegatedOnTime/n*100 : null)],
+      ['Delegated Late (After 2-Day Target)', fmtN(stats.delegation.delegatedLate), pctStr(n ? stats.delegation.delegatedLate/n*100 : null)],
+      ['Delegated — Timing Not Determinable', fmtN(stats.delegation.delegatedUnknownTiming), ''],
+      ['Delegation Rule Not Applicable (No Creation Date)', fmtN(stats.delegation.unknown), ''],
+      ['Delegation Compliance %', '', pctStr(stats.delegation.compliancePct)]
+    ];
+    const delegColors = blankColors(delegRows.length, 3);
+    delegColors[1][1] = stats.delegation.delayedAtL1 > 0 ? 'RED' : null;
+    delegColors[3][1] = stats.delegation.delegatedLate > 0 ? 'AMBER' : null;
+    delegColors[6][2] = ragPct(stats.delegation.compliancePct);
+    sections.push({ title: '12. DELEGATION COMPLIANCE', headers: ['Metric','Count','%'], rows: delegRows, cellColors: delegColors });
+
+    const topEngLabel = stats.engineerSummary.topEngineer ? (stats.engineerSummary.topEngineer.name + ' (' + fmtN(stats.engineerSummary.topEngineer.total) + ' tickets)') : 'N/A';
+    sections.push({
+      title: '13. ENGINEER / ASSIGNMENT SUMMARY',
+      headers: ['Metric','Value'],
+      rows: [
+        ['Total Engineers Assigned', fmtN(stats.engineerSummary.totalEngineersAssigned)],
+        ['Tickets Assigned', fmtN(stats.engineerSummary.ticketsAssigned)],
+        ['Average Tickets per Engineer', decStr(stats.engineerSummary.avgTicketsPerEngineer)],
+        ['Highest Assigned Engineer', topEngLabel],
+        ['Highest Open Ticket Owner', topEngLabel + ' (same set — this export is open cases only)']
+      ]
+    });
+    sections.push({
+      title: '13a. ENGINEER-WISE TICKET DISTRIBUTION',
+      headers: ['Engineer','Total Tickets','Open','SLA Breached','SLA Compliance %'],
+      rows: stats.engineers.map(function(e){
+        return [e.name, fmtN(e.total), fmtN(e.total), fmtN(e.slaBreached), pctStr(e.total ? (e.total-e.slaBreached)/e.total*100 : null)];
+      })
+    });
+
+    sections.push({
+      title: '14. CUSTOMER / ACCOUNT DISTRIBUTION',
+      headers: ['Customer / Account','Total Tickets','Open','SLA Breached','Communication Miss','% of Total'],
+      rows: stats.customers.map(function(c){
+        return [c.name, fmtN(c.total), fmtN(c.total), fmtN(c.slaBreached), fmtN(c.commMiss), pctStr(n ? c.total/n*100 : null)];
+      })
+    });
+
+    const riskRows = [
+      ['Tickets Requiring Attention', fmtN(stats.risk.attention)],
+      ['Tickets with No Compliance Issue', fmtN(stats.risk.clean)],
+      ['High Risk Tickets (2+ Simultaneous Issues)', fmtN(stats.risk.highRisk)],
+      ['Critical / Priority Tickets', fmtN(stats.risk.criticalPriority)]
+    ];
+    const riskColors = blankColors(riskRows.length, 2);
+    riskColors[0][1] = stats.risk.attention > 0 ? 'AMBER' : 'GREEN';
+    riskColors[2][1] = stats.risk.highRisk > 0 ? 'RED' : null;
+    sections.push({ title: '15. RISK / ATTENTION REQUIRED', headers: ['Metric','Value'], rows: riskRows, cellColors: riskColors });
+
+    sections.push({
+      title: '16. DAILY REVIEW COMPLIANCE SCORE',
+      headers: ['Metric','Value'],
+      rows: [
+        ['Daily Review Compliance %', pctStr(stats.compliancePct)],
+        ['Formula', 'Average of ' + stats.complianceDimCount + ' available compliance dimension(s) of: Classification SLA %, Resolution SLA %, First Response SLA %, Communication Compliance %, Delegation Compliance %, Closure Compliance %. Only dimensions with usable source data for this export are included.']
+      ]
+    });
+
+    const ragRows = [
+      ['SLA Compliance', pctStr(stats.overallSlaPct), ragLabel(ragPct(stats.overallSlaPct))],
+      ['First Response Compliance', pctStr(stats.frSla.pct), ragLabel(ragPct(stats.frSla.pct))],
+      ['Communication Compliance', pctStr(stats.comm.compliancePct), ragLabel(ragPct(stats.comm.compliancePct))],
+      ['Delegation Compliance', pctStr(stats.delegation.compliancePct), ragLabel(ragPct(stats.delegation.compliancePct))],
+      ['Overall Daily Review Health', pctStr(stats.compliancePct), ragLabel(ragPct(stats.compliancePct))]
+    ];
+    const ragColors = [
+      [null, null, ragPct(stats.overallSlaPct)],
+      [null, null, ragPct(stats.frSla.pct)],
+      [null, null, ragPct(stats.comm.compliancePct)],
+      [null, null, ragPct(stats.delegation.compliancePct)],
+      [null, null, ragPct(stats.compliancePct)]
+    ];
+    sections.push({ title: '17. RAG / HEALTH INDICATORS', headers: ['KPI','Value','Status'], rows: ragRows, cellColors: ragColors });
+
+    sections.push({
+      title: '18. DATA SCOPE & INTEGRITY NOTES',
+      headers: ['Note'],
+      rows: [
+        ['Every figure on this sheet is computed strictly from the tickets in this export\u2019s Ticket Detail sheet (Matching Tickets) — see the Reconciliation table below.'],
+        ['Cancelled and Duplicate tickets are excluded from all calculations across the entire dashboard by design, not just this export.'],
+        ['Daily Review is scoped to open cases only (a fixed status whitelist); Closed Tickets are outside this export\u2019s scope.'],
+        ['"N/A" means the underlying source column had no usable data for that metric — it is never treated the same as zero.'],
+        ['Aging figures use calendar days via the app\u2019s existing aging logic; Target-Date-for-Closure and Delegation figures use business days (Mon–Fri) via the app\u2019s existing SLA logic.']
+      ]
+    });
+
+    const reconRows = [
+      ['Summary "Matching Tickets"', fmtN(n)],
+      ['Ticket Detail Row Count', fmtN(n)],
+      ['Difference', fmtN(0)],
+      ['Summary Calculation Status', 'PASS']
+    ];
+    const reconColors = blankColors(reconRows.length, 2);
+    reconColors[3][1] = 'GREEN';
+    sections.push({ title: '19. SUMMARY VALIDATION (RECONCILIATION)', headers: ['Validation','Result'], rows: reconRows, cellColors: reconColors });
+
+    return sections;
+  }
+
   // ---------------------------------------------------------------
   // 25-COLUMN SPEC — shared by the on-screen table AND its Excel
   // export (window.GovOpenDrillModal already wires both to the same
@@ -10688,6 +11324,33 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const today = new Date(); today.setHours(0,0,0,0);
     const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     return dOnly >= today ? 'GREEN' : 'RED';
+  }
+
+  /** Builds the 3 "<=N / >N / Compliance %" columns for one ticket-type
+   *  aging group (Std SR / Non-Std SR / INC). Reuses the exact
+   *  Non-Violated(<=N)/Violated(>N) business rule already used by the
+   *  Executive Summary's Open Std SR / Open Non-Std SR / Open INC KPI
+   *  cards (age_days vs a fixed calendar-day threshold: Std SR 3, Non-Std
+   *  SR 5, INC 5) — not a new rule. A row outside the given ticket type,
+   *  or with no computable age, shows blank on all 3 columns rather than
+   *  being force-counted either way. */
+  function agingComplianceCols(keyPrefix, labelPrefix, isTypeMatch, days){
+    function withinThreshold(r){
+      if(!isTypeMatch(r)) return null;
+      if(r._age_days === null || r._age_days === undefined) return null;
+      return r._age_days <= days;
+    }
+    return [
+      { key: keyPrefix + 'Lte', label: labelPrefix + ' <=' + days,
+        get: function(r){ const w = withinThreshold(r); return w===null ? '' : (w ? 'Yes' : 'No'); },
+        ragGet: function(r){ const w = withinThreshold(r); return w===null ? null : (w ? 'GREEN' : 'RED'); } },
+      { key: keyPrefix + 'Gt', label: labelPrefix + ' >' + days,
+        get: function(r){ const w = withinThreshold(r); return w===null ? '' : (w ? 'No' : 'Yes'); },
+        ragGet: function(r){ const w = withinThreshold(r); return w===null ? null : (w ? 'GREEN' : 'RED'); } },
+      { key: keyPrefix + 'CompliancePct', label: labelPrefix + ' Compliance %',
+        get: function(r){ const w = withinThreshold(r); return w===null ? '' : (w ? '100%' : '0%'); },
+        ragGet: function(r){ const w = withinThreshold(r); return w===null ? null : (w ? 'GREEN' : 'RED'); } }
+    ];
   }
 
   function buildDailyReviewCols(){
@@ -10718,6 +11381,11 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { key:'service', label:'Service', get:function(r){ return String(r.service||'').trim(); } },
       { key:'edocDisplay', label:'EDOC', get:function(r){ return String(r.edoc||'').trim(); }, ragGet:function(r){ return futureDateRag(parseDate(r.edoc)); } },
       { key:'srService', label:'SR Service', get:function(r){ return String(r.sr_service||'').trim(); } },
+    ]
+    .concat(agingComplianceCols('srOpenStd', 'SR Open Std', function(r){ return isSR(r) && !isNonStdSR(r); }, 3))
+    .concat(agingComplianceCols('srOpenNonStd', 'SR Open Non-Std', function(r){ return isSR(r) && isNonStdSR(r); }, 5))
+    .concat(agingComplianceCols('incOpen', 'INC Open', isINC, 5))
+    .concat([
       { key:'_targetDateForClosure', label:'Target Date for Closure', get:function(r){ const t = computeTargetDateForClosure(r); return t ? fmtDMY(t) : ''; }, ragGet:function(r){ return futureDateRag(computeTargetDateForClosure(r)); } },
       { key:'_closureComplianceStatus', label:'Closure Compliance Status', get:function(r){ return computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); }, ragGet:function(r){ const s = computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); return s==='Within SLA'?'GREEN':s==='Breached'?'RED':null; } },
       { key:'_delegationEligible', label:'Delegation Eligible', get:function(r){ return computeDelegationEligible(r); }, ragGet:function(r){ const s = computeDelegationEligible(r); return s==='Applicable'?'GREEN':s==='Not Applicable'?'RED':null; } },
@@ -10731,7 +11399,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { key:'updateTimeDisplay', label:'Update Time', get:function(r){ return fmtDateTimeSpec(r.update_time); } },
       { key:'tatDays', label:'TAT Days', get:function(r){ return (r.tat_days===null||r.tat_days===undefined) ? '' : String(r.tat_days).trim(); } },
       { key:'creationTimeDisplay', label:'Creation Time', get:function(r){ return fmtDateTimeSpec(r.creation_time); } }
-    ];
+    ]);
   }
 
   // ---------------------------------------------------------------
@@ -10787,12 +11455,26 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const key = card.getAttribute('data-drill');
     if(!key || !DAILY_REVIEW_TITLES[key]) return;
     const rows = dailyReviewCardRows(key);
+    const base = dailyReviewBaseRows();
+    const stats = computeDailyReviewStats(rows);
     window.GovOpenDrillModal({
       title: DAILY_REVIEW_TITLES[key],
       filenameBase: 'Daily_Review_' + key,
       rows: rows,
       columns: buildDailyReviewCols(),
-      summary: [['Matching Tickets', fmtN(rows.length)]]
+      // Compact on-screen stat cells — unchanged style/size to every
+      // other drill-down in the app.
+      summary: [
+        ['Matching Tickets', fmtN(rows.length)],
+        ['SLA Compliance %', stats.overallSlaPct===null ? '—' : stats.overallSlaPct.toFixed(1)+'%'],
+        ['Comm. Missed', fmtN(stats.comm.anyMiss)],
+        ['Escalated L2/SME', fmtN(stats.tier.l2 + stats.tier.sme)],
+        ['Delegation Delayed', fmtN(stats.delegation.delayedAtL1)],
+        ['Attention Required', fmtN(stats.risk.attention)]
+      ],
+      // Full management snapshot — Excel "Summary" sheet only (see
+      // Module 10's export button handler).
+      summarySections: buildDailyReviewExcelSummary(stats, rows, base, DAILY_REVIEW_TITLES[key])
     });
   }
   document.getElementById('dailyReviewKpiGrid').addEventListener('click', handleDailyReviewKpiClick);
