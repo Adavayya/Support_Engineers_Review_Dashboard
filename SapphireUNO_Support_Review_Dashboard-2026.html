@@ -856,6 +856,19 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
 .pro-section-desc{ font-size:12.5px; color:var(--text-muted); margin:-4px 0 12px; max-width:900px; line-height:1.5; }
 .pro-export-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:10px; }
 
+/* ---- Collapsible section headers (Act Now / Action Today / Delegation
+   & Ownership / Customer Communication / Aging & Stale Cases) — table
+   stays out of the DOM's visible flow until the user opts in, so a long
+   list of dense tables doesn't all dump onto the screen at once. ---- */
+.kpi-group-label.pro-collapsible{ cursor:pointer; user-select:none; }
+.kpi-group-label.pro-collapsible:hover{ color:var(--accent); }
+.kpi-group-label.pro-collapsible:hover i{ color:var(--accent); }
+.pro-toggle-chevron{ transition:transform .16s ease; }
+.kpi-group-label.pro-collapsible.is-collapsed .pro-toggle-chevron{ transform:rotate(-90deg); }
+.pro-collapsible-hint{ font-size:10.5px; font-weight:600; text-transform:none; letter-spacing:normal; color:var(--text-muted); margin-left:2px; }
+.kpi-group-label.pro-collapsible.is-collapsed .pro-collapsible-hint::before{ content:"Click to expand"; }
+.kpi-group-label.pro-collapsible:not(.is-collapsed) .pro-collapsible-hint::before{ content:"Click to collapse"; }
+
 /* ---- Risk ranking filter chips (Customer Risk / Engineer Risk) ---- */
 .pro-risk-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
 .pro-risk-chip{
@@ -1839,6 +1852,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         <div id="dailyReviewWrap" style="display:none;">
           <div class="kpi-group-label"><i class="fa-solid fa-layer-group"></i> Overall Case Volume</div>
           <div class="kpi-grid" id="dailyReviewKpiGrid"></div>
+
+          <div class="kpi-group-label" style="margin-top:16px;"><i class="fa-solid fa-box-archive"></i> Overall Closed Volume</div>
+          <div class="kpi-grid" id="dailyReviewClosedKpiGrid"></div>
         </div>
       </section>
 
@@ -2877,17 +2893,17 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           </table></div>
 
           <!-- 2. ACT NOW -->
-          <div class="kpi-group-label" style="margin-top:24px;"><i class="fa-solid fa-fire"></i> Act Now <span class="pill pill-bad" style="margin-left:8px;">P1</span></div>
+          <div class="kpi-group-label pro-collapsible is-collapsed" data-toggle="proActNowWrap" style="margin-top:24px;"><i class="fa-solid fa-fire"></i> Act Now <span class="pill pill-bad" style="margin-left:8px;">P1</span><i class="fa-solid fa-chevron-down pro-toggle-chevron" style="margin-left:6px;"></i><span class="pro-collapsible-hint"></span></div>
           <p class="pro-section-desc">Immediate intervention required — these tickets have breached an SLA or condition and cannot wait.</p>
-          <div class="dt-wrap"><table class="table" id="proActNowTable" style="width:100%;">
+          <div class="dt-wrap" id="proActNowWrap" style="display:none;"><table class="table" id="proActNowTable" style="width:100%;">
             <thead><tr><th>Ticket</th><th>Customer</th><th>L1 Team</th><th>Owner</th><th>Tier</th><th>Age</th><th>Primary Issue</th><th>Why</th><th>Recommended Action</th><th>Action Owner</th><th>Due</th><th>Escalation</th></tr></thead>
             <tbody></tbody>
           </table></div>
 
           <!-- 3. ACTION TODAY -->
-          <div class="kpi-group-label" style="margin-top:24px;"><i class="fa-solid fa-calendar-day"></i> Action Today <span class="pill pill-warn" style="margin-left:8px;">P2</span></div>
+          <div class="kpi-group-label pro-collapsible is-collapsed" data-toggle="proActionTodayWrap" style="margin-top:24px;"><i class="fa-solid fa-calendar-day"></i> Action Today <span class="pill pill-warn" style="margin-left:8px;">P2</span><i class="fa-solid fa-chevron-down pro-toggle-chevron" style="margin-left:6px;"></i><span class="pro-collapsible-hint"></span></div>
           <p class="pro-section-desc">Already breached on a completed condition, or needs action today to avoid becoming an Act Now item.</p>
-          <div class="dt-wrap"><table class="table" id="proActionTodayTable" style="width:100%;">
+          <div class="dt-wrap" id="proActionTodayWrap" style="display:none;"><table class="table" id="proActionTodayTable" style="width:100%;">
             <thead><tr><th>Ticket</th><th>Customer</th><th>L1 Team</th><th>Owner</th><th>Tier</th><th>Age</th><th>Primary Issue</th><th>Why</th><th>Recommended Action</th><th>Action Owner</th><th>Due</th></tr></thead>
             <tbody></tbody>
           </table></div>
@@ -2906,22 +2922,22 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           </table></div>
 
           <!-- 5. DELEGATION & OWNERSHIP -->
-          <div class="kpi-group-label" style="margin-top:24px;"><i class="fa-solid fa-people-arrows"></i> Delegation &amp; Ownership</div>
-          <div class="dt-wrap"><table class="table" id="proDelegationTable" style="width:100%;">
+          <div class="kpi-group-label pro-collapsible is-collapsed" data-toggle="proDelegationWrap" style="margin-top:24px;"><i class="fa-solid fa-people-arrows"></i> Delegation &amp; Ownership<i class="fa-solid fa-chevron-down pro-toggle-chevron" style="margin-left:6px;"></i><span class="pro-collapsible-hint"></span></div>
+          <div class="dt-wrap" id="proDelegationWrap" style="display:none;"><table class="table" id="proDelegationTable" style="width:100%;">
             <thead><tr><th>Ticket</th><th>Customer</th><th>Owner</th><th>Tier</th><th>Condition</th><th>Status</th><th>Why</th><th>Recommended Action</th><th>Action Owner</th><th>Due</th></tr></thead>
             <tbody></tbody>
           </table></div>
 
           <!-- 6. CUSTOMER COMMUNICATION -->
-          <div class="kpi-group-label" style="margin-top:24px;"><i class="fa-solid fa-comments"></i> Customer Communication</div>
-          <div class="dt-wrap"><table class="table" id="proCommTable" style="width:100%;">
+          <div class="kpi-group-label pro-collapsible is-collapsed" data-toggle="proCommWrap" style="margin-top:24px;"><i class="fa-solid fa-comments"></i> Customer Communication<i class="fa-solid fa-chevron-down pro-toggle-chevron" style="margin-left:6px;"></i><span class="pro-collapsible-hint"></span></div>
+          <div class="dt-wrap" id="proCommWrap" style="display:none;"><table class="table" id="proCommTable" style="width:100%;">
             <thead><tr><th>Ticket</th><th>Customer</th><th>Owner</th><th>Tier</th><th>Condition</th><th>Status</th><th>Why</th><th>Action</th><th>Due</th></tr></thead>
             <tbody></tbody>
           </table></div>
 
           <!-- 7. AGING & STALE CASES -->
-          <div class="kpi-group-label" style="margin-top:24px;"><i class="fa-solid fa-hourglass-half"></i> Aging &amp; Stale Cases</div>
-          <div class="dt-wrap"><table class="table" id="proAgingTable" style="width:100%;">
+          <div class="kpi-group-label pro-collapsible is-collapsed" data-toggle="proAgingWrap" style="margin-top:24px;"><i class="fa-solid fa-hourglass-half"></i> Aging &amp; Stale Cases<i class="fa-solid fa-chevron-down pro-toggle-chevron" style="margin-left:6px;"></i><span class="pro-collapsible-hint"></span></div>
+          <div class="dt-wrap" id="proAgingWrap" style="display:none;"><table class="table" id="proAgingTable" style="width:100%;">
             <thead><tr><th>Ticket</th><th>Customer</th><th>Owner</th><th>Tier</th><th>Age (Days)</th><th>Aging Category</th><th>Why Flagged</th><th>Recommended Action</th><th>Action Owner</th></tr></thead>
             <tbody></tbody>
           </table></div>
@@ -3287,6 +3303,35 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   document.getElementById('sidebarBackdrop').addEventListener('click', closeMobileSidebar);
 
   // ---------------------------------------------------------------
+  // COLLAPSIBLE TABLE SECTIONS — Act Now / Action Today / Delegation &
+  // Ownership / Customer Communication / Aging & Stale Cases (Proactive
+  // Open Case Dashboard) start collapsed; clicking the section header
+  // toggles the table open/closed. Event-delegated on document since
+  // these headers exist in the DOM whether or not their host
+  // .page-section is the one currently shown.
+  document.addEventListener('click', function(e){
+    const label = e.target.closest('.kpi-group-label.pro-collapsible');
+    if(!label) return;
+    const targetId = label.getAttribute('data-toggle');
+    const target = targetId && document.getElementById(targetId);
+    if(!target) return;
+    const collapsed = label.classList.toggle('is-collapsed');
+    target.style.display = collapsed ? 'none' : '';
+    if(!collapsed && typeof $ !== 'undefined' && $.fn && $.fn.DataTable){
+      // These tables are wired with jQuery DataTables, which measures
+      // column widths at whatever moment it (re-)initializes — and a
+      // display:none container has no layout box, so a table that got
+      // (re-)initialized while collapsed (e.g. a filter change ran
+      // while this section was closed) would otherwise stay squashed
+      // to zero-width columns even after being revealed here.
+      const $tbl = $(target).find('table').first();
+      if($tbl.length && $.fn.DataTable.isDataTable($tbl)){
+        $tbl.DataTable().columns.adjust().draw(false);
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------
   // PRINT / EXPORT PDF — one generic control for every section rather
   // than a bespoke implementation per page. Browsers turn "Print" into
   // "Save as PDF" via the destination picker in the print dialog, which
@@ -3305,7 +3350,22 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   // one-off changes across every module.
   // ---------------------------------------------------------------
   let printExpandedTables = [];
+  let printExpandedSections = [];
   function prepareTablesForPrint(){
+    // Temporarily reveal any collapsed section (see the "Collapsible
+    // table sections" handler above) so it isn't silently missing from
+    // the printout — the same expand-now/restore-after approach this
+    // function already uses below for DataTables pagination.
+    printExpandedSections = [];
+    document.querySelectorAll('.kpi-group-label.pro-collapsible.is-collapsed').forEach(function(label){
+      const targetId = label.getAttribute('data-toggle');
+      const target = targetId && document.getElementById(targetId);
+      if(!target) return;
+      printExpandedSections.push(label);
+      label.classList.remove('is-collapsed');
+      target.style.display = '';
+    });
+
     if(typeof $ === 'undefined' || !$.fn || !$.fn.dataTable) return;
     printExpandedTables = [];
     $.fn.dataTable.tables({ visible:true, api:true }).every(function(){
@@ -3319,6 +3379,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function restoreTablesAfterPrint(){
     printExpandedTables.forEach(function(t){ t.api.page.len(t.length).draw(false); });
     printExpandedTables = [];
+    printExpandedSections.forEach(function(label){
+      label.classList.add('is-collapsed');
+      const targetId = label.getAttribute('data-toggle');
+      const target = targetId && document.getElementById(targetId);
+      if(target) target.style.display = 'none';
+    });
+    printExpandedSections = [];
   }
   window.addEventListener('beforeprint', prepareTablesForPrint);
   window.addEventListener('afterprint', restoreTablesAfterPrint);
@@ -10688,6 +10755,17 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function isDailyReviewOpen(r){
     return DAILY_REVIEW_OPEN_STATUSES.indexOf(compactStatus(r.current_status)) !== -1;
   }
+  // CLOSED-STATUS WHITELIST — "Overall Closed Volume" mirrors "Overall
+  // Case Volume" exactly (own fixed, independent list rather than the
+  // shared _is_closed flag, for the same stability reason as above).
+  // Values copied from this app's existing authoritative closed-status
+  // list (CLOSED_STATUS_COMPACT, Module 4) rather than referencing it,
+  // so this section's scope stays fixed even if that shared list
+  // changes for other purposes later.
+  const DAILY_REVIEW_CLOSED_STATUSES = ['closed','customeragreed','deferred','resolvedpendingforconfirmation'];
+  function isDailyReviewClosed(r){
+    return DAILY_REVIEW_CLOSED_STATUSES.indexOf(compactStatus(r.current_status)) !== -1;
+  }
   function isSR(r){ return String(r.service||'').trim() === 'Service Request'; }
   function isINC(r){ return String(r.service||'').trim() === 'Incident Management'; }
   function isNonStdSR(r){ return String(r.sr_service||'').trim().toLowerCase() !== 'standard'; }
@@ -10695,6 +10773,10 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function dailyReviewBaseRows(){
     const rows = (window.GovData && (window.GovData.filteredRowsAllCases || window.GovData.filteredRows)) || [];
     return rows.filter(isDailyReviewOpen);
+  }
+  function dailyReviewClosedBaseRows(){
+    const rows = (window.GovData && (window.GovData.filteredRowsAllCases || window.GovData.filteredRows)) || [];
+    return rows.filter(isDailyReviewClosed);
   }
 
   // ---------------------------------------------------------------
@@ -10927,16 +11009,20 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
     // --- TAT — if it's already on the record, use it as-is; most OPEN
     //     tickets won't have one yet since it's normally populated at
-    //     closure, so this will often legitimately come back empty ---
+    //     closure, so this will often legitimately come back empty (it's
+    //     genuinely meaningful for Closed-scope exports instead) ---
     const tatRows = rows.filter(function(r){ return toNumLocal(r.tat_days) !== null; });
     const tats = tatRows.map(function(r){ return toNumLocal(r.tat_days); });
+    function withinDaysCount(days){ return tats.filter(function(t){ return t <= days; }).length; }
     s.tat = {
       count: tats.length,
       avg: tats.length ? (tats.reduce(function(a,b){ return a+b; },0) / tats.length) : null,
       min: tats.length ? Math.min.apply(null, tats) : null,
       max: tats.length ? Math.max.apply(null, tats) : null,
-      rows: tatRows
+      rows: tatRows,
+      within1: withinDaysCount(1), within2: withinDaysCount(2), within3: withinDaysCount(3), within5: withinDaysCount(5)
     };
+
 
     // --- SLA (Classification/Assignment, Resolution, First Response) —
     //     "Applicable" = the source column actually carries a value for
@@ -11098,9 +11184,17 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   /** Formats computeDailyReviewStats()'s output into the stacked
    *  mini-tables consumed by exportWorkbook's { sections:[...] } sheet
    *  layout — this becomes the Excel "Summary" sheet. */
-  function buildDailyReviewExcelSummary(stats, rows, base, cardLabel){
+  function buildDailyReviewExcelSummary(stats, rows, base, cardLabel, scope){
     const n = stats.n;
     const sections = [];
+    const isClosedScope = scope === 'Closed';
+    const scopeWord = isClosedScope ? 'Closed' : 'Open';
+    // "Close" (not "Closed") to match this app's own existing naming
+    // convention elsewhere, and Ticket Detail's own column headers
+    // (see buildDailyReviewCols) exactly.
+    const stdColLabel = isClosedScope ? 'SR Close Std' : 'SR Open Std';
+    const nonStdColLabel = isClosedScope ? 'SR Close Non-Std' : 'SR Open Non-Std';
+    const incColLabel = isClosedScope ? 'INC Close' : 'INC Open';
 
     // Percentage cells hold a REAL fraction (0-1) with a '0.00%' column
     // number format (see numFmts below) rather than a pre-formatted
@@ -11120,12 +11214,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       rows: [
         ['Report Generated', fmtDMonYYYY(new Date())],
         ['Card / View', cardLabel],
-        ['Scope', 'Open cases only (Daily Review\u2019s fixed status whitelist), matching every currently active global filter']
+        ['Scope', scopeWord + ' cases only (Daily Review\u2019s fixed ' + scopeWord.toLowerCase() + '-status whitelist), matching every currently active global filter']
       ]
     });
 
     const execRows = [
-      ['Total Open Cases — All Daily Review Cards', fmtN(base.length)],
+      ['Total ' + scopeWord + ' Cases — All Daily Review Cards', fmtN(base.length)],
       ['Matching Tickets — This Export', fmtN(n)],
       ['SLA Compliance % (Overall)', pctStr(stats.overallSlaPct)],
       ['SLA Breached (Any Type)', fmtN(stats.anySlaBreachedCount)],
@@ -11135,7 +11229,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       ['Delegation Delayed (Overdue, Still at L1)', fmtN(stats.delegation.delayedAtL1)],
       ['Tickets Requiring Attention', fmtN(stats.risk.attention)],
       ['Average Aging (Days)', decStr(stats.avgAge)],
-      ['Average TAT (Days)', stats.tat.count ? decStr(stats.tat.avg) : 'N/A — tickets still open, TAT not yet available'],
+      ['Average TAT (Days)', stats.tat.count ? decStr(stats.tat.avg) : (isClosedScope ? 'N/A — no TAT value is populated for these tickets' : 'N/A — tickets still open, TAT not yet available')],
       ['Daily Review Compliance %', pctStr(stats.compliancePct)]
     ];
     const execColors = blankColors(execRows.length, 2);
@@ -11143,9 +11237,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     execColors[4][1] = ragPct(stats.frSla.pct);
     execColors[11][1] = ragPct(stats.compliancePct);
     execRows.push(
-      ['SR Open Std Compliance % (<=3 Days)', pctStr(stats.agingCompliance.stdSR.pct)],
-      ['SR Open Non-Std Compliance % (<=5 Days)', pctStr(stats.agingCompliance.nonStdSR.pct)],
-      ['INC Open Compliance % (<=5 Days)', pctStr(stats.agingCompliance.inc.pct)]
+      [stdColLabel + ' Compliance % (<=3 Days)', pctStr(stats.agingCompliance.stdSR.pct)],
+      [nonStdColLabel + ' Compliance % (<=5 Days)', pctStr(stats.agingCompliance.nonStdSR.pct)],
+      [incColLabel + ' Compliance % (<=5 Days)', pctStr(stats.agingCompliance.inc.pct)]
     );
     execColors.push(
       [null, ragPct(stats.agingCompliance.stdSR.pct)],
@@ -11158,14 +11252,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       title: '2. OVERALL TICKET SNAPSHOT',
       headers: ['Metric','Value'],
       rows: [
-        ['Total Tickets (All Open Cases — Daily Review Scope)', fmtN(base.length)],
+        ['Total Tickets (All ' + scopeWord + ' Cases — Daily Review Scope)', fmtN(base.length)],
         ['Matching Tickets (This Export)', fmtN(n)],
         ['Incident Tickets', fmtN(stats.incRows.length)],
         ['Service Request Tickets', fmtN(stats.srRows.length)],
         ['Standard Service Requests', fmtN(stats.srStdCount)],
         ['Non-Standard Service Requests', fmtN(stats.srNonStdCount)],
-        ['Open Tickets', fmtN(n) + ' (100% — this export is open-cases-only)'],
-        ['Closed Tickets', 'N/A — Daily Review is scoped to open cases only'],
+        ['Open Tickets', isClosedScope ? 'N/A — this export is scoped to closed cases only' : (fmtN(n) + ' (100% — this export is open-cases-only)')],
+        ['Closed Tickets', isClosedScope ? (fmtN(n) + ' (100% — this export is closed-cases-only)') : 'N/A — Daily Review is scoped to open cases only'],
         ['Cancelled / Duplicate Tickets', 'N/A — excluded from every calculation across the app by design']
       ]
     });
@@ -11224,18 +11318,18 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     });
 
     sections.push({
-      title: '8. TICKET AGING — BUCKETS (calendar days, existing app-wide aging logic)',
+      title: '8. TICKET AGING — BUCKETS (' + (isClosedScope ? 'time to close' : 'time open') + ', calendar days, existing app-wide aging logic)',
       headers: ['Aging Bucket','Count','% of Total'],
       rows: AGING_BUCKET_ORDER.map(function(b){ const c = stats.agingBucketCounts[b] || 0; return [b, c, pctCell(n ? c/n*100 : null)]; }),
       numFmts: [null, CNT_FMT, PCT_FMT]
     });
     sections.push({
-      title: '8a. TICKET AGING — ADDITIONAL STATS',
+      title: '8a. TICKET AGING — ADDITIONAL STATS' + (isClosedScope ? ' (age = creation to closure)' : ''),
       headers: ['Metric','Value'],
       rows: [
         ['Average Ticket Age (Days)', decStr(stats.avgAge)],
         ['Maximum Ticket Age (Days)', decStr(stats.maxAge, 0)],
-        ['Oldest Ticket', stats.oldestRow ? ((stats.oldestRow.ticket_id||'N/A') + ' — ' + String(stats.oldestRow.title||'').slice(0,50)) : 'N/A'],
+        [isClosedScope ? 'Longest-Open Ticket (Creation to Closure)' : 'Oldest Ticket', stats.oldestRow ? ((stats.oldestRow.ticket_id||'N/A') + ' — ' + String(stats.oldestRow.title||'').slice(0,50)) : 'N/A'],
         ['Tickets > 3 Days', fmtN(stats.agingOver.d3)],
         ['Tickets > 5 Days', fmtN(stats.agingOver.d5)],
         ['Tickets > 7 Days', fmtN(stats.agingOver.d7)],
@@ -11247,7 +11341,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     // Per-ticket-type aging compliance — mirrors the 9 "<=N / >N /
     // Compliance %" columns already in Ticket Detail between SR Service
     // and Target Date for Closure (same age/threshold source, so this
-    // reconciles with those columns by construction).
+    // reconciles with those columns by construction, and its labels
+    // switch Open/Close the same way Ticket Detail's own headers do).
     (function(){
       function bucketSection(label, b, days){
         const rows = [
@@ -11261,9 +11356,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         colors[3][2] = ragPct(b.pct);
         return { rows: rows, colors: colors };
       }
-      const stdSec = bucketSection('SR Open Std', stats.agingCompliance.stdSR, 3);
-      const nonStdSec = bucketSection('SR Open Non-Std', stats.agingCompliance.nonStdSR, 5);
-      const incSec = bucketSection('INC Open', stats.agingCompliance.inc, 5);
+      const stdSec = bucketSection(stdColLabel, stats.agingCompliance.stdSR, 3);
+      const nonStdSec = bucketSection(nonStdColLabel, stats.agingCompliance.nonStdSR, 5);
+      const incSec = bucketSection(incColLabel, stats.agingCompliance.inc, 5);
       sections.push({
         title: '8b. AGING COMPLIANCE — SR STD / SR NON-STD / INC',
         headers: ['Metric','Count','%'],
@@ -11281,9 +11376,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         ['Minimum TAT (Days)', decStr(stats.tat.min)],
         ['Maximum TAT (Days)', decStr(stats.tat.max)],
         ['Tickets with a TAT Value', fmtN(stats.tat.count) + ' of ' + fmtN(n)],
-        ['Resolved-Within-N-Days Breakdown', 'N/A — these tickets are still open/unresolved']
+        ['Resolved Within 1 Day', fmtN(stats.tat.within1) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value'],
+        ['Resolved Within 2 Days', fmtN(stats.tat.within2) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value'],
+        ['Resolved Within 3 Days', fmtN(stats.tat.within3) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value'],
+        ['Resolved Within 5 Days', fmtN(stats.tat.within5) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value']
       ] : [
-        ['TAT', 'N/A — no ticket in this export has a TAT value yet (TAT is normally populated at closure; these tickets are still open)']
+        ['TAT', isClosedScope ? 'N/A — no ticket in this export has a TAT value populated' : 'N/A — no ticket in this export has a TAT value yet (TAT is normally populated at closure; these tickets are still open)']
       ]
     });
 
@@ -11338,12 +11436,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         ['Tickets Assigned', fmtN(stats.engineerSummary.ticketsAssigned)],
         ['Average Tickets per Engineer', decStr(stats.engineerSummary.avgTicketsPerEngineer)],
         ['Highest Assigned Engineer', topEngLabel],
-        ['Highest Open Ticket Owner', topEngLabel + ' (same set — this export is open cases only)']
+        [isClosedScope ? 'Highest Closed Ticket Owner' : 'Highest Open Ticket Owner', topEngLabel + ' (same set — this export is ' + scopeWord.toLowerCase() + ' cases only)']
       ]
     });
     sections.push({
       title: '13a. ENGINEER-WISE TICKET DISTRIBUTION',
-      headers: ['Engineer','Total Tickets','Open','SLA Breached','SLA Compliance %'],
+      headers: ['Engineer','Total Tickets', scopeWord,'SLA Breached','SLA Compliance %'],
       rows: stats.engineers.map(function(e){
         return [e.name, e.total, e.total, e.slaBreached, pctCell(e.total ? (e.total-e.slaBreached)/e.total*100 : null)];
       }),
@@ -11352,7 +11450,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
     sections.push({
       title: '14. CUSTOMER / ACCOUNT DISTRIBUTION',
-      headers: ['Customer / Account','Total Tickets','Open','SLA Breached','Communication Miss','% of Total'],
+      headers: ['Customer / Account','Total Tickets', scopeWord,'SLA Breached','Communication Miss','% of Total'],
       rows: stats.customers.map(function(c){
         return [c.name, c.total, c.total, c.slaBreached, c.commMiss, pctCell(n ? c.total/n*100 : null)];
       }),
@@ -11401,9 +11499,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       rows: [
         ['Every figure on this sheet is computed strictly from the tickets in this export\u2019s Ticket Detail sheet (Matching Tickets) — see the Reconciliation table below.'],
         ['Cancelled and Duplicate tickets are excluded from all calculations across the entire dashboard by design, not just this export.'],
-        ['Daily Review is scoped to open cases only (a fixed status whitelist); Closed Tickets are outside this export\u2019s scope.'],
+        ['This export is scoped to ' + scopeWord.toLowerCase() + ' cases only (Daily Review\u2019s fixed ' + scopeWord.toLowerCase() + '-status whitelist); ' + (isClosedScope ? 'Open' : 'Closed') + ' Tickets are outside this export\u2019s scope.'],
         ['"N/A" means the underlying source column had no usable data for that metric — it is never treated the same as zero.'],
-        ['Aging figures use calendar days via the app\u2019s existing aging logic; Target-Date-for-Closure and Delegation figures use business days (Mon–Fri) via the app\u2019s existing SLA logic.'],
+        ['Aging figures use calendar days via the app\u2019s existing aging logic (creation to now for open tickets, creation to closure for closed ones); Target-Date-for-Closure and Delegation figures use business days (Mon\u2013Fri) via the app\u2019s existing SLA logic.'],
         ['Every section is fully expanded and visible by default — nothing on this sheet is hidden or requires any interaction to see.']
       ]
     });
@@ -11467,7 +11565,18 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     ];
   }
 
-  function buildDailyReviewCols(){
+  function buildDailyReviewCols(scope){
+    const isClosedScope = scope === 'Closed';
+    // "Close" (not "Closed") to match this app's own existing naming
+    // convention for the same distinction elsewhere (see the MAR-style
+    // export column list: 'SR Open Std' / 'SR Close Std' / 'SR Open
+    // Non-Std' / 'SR Close Non-Std' / 'INC Open' / 'INC Close').
+    const stdLabel = isClosedScope ? 'SR Close Std' : 'SR Open Std';
+    const nonStdLabel = isClosedScope ? 'SR Close Non-Std' : 'SR Open Non-Std';
+    const incLabel = isClosedScope ? 'INC Close' : 'INC Open';
+    const stdKey = isClosedScope ? 'srCloseStd' : 'srOpenStd';
+    const nonStdKey = isClosedScope ? 'srCloseNonStd' : 'srOpenNonStd';
+    const incKey = isClosedScope ? 'incClose' : 'incOpen';
     const exportDateStr = fmtDMonYYYY(new Date());
     return [
       { key:'exportDate', label:'Date', get:function(){ return exportDateStr; } },
@@ -11496,9 +11605,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { key:'edocDisplay', label:'EDOC', get:function(r){ return String(r.edoc||'').trim(); }, ragGet:function(r){ return futureDateRag(parseDate(r.edoc)); } },
       { key:'srService', label:'SR Service', get:function(r){ return String(r.sr_service||'').trim(); } },
     ]
-    .concat(agingComplianceCols('srOpenStd', 'SR Open Std', function(r){ return isSR(r) && !isNonStdSR(r); }, 3))
-    .concat(agingComplianceCols('srOpenNonStd', 'SR Open Non-Std', function(r){ return isSR(r) && isNonStdSR(r); }, 5))
-    .concat(agingComplianceCols('incOpen', 'INC Open', isINC, 5))
+    .concat(agingComplianceCols(stdKey, stdLabel, function(r){ return isSR(r) && !isNonStdSR(r); }, 3))
+    .concat(agingComplianceCols(nonStdKey, nonStdLabel, function(r){ return isSR(r) && isNonStdSR(r); }, 5))
+    .concat(agingComplianceCols(incKey, incLabel, isINC, 5))
     .concat([
       { key:'_targetDateForClosure', label:'Target Date for Closure', get:function(r){ const t = computeTargetDateForClosure(r); return t ? fmtDMY(t) : ''; }, ragGet:function(r){ return futureDateRag(computeTargetDateForClosure(r)); } },
       { key:'_closureComplianceStatus', label:'Closure Compliance Status', get:function(r){ return computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); }, ragGet:function(r){ const s = computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); return s==='Within SLA'?'GREEN':s==='Breached'?'RED':null; } },
@@ -11532,11 +11641,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       '</div>';
   }
 
+  const DAILY_REVIEW_CLOSED_KEYS = { totalClosed:1, closedSR:1, closedINC:1 };
   function dailyReviewCardRows(key){
-    const base = dailyReviewBaseRows();
-    if(key === 'totalSR') return base.filter(isSR);
-    if(key === 'totalINC') return base.filter(isINC);
-    return base; // totalOpen
+    if(key === 'totalSR') return dailyReviewBaseRows().filter(isSR);
+    if(key === 'totalINC') return dailyReviewBaseRows().filter(isINC);
+    if(key === 'totalClosed') return dailyReviewClosedBaseRows();
+    if(key === 'closedSR') return dailyReviewClosedBaseRows().filter(isSR);
+    if(key === 'closedINC') return dailyReviewClosedBaseRows().filter(isINC);
+    return dailyReviewBaseRows(); // totalOpen
   }
 
   function renderDailyReviewModule(){
@@ -11556,27 +11668,40 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       kpiCard({ icon:'fa-layer-group', label:'Total Active Cases', value:fmtN(base.length), drillKey:'totalOpen' }) +
       kpiCard({ icon:'fa-headset', label:'Service Requests (SR)', value:fmtN(srCount), drillKey:'totalSR' }) +
       kpiCard({ icon:'fa-triangle-exclamation', label:'Incident Management (INC)', value:fmtN(incCount), drillKey:'totalINC' });
+
+    const closedBase = dailyReviewClosedBaseRows();
+    const closedSrCount = closedBase.filter(isSR).length;
+    const closedIncCount = closedBase.filter(isINC).length;
+
+    document.getElementById('dailyReviewClosedKpiGrid').innerHTML =
+      kpiCard({ icon:'fa-box-archive', label:'Total Closed Cases', value:fmtN(closedBase.length), drillKey:'totalClosed' }) +
+      kpiCard({ icon:'fa-headset', label:'Service Requests (SR)', value:fmtN(closedSrCount), drillKey:'closedSR' }) +
+      kpiCard({ icon:'fa-triangle-exclamation', label:'Incident Management (INC)', value:fmtN(closedIncCount), drillKey:'closedINC' });
   }
 
   const DAILY_REVIEW_TITLES = {
     totalOpen: 'Total Active Cases — Open Tickets',
     totalSR: 'Service Requests (SR) — Open Tickets',
-    totalINC: 'Incident Management (INC) — Open Tickets'
+    totalINC: 'Incident Management (INC) — Open Tickets',
+    totalClosed: 'Total Closed Cases — Closed Tickets',
+    closedSR: 'Service Requests (SR) — Closed Tickets',
+    closedINC: 'Incident Management (INC) — Closed Tickets'
   };
   function handleDailyReviewKpiClick(e){
     const card = e.target.closest('.kpi-card.clickable');
     if(!card) return;
     const key = card.getAttribute('data-drill');
     if(!key || !DAILY_REVIEW_TITLES[key]) return;
+    const isClosed = !!DAILY_REVIEW_CLOSED_KEYS[key];
     const rows = dailyReviewCardRows(key);
-    const base = dailyReviewBaseRows();
+    const base = isClosed ? dailyReviewClosedBaseRows() : dailyReviewBaseRows();
     const stats = computeDailyReviewStats(rows);
-    const summaryBuild = buildDailyReviewExcelSummary(stats, rows, base, DAILY_REVIEW_TITLES[key]);
+    const summaryBuild = buildDailyReviewExcelSummary(stats, rows, base, DAILY_REVIEW_TITLES[key], isClosed ? 'Closed' : 'Open');
     window.GovOpenDrillModal({
       title: DAILY_REVIEW_TITLES[key],
       filenameBase: 'Daily_Review_' + key,
       rows: rows,
-      columns: buildDailyReviewCols(),
+      columns: buildDailyReviewCols(isClosed ? 'Closed' : 'Open'),
       // Compact on-screen stat cells — unchanged style/size to every
       // other drill-down in the app.
       summary: [
@@ -11588,13 +11713,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         ['Attention Required', fmtN(stats.risk.attention)]
       ],
       // Full management snapshot — Excel "Summary" sheet only (see
-      // Module 10's export button handler): every section's data rows
-      // are collapsible (native Excel outline), banded, bordered, and
-      // — where the column is purely numeric — carry a data bar.
+      // Module 10's export button handler): banded, bordered, and
+      // scoped (Open/Closed) text throughout.
       summarySections: summaryBuild.sections
     });
   }
   document.getElementById('dailyReviewKpiGrid').addEventListener('click', handleDailyReviewKpiClick);
+  document.getElementById('dailyReviewClosedKpiGrid').addEventListener('click', handleDailyReviewKpiClick);
 
   window.GovRegisterModule(['dailyreview'], renderDailyReviewModule);
 
