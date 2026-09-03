@@ -4662,9 +4662,21 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
   function normFilterValue(v){
     if(v === null || v === undefined) return NOT_SPECIFIED;
-    const s = String(v).trim();
+    const s = String(v).trim().replace(/\s+/g, ' ');
     return s === '' ? NOT_SPECIFIED : s;
   }
+  // Case/whitespace-insensitive comparison key. Real-world exports very
+  // often carry the same person's name in more than one casing across
+  // different tickets ("Raju R" / "RAJU R" / "raju r") or with stray
+  // extra internal spaces — with a strict exact-string match, checking
+  // one of those variants in the filter would silently leave that same
+  // person's other-cased tickets out of the result. Matching (and
+  // grouping the checkbox list) on this key instead means a selection
+  // reliably captures every ticket for that person regardless of which
+  // exact casing a given row happens to use. The label the user
+  // actually sees and clicks is still normFilterValue's original-case
+  // form — this key is comparison/grouping-only, never displayed.
+  function normFilterKey(v){ return normFilterValue(v).toLowerCase(); }
 
   /** Build (and cache) the sorted unique-value + count list for one
    *  filterable field, used to populate its popover checkbox list.
@@ -4673,21 +4685,27 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
    *  never show any value that isn't on the roster. */
   function buildFilterOptions(fieldDef){
     const dataField = fieldDef.dataField || fieldDef.key;
-    const counts = {};
     if(fieldDef.fixedOptions){
-      fieldDef.fixedOptions.forEach(function(v){ counts[v] = 0; });
+      const counts = {};
+      fieldDef.fixedOptions.forEach(function(v){ counts[normFilterKey(v)] = 0; });
       window.GovData.rows.forEach(function(row){
-        const v = normFilterValue(row[dataField]);
-        if(counts.hasOwnProperty(v)) counts[v] = counts[v] + 1;
+        const k = normFilterKey(row[dataField]);
+        if(counts.hasOwnProperty(k)) counts[k] = counts[k] + 1;
       });
-      return fieldDef.fixedOptions.map(function(v){ return { value:v, count:counts[v] }; });
+      return fieldDef.fixedOptions.map(function(v){ return { value:v, count:counts[normFilterKey(v)] }; });
     }
+    const counts = {};
+    const keyToLabel = {};
     window.GovData.rows.forEach(function(row){
-      const v = normFilterValue(row[dataField]);
-      counts[v] = (counts[v] || 0) + 1;
+      const k = normFilterKey(row[dataField]);
+      // First-seen casing becomes this option's display label — later
+      // rows using a different casing of the same person/value still
+      // count toward the same option instead of splitting it in two.
+      if(!keyToLabel.hasOwnProperty(k)) keyToLabel[k] = normFilterValue(row[dataField]);
+      counts[k] = (counts[k] || 0) + 1;
     });
     return Object.keys(counts)
-      .map(function(v){ return { value: v, count: counts[v] }; })
+      .map(function(k){ return { value: keyToLabel[k], count: counts[k] }; })
       .sort(function(a,b){ return b.count - a.count; });
   }
 
@@ -4721,7 +4739,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const sel = f[fld.key];
       if(sel && sel.length){
         const dataField = fld.dataField || fld.key;
-        rows = rows.filter(function(r){ return sel.indexOf(normFilterValue(r[dataField])) !== -1; });
+        const selKeys = sel.map(normFilterKey);
+        rows = rows.filter(function(r){ return selKeys.indexOf(normFilterKey(r[dataField])) !== -1; });
       }
     });
 
