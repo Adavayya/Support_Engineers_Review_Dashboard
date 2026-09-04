@@ -656,6 +656,26 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
 .fp-case-mode-row .case-mode-item:hover{ border-color:var(--accent); color:var(--accent); }
 .fp-case-mode-row .case-mode-item.active{ background:var(--accent-dim); border-color:var(--accent-dim); color:#FFFFFF; }
 
+/* ---- Global Timescale — the sole control for the creation-time
+   period filter (the old manual Date Range chip/picker was removed).
+   Lives just below Case Analysis Mode inside the filter panel, above
+   the regular filter chips. Picking a period here drives
+   window.GovFilters.dateFrom/dateTo (by creation_time), so it reaches
+   every dashboard/report/table already wired to that filter. ---- */
+.filter-panel-timescale{
+  padding:14px 18px; border-bottom:1px solid var(--border-subtle); background:var(--bg-surface-2);
+}
+.fp-timescale-label{
+  font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em;
+  color:var(--text-muted); margin-bottom:8px; display:flex; align-items:center; gap:6px;
+}
+#global-filter-timescale{
+  width:100%; border:1px solid var(--border-subtle); background:var(--bg-surface); color:var(--text-primary);
+  border-radius:var(--radius-sm); padding:7px 10px; font-size:12.5px; outline:none; cursor:pointer;
+}
+#global-filter-timescale:focus{ border-color:var(--accent); box-shadow:none; }
+#global-filter-timescale:disabled{ opacity:0.55; cursor:not-allowed; }
+
 /* ---- Applied-filters row + result count, under the page title ---- */
 .applied-filters-row{
   display:none; align-items:center; gap:8px; flex-wrap:wrap; row-gap:6px;
@@ -798,19 +818,6 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
 .applied-pill.mode-pill .pill-x{ color:rgba(255,255,255,0.7); }
 .applied-pill.mode-pill .pill-x:hover{ color:#fff; background:var(--status-bad); }
 
-.fp-daterange{ padding:14px; }
-.fp-daterange label{ font-size:11px; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; display:block; }
-.fp-daterange input[type=date]{
-  width:100%; border:1px solid var(--border-subtle); background:var(--bg-surface-2); color:var(--text-primary);
-  border-radius:var(--radius-sm); padding:7px 10px; font-size:12.5px; margin-bottom:12px; outline:none;
-}
-.fp-daterange input[type=date]:focus{ border-color:var(--accent); }
-.fp-daterange .fp-quick{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
-.fp-daterange .fp-quick button{
-  font-size:11px; padding:4px 9px; border-radius:999px; border:1px solid var(--border-subtle);
-  background:var(--bg-surface-2); color:var(--text-secondary); cursor:pointer;
-}
-.fp-daterange .fp-quick button:hover{ border-color:var(--accent); color:var(--accent); }
 .fp-footer{ padding:10px 12px; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end; }
 .fp-clear-btn{
   font-size:11.5px; font-weight:700; color:var(--text-muted); background:none; border:none; cursor:pointer;
@@ -1471,6 +1478,40 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         <button class="case-mode-item" data-case-mode="CLOSED" title="Show only Closed cases"><i class="fa-solid fa-box-archive"></i> Closed Case Analysis</button>
       </div>
     </div>
+    <div class="filter-panel-timescale">
+      <div class="fp-timescale-label"><i class="fa-solid fa-calendar-days"></i> Timescale</div>
+      <select class="form-select form-select-sm" id="global-filter-timescale">
+        <option value="all">All Time (Default)</option>
+        <option value="today">Today</option>
+        <option value="current-week">Current Week</option>
+        <option value="last-week">Last Week</option>
+        <option value="current-month">Current Month</option>
+        <option value="last-month">Last Month</option>
+        <option value="last-month-include-current">Last Month + Current Month</option>
+        <option value="last-2-months">Last 2 Months</option>
+        <option value="last-2-months-include-current">Last 2 Months + Current Month</option>
+        <option value="last-3-months">Last 3 Months</option>
+        <option value="last-3-months-include-current">Last 3 Months + Current Month</option>
+        <option value="last-4-months">Last 4 Months</option>
+        <option value="last-4-months-include-current">Last 4 Months + Current Month</option>
+        <option value="last-5-months">Last 5 Months</option>
+        <option value="last-5-months-include-current">Last 5 Months + Current Month</option>
+        <option value="last-6-months">Last 6 Months</option>
+        <option value="last-6-months-include-current">Last 6 Months + Current Month</option>
+        <option value="last-7-months">Last 7 Months</option>
+        <option value="last-7-months-include-current">Last 7 Months + Current Month</option>
+        <option value="last-8-months">Last 8 Months</option>
+        <option value="last-8-months-include-current">Last 8 Months + Current Month</option>
+        <option value="last-9-months">Last 9 Months</option>
+        <option value="last-9-months-include-current">Last 9 Months + Current Month</option>
+        <option value="last-10-months">Last 10 Months</option>
+        <option value="last-10-months-include-current">Last 10 Months + Current Month</option>
+        <option value="last-11-months">Last 11 Months</option>
+        <option value="last-11-months-include-current">Last 11 Months + Current Month</option>
+        <option value="current-year">Current Year</option>
+        <option value="last-year">Last Year</option>
+      </select>
+    </div>
     <div class="filter-panel-body" id="filterChipsRow"></div>
   </aside>
   <div class="filter-panel-backdrop" id="filterPanelBackdrop"></div>
@@ -1574,7 +1615,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
                   <!-- Add your Excel file names from the MSPData folder below.
                        Each option's value is the file's path relative to this
                        HTML file, and must be committed to the same repo. -->
-                  <option value="MSPData/CallDump_April_To_Aug_2026.xlsx">SupportCalls_April_TO_Aug_2026</option>
+                  <option value="MSPData/CallDump_April_To_Aug_2026.xlsx">SupportCalls_April_TO_Aug-2026</option>
                   
                   <!-- Add more <option> entries here, following the same
                        MSPData/filename.xlsx pattern, e.g.:
@@ -4498,7 +4539,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
   const NOT_SPECIFIED = '(Not Specified)';
 
-  window.GovFilters = { dateFrom: null, dateTo: null };
+  window.GovFilters = { dateFrom: null, dateTo: null, timescale: 'all' };
   FILTERABLE_FIELDS.forEach(function(f){ window.GovFilters[f.key] = []; });
 
   // Global Case Analysis mode — NOT a normal filter. null = All Cases (today's
@@ -4565,30 +4606,61 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const diff = (day === 0 ? -6 : 1) - day; // shift back to that week's Monday
     return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
   }
-  function getPresetRange(preset){
+
+  /** Resolve a Global Timescale <select> value (e.g. 'today',
+   *  'current-week', 'last-3-months', 'last-3-months-include-current',
+   *  'current-year') into a { from, to } Date range, evaluated against
+   *  creation_time. Returns null for 'all' (no restriction) or an
+   *  unrecognized value.
+   *  - "Today": just today.
+   *  - "Current Week" / "Last Week": Monday–Sunday weeks.
+   *  - "Last N Months" (no "include current"): the N complete calendar
+   *    months before the current one (current month excluded).
+   *  - "...+ Current Month": the same N complete months, extended
+   *    through today (current month included, to date).
+   *  - "Current Month" / "Current Year": start of the period through
+   *    today.
+   *  - "Last Year": the full previous calendar year. */
+  function getTimescaleRange(preset){
     const today = startOfDay(new Date());
-    switch(preset){
-      case 'today':
-        return { from: today, to: today };
-      case 'currentWeek':
-        return { from: mondayOnOrBefore(today), to: today };
-      case 'lastWeek': {
-        const thisMonday = mondayOnOrBefore(today);
-        const lastMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() - 7);
-        const lastSunday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() - 1);
-        return { from: lastMonday, to: lastSunday };
-      }
-      case 'currentMonth':
-        return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: today };
-      case 'lastMonth':
-        return { from: new Date(today.getFullYear(), today.getMonth() - 1, 1), to: new Date(today.getFullYear(), today.getMonth(), 0) };
-      case 'last2Months':
-        return { from: new Date(today.getFullYear(), today.getMonth() - 1, 1), to: today };
-      case 'last3Months':
-        return { from: new Date(today.getFullYear(), today.getMonth() - 2, 1), to: today };
-      default:
-        return null;
+    if(!preset || preset === 'all') return null;
+    if(preset === 'today'){
+      return { from: today, to: today };
     }
+    if(preset === 'current-week'){
+      return { from: mondayOnOrBefore(today), to: today };
+    }
+    if(preset === 'last-week'){
+      const thisMonday = mondayOnOrBefore(today);
+      const lastMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() - 7);
+      const lastSunday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() - 1);
+      return { from: lastMonday, to: lastSunday };
+    }
+    if(preset === 'current-month'){
+      return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: today };
+    }
+    if(preset === 'current-year'){
+      return { from: new Date(today.getFullYear(), 0, 1), to: today };
+    }
+    if(preset === 'last-year'){
+      return { from: new Date(today.getFullYear() - 1, 0, 1), to: new Date(today.getFullYear() - 1, 11, 31) };
+    }
+    const monthOnly = preset.match(/^last-month(-include-current)?$/);
+    if(monthOnly){
+      const includeCurrent = !!monthOnly[1];
+      const from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const to = includeCurrent ? today : new Date(today.getFullYear(), today.getMonth(), 0);
+      return { from: from, to: to };
+    }
+    const multiMonth = preset.match(/^last-(\d+)-months(-include-current)?$/);
+    if(multiMonth){
+      const n = parseInt(multiMonth[1], 10);
+      const includeCurrent = !!multiMonth[2];
+      const from = new Date(today.getFullYear(), today.getMonth() - n, 1);
+      const to = includeCurrent ? today : new Date(today.getFullYear(), today.getMonth(), 0);
+      return { from: from, to: to };
+    }
+    return null;
   }
 
   /** Enrich a single normalized row with every _-prefixed derived field
@@ -4784,7 +4856,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function resetAllFilters(){
     window.GovFilters.dateFrom = null;
     window.GovFilters.dateTo = null;
+    window.GovFilters.timescale = 'all';
     FILTERABLE_FIELDS.forEach(function(f){ window.GovFilters[f.key] = []; });
+    syncTimescaleSelectUI();
     closePopover();
     applyFilters();
   }
@@ -4800,9 +4874,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const missing = (window.GovData && window.GovData.missingColumns) || [];
     function isUnavailable(dataField){ return missing.indexOf(dataField) !== -1; }
 
-    let html = isUnavailable('creation_time')
-      ? '<button class="filter-chip is-unavailable" data-field="__daterange" disabled title="Creation Time is not available in the uploaded file"><i class="fa-solid fa-calendar-days"></i><span class="chip-text">Date Range</span><span class="chip-unavailable-tag">N/A</span></button>'
-      : '<button class="filter-chip" data-field="__daterange"><i class="fa-solid fa-calendar-days"></i><span class="chip-text">Date Range</span><i class="fa-solid fa-chevron-down"></i></button>';
+    const tsSelect = document.getElementById('global-filter-timescale');
+    if(tsSelect){
+      const tsUnavailable = isUnavailable('creation_time');
+      tsSelect.disabled = tsUnavailable;
+      tsSelect.title = tsUnavailable ? 'Creation Time is not available in the uploaded file' : '';
+    }
+
+    let html = '';
 
     FILTERABLE_FIELDS.forEach(function(f){
       if(isUnavailable(f.dataField || f.key)){
@@ -4833,22 +4912,19 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       if(existingBadge) existingBadge.remove();
 
       if(field === '__daterange'){
-        const has = window.GovFilters.dateFrom || window.GovFilters.dateTo;
-        btn.classList.toggle('has-value', !!has);
-        chipText.textContent = has
-          ? (fmtDateShort(window.GovFilters.dateFrom) + ' → ' + fmtDateShort(window.GovFilters.dateTo))
-          : 'Date Range';
-      } else {
-        const sel = window.GovFilters[field] || [];
-        const fLabel = FILTERABLE_FIELDS.find(function(f){ return f.key === field; }).label;
-        btn.classList.toggle('has-value', sel.length > 0);
-        chipText.textContent = fLabel;
-        if(sel.length > 0){
-          const badge = document.createElement('span');
-          badge.className = 'chip-count';
-          badge.textContent = sel.length;
-          btn.insertBefore(badge, btn.querySelector('i.fa-chevron-down'));
-        }
+        // Dead branch — no chip with data-field="__daterange" is ever
+        // rendered anymore (the Global Timescale select replaced it).
+        return;
+      }
+      const sel = window.GovFilters[field] || [];
+      const fLabel = FILTERABLE_FIELDS.find(function(f){ return f.key === field; }).label;
+      btn.classList.toggle('has-value', sel.length > 0);
+      chipText.textContent = fLabel;
+      if(sel.length > 0){
+        const badge = document.createElement('span');
+        badge.className = 'chip-count';
+        badge.textContent = sel.length;
+        btn.insertBefore(badge, btn.querySelector('i.fa-chevron-down'));
       }
     });
     renderAppliedFiltersRow();
@@ -4922,7 +4998,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         e.stopPropagation();
         const field = x.getAttribute('data-remove');
         if(field === '__casemode'){ if(window.setGovCaseMode) window.setGovCaseMode(null); return; }
-        if(field === '__daterange'){ f.dateFrom = null; f.dateTo = null; }
+        if(field === '__daterange'){ f.dateFrom = null; f.dateTo = null; f.timescale = 'all'; syncTimescaleSelectUI(); }
         else { f[field] = []; }
         applyFilters();
       });
@@ -4952,47 +5028,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     popover.style.top = top + 'px';
     popover.style.left = Math.min(rect.left, window.innerWidth - 290) + 'px';
 
-    if(field === '__daterange'){
-      renderDateRangePopover();
-    } else {
-      renderCategoricalPopover(field);
-    }
+    renderCategoricalPopover(field);
     popover.classList.add('show');
-  }
-
-  function renderDateRangePopover(){
-    const f = window.GovFilters;
-    popover.innerHTML =
-      '<div class="fp-daterange">' +
-        '<label>From</label><input type="date" id="fpDateFrom" value="' + (f.dateFrom || '') + '">' +
-        '<label>To</label><input type="date" id="fpDateTo" value="' + (f.dateTo || '') + '">' +
-        '<div class="fp-quick">' +
-          '<button data-preset="today">Today</button>' +
-          '<button data-preset="currentWeek">Current Week</button>' +
-          '<button data-preset="lastWeek">Last Week</button>' +
-          '<button data-preset="currentMonth">Current Month</button>' +
-          '<button data-preset="lastMonth">Last Month</button>' +
-          '<button data-preset="last2Months">Last 2 Months</button>' +
-          '<button data-preset="last3Months">Last 3 Months</button>' +
-        '</div>' +
-      '</div>' +
-      '<div class="fp-footer"><button class="fp-clear-btn" id="fpDateClear">Clear</button></div>';
-
-    document.getElementById('fpDateFrom').addEventListener('change', function(e){ f.dateFrom = e.target.value || null; applyFilters(); });
-    document.getElementById('fpDateTo').addEventListener('change', function(e){ f.dateTo = e.target.value || null; applyFilters(); });
-    document.getElementById('fpDateClear').addEventListener('click', function(){
-      f.dateFrom = null; f.dateTo = null; closePopover(); applyFilters();
-    });
-    popover.querySelectorAll('.fp-quick button').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        const range = getPresetRange(btn.getAttribute('data-preset'));
-        if(!range) return;
-        f.dateFrom = toDateInputValue(range.from);
-        f.dateTo = toDateInputValue(range.to);
-        closePopover();
-        applyFilters();
-      });
-    });
   }
 
   function renderCategoricalPopover(field){
@@ -5118,6 +5155,35 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   });
 
   // ---------------------------------------------------------------
+  // GLOBAL TIMESCALE — the sole control for the creation-time period
+  // filter (the old manual Date Range chip/picker was removed; this
+  // replaces it entirely). Picking a period here resolves it to a
+  // { from, to } range (getTimescaleRange, Module 3 above) and writes
+  // it straight into window.GovFilters.dateFrom / dateTo — the exact
+  // fields applyFilters() already uses to filter every row by
+  // _creation_date — then calls applyFilters(). That means it reaches
+  // every dashboard, report, table and export that already reacts to
+  // window.GovData.filteredRows / the 'govdata:filtered' event, with
+  // no per-dashboard wiring needed.
+  // ---------------------------------------------------------------
+  const timescaleSelect = document.getElementById('global-filter-timescale');
+  function syncTimescaleSelectUI(){
+    if(timescaleSelect) timescaleSelect.value = window.GovFilters.timescale || 'all';
+  }
+  function setGovTimescale(value){
+    window.GovFilters.timescale = value || 'all';
+    const range = getTimescaleRange(window.GovFilters.timescale);
+    window.GovFilters.dateFrom = range ? toDateInputValue(range.from) : null;
+    window.GovFilters.dateTo = range ? toDateInputValue(range.to) : null;
+    syncTimescaleSelectUI();
+    applyFilters();
+  }
+  window.setGovTimescale = setGovTimescale;
+  if(timescaleSelect){
+    timescaleSelect.addEventListener('change', function(e){ setGovTimescale(e.target.value); });
+  }
+
+  // ---------------------------------------------------------------
   // FLOATING FILTER ICON VISIBILITY — hidden on Upload & Settings
   // pages, and hidden entirely until data has been loaded (same rule
   // the old filter bar used). The Case Analysis Mode toggle now lives
@@ -5192,6 +5258,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     // filteredRows from the very first paint, before the user has touched
     // any filter control — it also renders chip states/result count and
     // dispatches 'govdata:filtered' for every module that listens for it.
+    syncTimescaleSelectUI();
     applyFilters();
     updateFilterBarVisibility('executive');
     updateViewingRangeBar('executive');
