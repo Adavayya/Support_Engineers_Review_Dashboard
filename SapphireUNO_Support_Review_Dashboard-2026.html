@@ -4521,7 +4521,20 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   const FILTERABLE_FIELDS = [
     { key:'customer_name',         label:'Customer' },
     { key:'assign_owner_name',     label:'Engineer' },
-    { key:'assign_to_l1_engineer', label:'L1 Team', fixedOptions: L1_TEAM_ROSTER },
+    // "L1 Team" is a roster-scoped shortcut over the SAME "current owner"
+    // field as "Engineer" above (dataField: 'assign_owner_name'), not the
+    // assign_to_l1_engineer column. assign_to_l1_engineer only records who
+    // was originally assigned at the L1 tier, and stays put even after a
+    // ticket escalates to L2/SME and is no longer that person's open
+    // workload — filtering on it over-counts (verified against a raw
+    // export: 239 tickets carry an assign_to_l1_engineer value from this
+    // roster, but only 149 of those are still actually owned by someone on
+    // the roster today). assign_owner_name/owner — the ticket's current
+    // owner — is what "which open tickets are sitting with my L1 team
+    // right now" actually means, and is also what "Engineer" already
+    // filters on; this entry keeps its own key/fixedOptions/chip so
+    // picking "L1 Team" doesn't clobber a separate "Engineer" selection.
+    { key:'assign_to_l1_engineer', label:'L1 Team', dataField:'assign_owner_name', fixedOptions: L1_TEAM_ROSTER },
     { key:'priority',              label:'Priority' },
     { key:'severity',              label:'Severity' },
     { key:'support_category',      label:'Category' },
