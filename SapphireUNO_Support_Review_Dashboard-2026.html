@@ -1152,6 +1152,25 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
    dashboard-page print's own @page rule (landscape) further down —
    printing a page never touches the other. */
 @page reportPage{ size:A4 portrait; margin:12mm 10mm; }
+/* ---- "Download as PDF" for the Call Dump Analytics Overview section
+   (Executive Summary). Unlike the Customer/Engineer reports above
+   (separate modals with their own re-rendered charts), this section
+   lives inline on the page, so printing it uses the standard
+   "hide everything, reveal just this element" isolation technique
+   instead: only #cdaPrintRoot (and its children) stay visible, kept
+   flowing from the top of the page regardless of where it sits in
+   the live layout. ---- */
+@page cdaPage{ size:A4 landscape; margin:10mm; }
+@media print{
+  body.printing-cda *{ visibility:hidden !important; }
+  body.printing-cda #cdaPrintRoot, body.printing-cda #cdaPrintRoot *{ visibility:visible !important; }
+  body.printing-cda #cdaPrintRoot{
+    position:absolute; left:0; top:0; width:100%; height:auto !important; max-height:none !important; overflow:visible !important;
+    page:cdaPage;
+  }
+  body.printing-cda .chart-card, body.printing-cda .dt-wrap{ break-inside:avoid; }
+  body.printing-cda .export-toolbar-btn{ display:none !important; }
+}
 @media print{
   html, body{ height:auto !important; overflow:visible !important; }
   body.printing-report .app-shell{ display:none !important; }
@@ -1884,6 +1903,85 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
               <tbody></tbody>
             </table>
           </div>
+
+          <!-- ============ CALL DUMP ANALYTICS — OVERVIEW ============
+               Ported from the standalone Call Dump Analytics tool's
+               "Overview" tab. That tool normally needs 3 extra mapping
+               files (Team/Tower/Status Category masters), but Overview
+               itself only needs the Call Dump — the masters are only
+               used by its other tabs (By Team/Engineer, By Tower/
+               Customer), so this reproduces it from the same single
+               upload already used everywhere else in this app. Reads
+               the same globally-filtered rows as the rest of Executive
+               Summary above. -->
+          <div class="kpi-group-label" style="margin-top:26px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <span><i class="fa-solid fa-chart-simple"></i> Call Dump Analytics — Overview</span>
+            <span style="display:flex; gap:8px;">
+              <button type="button" class="btn-ghost-gov export-toolbar-btn" id="cdaExportExcelBtn" style="margin-bottom:0;"><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
+              <button type="button" class="btn-ghost-gov export-toolbar-btn" id="cdaDownloadPdfBtn" style="margin-bottom:0;"><i class="fa-solid fa-file-pdf"></i> Download as PDF</button>
+            </span>
+          </div>
+          <div id="cdaPrintRoot">
+          <div id="cdaWrap">
+            <div class="kpi-grid" id="cdaKpiGrid"></div>
+
+            <div class="chart-grid">
+              <div class="chart-card">
+                <div class="cc-head"><h6><i class="fa-solid fa-chart-column"></i> Volume — Logged vs Resolved</h6></div>
+                <div class="cc-body"><canvas id="cda_volume"></canvas></div>
+              </div>
+              <div class="chart-card">
+                <div class="cc-head"><h6><i class="fa-solid fa-star"></i> CSAT Trend</h6></div>
+                <div class="cc-body"><canvas id="cda_csat"></canvas></div>
+              </div>
+            </div>
+
+            <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-shield-halved"></i> SLA Compliance Trend</div>
+            <div class="chart-grid">
+              <div class="chart-card span-12">
+                <div class="cc-head"><h6><i class="fa-solid fa-chart-line"></i> All 6 SLA Metrics</h6></div>
+                <div class="cc-body"><canvas id="cda_sla"></canvas></div>
+              </div>
+            </div>
+            <div class="dt-wrap" style="margin-top:16px;">
+              <table class="table" id="cda_sla_table" style="width:100%;"></table>
+            </div>
+
+            <div class="chart-grid">
+              <div class="chart-card">
+                <div class="cc-head"><h6><i class="fa-solid fa-bolt"></i> First Call Resolution (&le;2 business days)</h6></div>
+                <div class="cc-body"><canvas id="cda_fcr"></canvas></div>
+              </div>
+              <div class="chart-card">
+                <div class="cc-head"><h6><i class="fa-solid fa-stopwatch"></i> Avg TAT — 24/7 &amp; Actual SLA</h6></div>
+                <div class="cc-body"><canvas id="cda_tat"></canvas></div>
+              </div>
+            </div>
+
+            <div class="chart-grid">
+              <div class="chart-card span-12">
+                <div class="cc-head"><h6><i class="fa-solid fa-business-time"></i> Effort Hours</h6></div>
+                <div class="cc-body"><canvas id="cda_effort"></canvas></div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px;">
+              <div class="dt-wrap"><table class="table" id="cda_severity" style="width:100%;"></table></div>
+              <div class="dt-wrap"><table class="table" id="cda_kb" style="width:100%;"></table></div>
+            </div>
+
+            <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-arrow-trend-up"></i> Escalation Signals</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="dt-wrap"><table class="table" id="cda_esc_month" style="width:100%;"></table></div>
+              <div class="dt-wrap"><table class="table" id="cda_esc_type" style="width:100%;"></table></div>
+            </div>
+
+            <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-hourglass-half"></i> SR Hour Utilization (Top 15 Customers)</div>
+            <div class="dt-wrap">
+              <table class="table" id="cda_srhours" style="width:100%;"></table>
+            </div>
+          </div>
+          </div>
         </div>
       </section>
 
@@ -2536,7 +2634,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           <div class="dt-wrap">
             <table class="table" id="ticketAnalyticsTable" style="width:100%;">
               <thead>
-                <tr><th>Ticket ID</th><th>Title</th><th>Customer</th><th>Engineer</th><th>Status</th><th>Severity</th><th>Priority</th><th>Category</th><th>Created</th><th>TAT (d)</th><th>SLA</th></tr>
+                <tr><th>Ticket ID</th><th>Title</th><th>Customer</th><th>Engineer</th><th>Status</th><th>Severity</th><th>Priority</th><th>Category</th><th>Created</th><th>Age (d)</th><th>24/7 SLA</th><th>Actual SLA(Business hours)</th><th>Periodic SLA</th><th>SLA</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -3489,7 +3587,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     'sr_service','classification_time','assign_to','assign_owner_name','assign_time','assign_to_l1_engineer',
     'assign_l1_time','assign_to_l2_engineer','assign_l2_time','assign_to_sme','assign_sme_time',
     'first_response_days','edoc_share_days','l1_duration_days','l2_duration_days','sme_duration_days',
-    'tat_days','total_effort_spent_hrs','l1_time_spent_hrs','l2_time_spent_hrs','sme_time_spent_hrs',
+    'tat_days','tat_sla','subsequent_response_miss_count','total_effort_spent_hrs','l1_time_spent_hrs','l2_time_spent_hrs','sme_time_spent_hrs',
     'company_name','allocated_effort_hours','consumed_effort_hours','remaining_effort_hours',
     'requested_effort_hours','business_justification','total_used','balance_effort_hours',
     'pending_effort_approval_time','internal_reference_id','edoc','edoc_update_time',
@@ -4136,7 +4234,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
             <thead>
               <tr>
                 <th>Ticket ID</th><th>Title</th><th>Engineer</th><th>Type</th><th>Status</th>
-                <th>Severity</th><th>Priority</th><th>Created</th><th>Closed</th><th>TAT (Days)</th>
+                <th>Severity</th><th>Priority</th><th>Created</th><th>Closed</th><th>24/7 SLA</th>
+                <th>Actual SLA(Business hours)</th><th>Periodic SLA</th>
                 <th>First Response SLA</th><th>Resolution SLA</th><th>Escalated</th><th>Reopened</th>
                 <th>FCR</th><th>KB Referred</th><th>Rating</th>
               </tr>
@@ -4261,7 +4360,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
             <thead>
               <tr>
                 <th>Ticket ID</th><th>Title</th><th>Customer</th><th>Type</th><th>Status</th>
-                <th>Severity</th><th>Priority</th><th>Created</th><th>Closed</th><th>TAT (Days)</th>
+                <th>Severity</th><th>Priority</th><th>Created</th><th>Closed</th><th>24/7 SLA</th>
+                <th>Actual SLA(Business hours)</th><th>Periodic SLA</th>
                 <th>First Response SLA</th><th>Resolution SLA</th><th>Escalated</th><th>Reopened</th>
                 <th>FCR</th><th>KB Referred</th><th>Rating</th>
               </tr>
@@ -6372,6 +6472,780 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
 <script>
 /* ================================================================
+   MODULE 4B — CALL DUMP ANALYTICS OVERVIEW (Executive Summary)
+   ----------------------------------------------------------------
+   Ported from the standalone "Call Dump Analytics" tool's Overview
+   tab. That tool normally reads 4 files (Call Dump + Team/Tower/
+   Status Category masters), but every metric on its Overview tab is
+   derivable from the Call Dump alone — the 3 masters are only used
+   by its other tabs (By Team/Engineer, By Tower/Customer) — so this
+   reproduces it from the SAME single upload already used everywhere
+   else in this app, no extra files needed.
+
+   Business rules are ported as exactly as a single-file adaptation
+   allows:
+   - RESOLVED_STATUSES and the resolved_end_ts state machine (which
+     of resolve_time / deferred_time / cancel_time counts as "when
+     this ticket finished") are copied verbatim from the source tool
+     — these are literal status strings, not derived, so there is
+     nothing to adapt.
+   - "Open — current" substitutes this app's own r._is_open flag for
+     the source tool's Status Category master lookup — both express
+     the same "is this ticket currently open" concept, and this way
+     it stays consistent with how "Open" is defined everywhere else
+     in this dashboard.
+   - "Escalation Signals" replaces the source tool's By-Tower
+     breakdown (no Tower master here) with a by-escalation-type
+     breakdown instead, matching how this app treats escalation_type
+     elsewhere (an open-ended set of real values, not a fixed list).
+   - SR Hour Utilization pools at 60h/customer, matching the source
+     tool's fixed pool size.
+
+   Registers as a SECOND module against the 'executive' page — the
+   module registry (Module 3B) supports multiple renderers per page,
+   so this runs alongside renderExecutive() above without touching it.
+   ================================================================ */
+(function(){
+  'use strict';
+
+  // ---- local helpers (this module's own copies, like every other
+  // module in this file — see e.g. Module 4's own toNum/chartColors) ----
+  function pyRound(x, nd){
+    const m = Math.pow(10, nd);
+    const scaled = x*m;
+    const floor = Math.floor(scaled);
+    const diff = scaled - floor;
+    let r;
+    if(Math.abs(diff - 0.5) < 1e-9){
+      r = (floor % 2 === 0) ? floor : floor + 1;
+    } else {
+      r = Math.round(scaled);
+    }
+    return r/m;
+  }
+  function round1(v){ return v===null||v===undefined ? null : pyRound(v, 1); }
+  function round2(v){ return v===null||v===undefined ? null : pyRound(v, 2); }
+  function toNumOrNull(v){
+    if(v === null || v === undefined || String(v).trim() === '') return null;
+    const n = Number(v);
+    return isNaN(n) ? null : n;
+  }
+  // Robust datetime parser — mirrors the source tool's own parseDT()
+  // exactly (handles "YYYY-MM-DD HH:mm:ss[.ffffff]", "YYYY-MM-DD",
+  // native Date objects, and blank/placeholder tokens).
+  function parseDT(v){
+    if(v === null || v === undefined) return null;
+    if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
+    const s = String(v).trim();
+    if(!s || s === '0000-00-00 00:00:00') return null;
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?/);
+    if(m){
+      const ms = m[7] ? Math.round(parseFloat('0.'+m[7])*1000) : 0;
+      return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6], ms);
+    }
+    m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function monthKeyOf(d){
+    if(!d) return null;
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  function dateOnlyKey(d){
+    if(!d) return null;
+    return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+  }
+  // Business days elapsed [start, end) — matches numpy.busday_count
+  // semantics, same as the source tool's bizDaysBetween().
+  function bizDaysBetween(start, end){
+    if(!start || !end) return null;
+    const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const e = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    let sign = 1, a = s, b = e;
+    if(e < s){ sign = -1; a = e; b = s; }
+    let count = 0;
+    const cur = new Date(a);
+    while(cur < b){
+      const dow = cur.getDay();
+      if(dow !== 0 && dow !== 6) count++;
+      cur.setDate(cur.getDate()+1);
+    }
+    return sign*count;
+  }
+  // Literal status strings, ported verbatim from the source tool.
+  const RESOLVED_STATUSES = ['Closed', 'Customer Agreed', 'Resolved - Pending for Confirmation', 'Deferred', 'Cancel'];
+  function resolvedEndTs(r){
+    const st = r.current_status;
+    if(st === 'Closed' || st === 'Customer Agreed' || st === 'Resolved - Pending for Confirmation') return parseDT(r.resolve_time);
+    if(st === 'Deferred') return parseDT(r.deferred_time);
+    if(st === 'Cancel') return parseDT(r.cancel_time);
+    return null;
+  }
+  // Same Standard/Non-Standard SR split already used elsewhere in this
+  // app (Executive Summary's Open/Closed Service Std/Non-Std SR cards),
+  // kept in sync with that definition rather than re-deriving a second one.
+  const STANDARD_SR = new Set(['Add / Remove User', 'Add/Remove User', 'Password Reset', 'Access Request',
+    'Configuration Change', 'Report Request', 'How To']);
+  function srBucket(service, srService){
+    if(service !== 'Service Request') return null;
+    const v = String(srService||'').trim();
+    return STANDARD_SR.has(v) ? 'Standard' : 'Non-Standard';
+  }
+
+  // ---------------------------------------------------------------
+  // DATA PIPELINE — mirrors computeMetrics() in the source tool, with
+  // the Team/Tower/StatusCategory substitutions documented above.
+  // ---------------------------------------------------------------
+  function computeCda(rows){
+    const enriched = rows.map(function(r){
+      const e = Object.assign({}, r);
+      e._creation_dt = parseDT(r.creation_time);
+      e._resolved_end_ts = resolvedEndTs(r);
+      e._resolved_month = e._resolved_end_ts ? monthKeyOf(e._resolved_end_ts) : null;
+      e._sr_bucket = srBucket(r.service, r.sr_service);
+      e._sr_hours_num = toNumOrNull(r.sr_hours_deducted);
+      return e;
+    });
+
+    const monthSet = {};
+    enriched.forEach(function(r){ if(r._month_key) monthSet[r._month_key] = true; });
+    const months = Object.keys(monthSet).sort();
+
+    const logged = enriched.filter(function(r){ return r.current_status !== 'Duplicate'; });
+    const isResolvedCandidate = function(r){ return RESOLVED_STATUSES.indexOf(r.current_status) !== -1; };
+    const resolvedPop = enriched.filter(function(r){ return isResolvedCandidate(r) && r._resolved_end_ts !== null; });
+
+    const out = { months: months };
+
+    // ---- Logged / Resolved / Open (current) / CSAT ----
+    out.logged = {}; out.resolved = {}; out.csat = {};
+    months.forEach(function(m){
+      const lg = logged.filter(function(r){ return r._month_key === m; });
+      const rs = resolvedPop.filter(function(r){ return r._resolved_month === m; });
+      out.logged[m] = { Total: lg.length, IM: lg.filter(function(r){ return r.service==='Incident Management'; }).length, SR: lg.filter(function(r){ return r.service==='Service Request'; }).length, rows: lg };
+      out.resolved[m] = { Total: rs.length, IM: rs.filter(function(r){ return r.service==='Incident Management'; }).length, SR: rs.filter(function(r){ return r.service==='Service Request'; }).length, rows: rs };
+      const ratedRows = lg.filter(function(r){ return toNumOrNull(r.service_rating) !== null; });
+      const ratingsSeg = ratedRows.map(function(r){ return toNumOrNull(r.service_rating); });
+      out.csat[m] = { mean: ratingsSeg.length ? round2(ratingsSeg.reduce(function(a,b){return a+b;},0)/ratingsSeg.length) : null, count: ratingsSeg.length, rows: ratedRows };
+    });
+    // "Open — current" is not month-scoped: substitutes this app's own
+    // _is_open flag for the source tool's Status Category master lookup
+    // (see module header note).
+    const openRows = enriched.filter(function(r){ return r._is_open; });
+    out.open_current = { Total: openRows.length, IM: openRows.filter(function(r){ return r.service==='Incident Management'; }).length, SR: openRows.filter(function(r){ return r.service==='Service Request'; }).length, rows: openRows };
+
+    // ---- TAT: 24/7 (calendar days, creation -> resolved_end_ts) & Actual SLA (tat_sla field) ----
+    out.tat_24x7 = {}; out.tat_sla = {};
+    months.forEach(function(m){
+      const seg = resolvedPop.filter(function(r){ return r._resolved_month === m; });
+      const row1 = {}, row2 = {};
+      [['Incident Management','IM'],['Service Request','SR']].forEach(function(pair){
+        const svc = pair[0], label = pair[1];
+        const s2 = seg.filter(function(r){ return r.service===svc; });
+        const v1 = s2.map(function(r){ return (r._creation_dt && r._resolved_end_ts) ? (r._resolved_end_ts.getTime()-r._creation_dt.getTime())/86400000 : null; }).filter(function(v){ return v!==null; });
+        row1[label] = { avg: v1.length ? round2(v1.reduce(function(a,b){return a+b;},0)/v1.length) : null, rows: s2 };
+        const v2 = s2.map(function(r){ return toNumOrNull(r.tat_sla); }).filter(function(v){ return v!==null; });
+        row2[label] = { avg: v2.length ? round2(v2.reduce(function(a,b){return a+b;},0)/v2.length) : null, excluded: s2.length - v2.length, rows: s2 };
+      });
+      out.tat_24x7[m] = row1;
+      out.tat_sla[m] = row2;
+    });
+
+    // ---- SLA compliance (6 metrics) + FCR ----
+    const sla = {};
+    // Every entry carries its applicable population (rows) AND the
+    // subset that failed compliance (breachedRows) — drill-downs open
+    // breachedRows by default (the actionable subset for a compliance
+    // review), with the full applicable population one click away via
+    // openCdaDrill's summary pair.
+    const calcEntry = function(segX, validFn, compliantFn){
+      const valid = segX.filter(validFn);
+      const applicable = valid.length;
+      const breachedRows = valid.filter(function(r){ return !compliantFn(r); });
+      const compliant = applicable - breachedRows.length;
+      return { applicable: applicable, compliant: compliant, pct: applicable>0 ? round1(100*compliant/applicable) : null, excluded: segX.length-applicable, rows: valid, breachedRows: breachedRows };
+    };
+
+    const pop1 = enriched.filter(function(r){ return ['Duplicate','Cancel'].indexOf(r.current_status)===-1 && r.owner !== null && r.owner !== undefined && r.owner !== ''; });
+    sla.resp1 = {};
+    months.forEach(function(m){
+      const seg = pop1.filter(function(r){ return r._month_key === m; });
+      const validFn = function(r){ return r.first_response_sla_breached !== null && r.first_response_sla_breached !== undefined && r.first_response_sla_breached !== ''; };
+      const compliantFn = function(r){ return Number(r.first_response_sla_breached) === 0; };
+      sla.resp1[m] = {
+        combined: calcEntry(seg, validFn, compliantFn),
+        IM: calcEntry(seg.filter(function(r){return r.service==='Incident Management';}), validFn, compliantFn),
+        SR: calcEntry(seg.filter(function(r){return r.service==='Service Request';}), validFn, compliantFn)
+      };
+    });
+
+    const pop2 = logged.filter(function(r){ return r.service === 'Incident Management'; });
+    sla.subsequent_im = {};
+    months.forEach(function(m){
+      const seg = pop2.filter(function(r){ return r._month_key === m; });
+      sla.subsequent_im[m] = calcEntry(seg,
+        function(){ return true; },
+        function(r){ const v = r.subsequent_response_miss_count; return v===null||v===undefined||v===''||Number(v)===0; });
+    });
+
+    const pop3 = resolvedPop.filter(function(r){ return r.service === 'Incident Management'; });
+    sla.resolution_im = {};
+    months.forEach(function(m){
+      const seg = pop3.filter(function(r){ return r._resolved_month === m; });
+      sla.resolution_im[m] = calcEntry(seg,
+        function(r){ return r.resolution_sla_breached !== null && r.resolution_sla_breached !== undefined && r.resolution_sla_breached !== '' && r.resolution_sla_status !== 'Pending'; },
+        function(r){ return Number(r.resolution_sla_breached) === 0; });
+    });
+
+    const pop4 = resolvedPop.filter(function(r){ return r.service === 'Service Request' && r._sr_bucket === 'Standard' && r.current_status !== 'Cancel'; });
+    sla.resolution_sr_standard = {};
+    months.forEach(function(m){
+      const seg = pop4.filter(function(r){ return r._resolved_month === m; });
+      sla.resolution_sr_standard[m] = calcEntry(seg,
+        function(r){ return r.tat_sla !== null && r.tat_sla !== undefined && r.tat_sla !== ''; },
+        function(r){ return toNumOrNull(r.tat_sla) <= 3; });
+    });
+
+    const pop5 = enriched.filter(function(r){ return r.service === 'Service Request' && r._sr_bucket === 'Non-Standard' && ['Duplicate','Cancel'].indexOf(r.current_status)===-1; });
+    sla.edoc_shared = {};
+    months.forEach(function(m){
+      const seg = pop5.filter(function(r){ return r._month_key === m; });
+      sla.edoc_shared[m] = calcEntry(seg,
+        function(r){ return parseDT(r.edoc_first_populated_time) !== null; },
+        function(r){ return bizDaysBetween(r._creation_dt, parseDT(r.edoc_first_populated_time)) <= 3; });
+    });
+
+    const pop6 = resolvedPop.filter(function(r){ return r.service === 'Service Request' && r._sr_bucket === 'Non-Standard'; });
+    sla.resolution_meeting_edoc = {};
+    months.forEach(function(m){
+      const seg = pop6.filter(function(r){ return r._resolved_month === m; });
+      sla.resolution_meeting_edoc[m] = calcEntry(seg,
+        function(r){ return parseDT(r.edoc) !== null; },
+        function(r){ return dateOnlyKey(r._resolved_end_ts) <= dateOnlyKey(parseDT(r.edoc)); });
+    });
+
+    const pop7 = resolvedPop.filter(function(r){ return r.current_status !== 'Cancel'; });
+    sla.fcr_2bd = {};
+    months.forEach(function(m){
+      const seg = pop7.filter(function(r){ return r._resolved_month === m; });
+      const validFn = function(r){ return r.tat_sla !== null && r.tat_sla !== undefined && r.tat_sla !== ''; };
+      const compliantFn = function(r){ return toNumOrNull(r.tat_sla) <= 2; };
+      sla.fcr_2bd[m] = {
+        combined: calcEntry(seg, validFn, compliantFn),
+        IM: calcEntry(seg.filter(function(r){return r.service==='Incident Management';}), validFn, compliantFn),
+        SR: calcEntry(seg.filter(function(r){return r.service==='Service Request';}), validFn, compliantFn)
+      };
+    });
+    out.sla = sla;
+
+    // ---- Effort hours ----
+    out.effort_hours = {};
+    months.forEach(function(m){
+      const seg = resolvedPop.filter(function(r){ return r._resolved_month === m; });
+      const row = {};
+      [['Incident Management','IM'],['Service Request','SR']].forEach(function(pair){
+        const svc = pair[0], label = pair[1];
+        const s2 = seg.filter(function(r){ return r.service===svc; });
+        const vals = s2.map(function(r){ return toNumOrNull(r.total_effort_spent_hrs); }).filter(function(v){ return v!==null; });
+        row[label] = { avg: vals.length ? round2(vals.reduce(function(a,b){return a+b;},0)/vals.length) : null, rows: s2 };
+      });
+      out.effort_hours[m] = row;
+    });
+
+    // ---- Knowledge Base ----
+    function kbStats(seg, field){
+      const yesRows = seg.filter(function(r){ return String(r[field]).toLowerCase() === 'yes'; });
+      const noRows = seg.filter(function(r){ return String(r[field]).toLowerCase() === 'no'; });
+      const untrackedRows = seg.filter(function(r){ return r[field] === null || r[field] === undefined || r[field] === ''; });
+      const yes = yesRows.length, no = noRows.length;
+      return { Yes: yes, No: no, Untracked: untrackedRows.length, pct_yes: (yes+no)>0 ? round1(100*yes/(yes+no)) : null,
+        yesRows: yesRows, noRows: noRows, untrackedRows: untrackedRows };
+    }
+    out.kb_referred = kbStats(logged, 'was_kb_referred');
+    out.kb_added = kbStats(logged, 'add_to_kb');
+
+    // ---- Severity (IM by severity, SR by priority) ----
+    const sevImRows = {}, sevSrRows = {};
+    logged.forEach(function(r){
+      if(r.service === 'Incident Management'){ const k = String(r.severity||'').trim(); if(k) (sevImRows[k] = sevImRows[k]||[]).push(r); }
+      else if(r.service === 'Service Request'){ const k = String(r.priority||'').trim(); if(k) (sevSrRows[k] = sevSrRows[k]||[]).push(r); }
+    });
+    const sevIm = {}, sevSr = {};
+    Object.keys(sevImRows).forEach(function(k){ sevIm[k] = sevImRows[k].length; });
+    Object.keys(sevSrRows).forEach(function(k){ sevSr[k] = sevSrRows[k].length; });
+    out.severity = { IM: sevIm, SR: sevSr, imRows: sevImRows, srRows: sevSrRows };
+
+    // ---- Escalation signals — by month + by escalation_type (in place
+    // of the source tool's by-Tower breakdown; see module header note) ----
+    const escByMonth = {}, escByMonthRows = {};
+    months.forEach(function(m){
+      const seg = logged.filter(function(r){ return r._month_key === m && r.escalation_type; });
+      escByMonth[m] = seg.length;
+      escByMonthRows[m] = seg;
+    });
+    const escByType = {}, escByTypeRows = {};
+    logged.forEach(function(r){ if(r.escalation_type){ const k = String(r.escalation_type).trim(); if(k){ escByType[k] = (escByType[k]||0)+1; (escByTypeRows[k] = escByTypeRows[k]||[]).push(r); } } });
+    out.escalation = { by_month: escByMonth, by_month_rows: escByMonthRows, by_type: escByType, by_type_rows: escByTypeRows };
+
+    // ---- SR Hour Utilization per customer (pool fixed at 60h, matching
+    // the source tool; always current-scope, not month-filtered) ----
+    const srRows = enriched.filter(function(r){ return r.service === 'Service Request'; });
+    const custGroups = {};
+    srRows.forEach(function(r){
+      const key = (r.customer_name === null || r.customer_name === undefined || r.customer_name === '') ? 'Unassigned' : r.customer_name;
+      (custGroups[key] = custGroups[key] || []).push(r);
+    });
+    const byCust = {};
+    Object.keys(custGroups).forEach(function(key){
+      const g = custGroups[key];
+      const totalConsumed = round2(g.reduce(function(a,r){ return a+(r._sr_hours_num||0); },0));
+      const pool = 60.0;
+      byCust[key] = { consumed: totalConsumed, pool: pool, pct_consumed: round1(100*totalConsumed/pool), rows: g };
+    });
+    out.sr_hours = { by_customer: byCust };
+
+    return out;
+  }
+
+  // ---------------------------------------------------------------
+  // RENDERING
+  // ---------------------------------------------------------------
+  let charts = {};
+  function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+  function makeChart(canvasId, config){
+    destroyChart(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+    charts[canvasId] = new Chart(canvas.getContext('2d'), config);
+  }
+  function chartColors(){
+    const css = getComputedStyle(document.documentElement);
+    const read = function(name){ return css.getPropertyValue(name).trim(); };
+    return {
+      textPrimary: read('--text-primary'), textSecondary: read('--text-secondary'), textMuted: read('--text-muted'),
+      gridLine: read('--border-subtle'), surface: read('--bg-surface'),
+      palette: ['#7C3AED','#5B21B6','#A78BFA','#4C1D95','#8B5CF6','#6D28D9','#C4B5FD','#DDD6FE']
+    };
+  }
+  function esc(s){
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function fmtN(v, dp){
+    if(v === null || v === undefined || isNaN(v)) return '—';
+    return Number(v).toLocaleString(undefined, { minimumFractionDigits: dp||0, maximumFractionDigits: dp||0 });
+  }
+  function fmtPct(v){ return v===null||v===undefined ? '—' : fmtN(v,1)+'%'; }
+  function pctClass(v){ return v===null||v===undefined ? '' : (v>=90?'pill-good':v>=75?'pill-warn':'pill-bad'); }
+  function labelsFor(months){
+    return months.map(function(m){
+      const parts = m.split('-');
+      return new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, 1).toLocaleString('en-US',{month:'short',year:'2-digit'});
+    });
+  }
+  function baseLineOpts(c, extra){
+    return Object.assign({
+      responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+      plugins:{ legend:{labels:{color:c.textSecondary, boxWidth:12, font:{size:11}}},
+        tooltip:{backgroundColor:c.surface, borderColor:c.gridLine, borderWidth:1, titleColor:c.textPrimary, bodyColor:c.textPrimary} },
+      scales:{
+        x:{ticks:{color:c.textMuted, font:{size:11}}, grid:{color:c.gridLine}},
+        y:{ticks:{color:c.textMuted, font:{size:11}}, grid:{color:c.gridLine}, beginAtZero:true}
+      }
+    }, extra||{});
+  }
+
+  function cdaKpiCard(icon, value, label, sub, id){
+    return '<div class="kpi-card' + (id?' clickable':'') + '"' + (id?' id="'+id+'" style="cursor:pointer;"':'') + '><div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div></div>' +
+      '<div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div>' +
+      (sub ? '<div class="kc-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  // ---------------------------------------------------------------
+  // DRILL-DOWNS — every chart/table below opens the same shared
+  // Ticket Detail drill-down modal used across the rest of this app
+  // (window.GovOpenDrillModal / window.GovDrillCol), so exploring a
+  // number here behaves exactly like everywhere else in the dashboard.
+  // ---------------------------------------------------------------
+  function cdaBaseCols(){
+    const GD = window.GovDrillCol;
+    return [GD.id, GD.title, GD.customer, GD.engineer, GD.service, GD.status, GD.severity, GD.priority, GD.created, GD.closed];
+  }
+  function cdaOpenDrill(title, rows, extraCols, filenameBase){
+    if(!window.GovOpenDrillModal) return;
+    const cols = extraCols && extraCols.length ? cdaBaseCols().concat(extraCols) : cdaBaseCols();
+    window.GovOpenDrillModal({ title: title, rows: rows || [], columns: cols, filenameBase: 'CDA_' + (filenameBase || title.replace(/[^a-z0-9]+/gi,'_')) });
+  }
+  // Small custom columns not already in the shared GovDrillCol library.
+  function cdaCustomCol(label, field, isDate){
+    return { label: label, get: function(r){ return r[field]===null||r[field]===undefined ? '' : r[field]; }, isDate: !!isDate };
+  }
+
+  function renderCdaKpis(g){
+    const lg = g.months.reduce(function(a,m){ a.Total+=g.logged[m].Total; a.IM+=g.logged[m].IM; a.SR+=g.logged[m].SR; a.rows=a.rows.concat(g.logged[m].rows); return a; }, {Total:0,IM:0,SR:0,rows:[]});
+    const rs = g.months.reduce(function(a,m){ a.Total+=g.resolved[m].Total; a.IM+=g.resolved[m].IM; a.SR+=g.resolved[m].SR; a.rows=a.rows.concat(g.resolved[m].rows); return a; }, {Total:0,IM:0,SR:0,rows:[]});
+    const csatCount = g.months.reduce(function(a,m){ return a+g.csat[m].count; },0);
+    const csatWeighted = g.months.reduce(function(a,m){ return a + (g.csat[m].mean!==null ? g.csat[m].mean*g.csat[m].count : 0); },0);
+    const csatMean = csatCount>0 ? round2(csatWeighted/csatCount) : null;
+    const csatRows = g.months.reduce(function(a,m){ return a.concat(g.csat[m].rows); }, []);
+    document.getElementById('cdaKpiGrid').innerHTML =
+      cdaKpiCard('fa-ticket', fmtN(lg.Total), 'Logged', 'IM ' + fmtN(lg.IM) + ' / SR ' + fmtN(lg.SR), 'cdaKpiLogged') +
+      cdaKpiCard('fa-check', fmtN(rs.Total), 'Resolved', 'IM ' + fmtN(rs.IM) + ' / SR ' + fmtN(rs.SR), 'cdaKpiResolved') +
+      cdaKpiCard('fa-folder-open', fmtN(g.open_current.Total), 'Open — current', 'IM ' + fmtN(g.open_current.IM) + ' / SR ' + fmtN(g.open_current.SR), 'cdaKpiOpen') +
+      cdaKpiCard('fa-star', csatMean===null?'NA':fmtN(csatMean,2), 'CSAT', fmtN(csatCount) + ' surveys', 'cdaKpiCsat');
+    const GD = window.GovDrillCol;
+    document.getElementById('cdaKpiLogged').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Logged Tickets', lg.rows, [], 'Logged'); });
+    document.getElementById('cdaKpiResolved').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Resolved Tickets', rs.rows, [GD.tat, GD.slaBusiness], 'Resolved'); });
+    document.getElementById('cdaKpiOpen').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Open (Current)', g.open_current.rows, [], 'Open_Current'); });
+    document.getElementById('cdaKpiCsat').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Rated Tickets (CSAT)', csatRows, [GD.rating], 'CSAT'); });
+  }
+
+  function cdaVolumeChart(g){
+    const c = chartColors();
+    makeChart('cda_volume', {type:'bar', data:{labels:labelsFor(g.months), datasets:[
+      {label:'Logged', data:g.months.map(function(m){return g.logged[m].Total;}), backgroundColor:c.palette[0]},
+      {label:'Resolved', data:g.months.map(function(m){return g.resolved[m].Total;}), backgroundColor:c.palette[2]}
+    ]}, options: Object.assign(baseLineOpts(c), { onHover: cdaHoverCursor, onClick: function(evt, elements){
+      if(!elements.length) return;
+      const m = g.months[elements[0].index];
+      const isLogged = elements[0].datasetIndex === 0;
+      const entry = isLogged ? g.logged[m] : g.resolved[m];
+      cdaOpenDrill('Call Dump Analytics — ' + (isLogged?'Logged':'Resolved') + ' (' + labelsFor([m])[0] + ')', entry.rows, isLogged?[]:[window.GovDrillCol.tat, window.GovDrillCol.slaBusiness], (isLogged?'Logged':'Resolved')+'_'+m);
+    }})});
+  }
+  function cdaCsatChart(g){
+    const c = chartColors();
+    makeChart('cda_csat', {data:{labels:labelsFor(g.months), datasets:[
+      {type:'bar', label:'Surveys', data:g.months.map(function(m){return g.csat[m].count;}), backgroundColor:c.gridLine, yAxisID:'ySurveys', order:2},
+      {type:'line', label:'CSAT (mean)', data:g.months.map(function(m){return g.csat[m].mean;}), borderColor:c.palette[3], backgroundColor:c.palette[3], yAxisID:'yCsat', tension:0.3, spanGaps:true, order:1}
+    ]}, options: Object.assign(baseLineOpts(c, {
+      scales:{
+        x:{ticks:{color:c.textMuted}, grid:{color:c.gridLine}},
+        yCsat:{position:'left', min:0, max:5, ticks:{color:c.textMuted}, grid:{color:c.gridLine}, title:{display:true,text:'Mean rating',color:c.textMuted}},
+        ySurveys:{position:'right', beginAtZero:true, ticks:{color:c.textMuted}, grid:{drawOnChartArea:false}, title:{display:true,text:'Surveys',color:c.textMuted}}
+      }
+    }), { onHover: cdaHoverCursor, onClick: function(evt, elements){
+      if(!elements.length) return;
+      const m = g.months[elements[0].index];
+      cdaOpenDrill('Call Dump Analytics — CSAT Surveys (' + labelsFor([m])[0] + ')', g.csat[m].rows, [window.GovDrillCol.rating], 'CSAT_'+m);
+    }})});
+  }
+  function cdaTatChart(g){
+    const c = chartColors();
+    const GD = window.GovDrillCol;
+    const DATASETS = [
+      {label:'IM 24/7', svc:'IM', key:'tat_24x7', color:c.palette[0]},
+      {label:'SR 24/7', svc:'SR', key:'tat_24x7', color:c.palette[1]},
+      {label:'IM Actual SLA', svc:'IM', key:'tat_sla', color:c.palette[2], dash:[4,3]},
+      {label:'SR Actual SLA', svc:'SR', key:'tat_sla', color:c.palette[3], dash:[4,3]}
+    ];
+    makeChart('cda_tat', {type:'line', data:{labels:labelsFor(g.months), datasets: DATASETS.map(function(d){
+      return {label:d.label, data:g.months.map(function(m){return g[d.key][m][d.svc].avg;}), borderColor:d.color, borderDash:d.dash, tension:0.3, spanGaps:true};
+    })}, options: Object.assign(baseLineOpts(c), { onHover: cdaHoverCursor, onClick: function(evt, elements){
+      if(!elements.length) return;
+      const d = DATASETS[elements[0].datasetIndex];
+      const m = g.months[elements[0].index];
+      cdaOpenDrill('Call Dump Analytics — ' + d.label + ' (' + labelsFor([m])[0] + ')', g[d.key][m][d.svc].rows, [GD.tat, GD.slaBusiness], d.label.replace(/\s+/g,'_')+'_'+m);
+    }})});
+  }
+  function cdaFcrChart(g){
+    const c = chartColors();
+    const GD = window.GovDrillCol;
+    makeChart('cda_fcr', {type:'line', data:{labels:labelsFor(g.months), datasets:[
+      {label:'IM', data:g.months.map(function(m){return g.sla.fcr_2bd[m].IM.pct;}), borderColor:c.palette[0], tension:0.3, spanGaps:true},
+      {label:'SR', data:g.months.map(function(m){return g.sla.fcr_2bd[m].SR.pct;}), borderColor:c.palette[1], tension:0.3, spanGaps:true}
+    ]}, options: Object.assign(baseLineOpts(c, {scales:{x:{ticks:{color:c.textMuted},grid:{color:c.gridLine}}, y:{min:0,max:100,ticks:{color:c.textMuted},grid:{color:c.gridLine}}}}),
+    { onHover: cdaHoverCursor, onClick: function(evt, elements){
+      if(!elements.length) return;
+      const svc = elements[0].datasetIndex===0 ? 'IM' : 'SR';
+      const m = g.months[elements[0].index];
+      const e = g.sla.fcr_2bd[m][svc];
+      cdaOpenDrill('Call Dump Analytics — FCR Misses, ' + svc + ' (' + labelsFor([m])[0] + ')', e.breachedRows, [GD.tat, GD.slaBusiness], 'FCR_'+svc+'_'+m);
+    }})});
+  }
+  function cdaEffortChart(g){
+    const c = chartColors();
+    makeChart('cda_effort', {type:'line', data:{labels:labelsFor(g.months), datasets:[
+      {label:'IM avg effort (h)', data:g.months.map(function(m){return g.effort_hours[m].IM.avg;}), borderColor:c.palette[0], tension:0.3, spanGaps:true},
+      {label:'SR avg effort (h)', data:g.months.map(function(m){return g.effort_hours[m].SR.avg;}), borderColor:c.palette[1], tension:0.3, spanGaps:true}
+    ]}, options: Object.assign(baseLineOpts(c), { onHover: cdaHoverCursor, onClick: function(evt, elements){
+      if(!elements.length) return;
+      const svc = elements[0].datasetIndex===0 ? 'IM' : 'SR';
+      const m = g.months[elements[0].index];
+      cdaOpenDrill('Call Dump Analytics — Effort, ' + svc + ' (' + labelsFor([m])[0] + ')', g.effort_hours[m][svc].rows, [cdaCustomCol('Effort (Hrs)','total_effort_spent_hrs')], 'Effort_'+svc+'_'+m);
+    }})});
+  }
+  function cdaHoverCursor(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+
+  // FCR is intentionally its own chart (not a 7th row here), matching
+  // the source tool's own layout.
+  const SLA_ROWS = [
+    {key:'resp1', sub:'combined', label:'First Response SLA'},
+    {key:'subsequent_im', sub:null, label:'Periodic SLA (Incidents)'},
+    {key:'resolution_im', sub:null, label:'Resolution SLA (Incidents)'},
+    {key:'resolution_sr_standard', sub:null, label:'Resolution SLA (Standard SR, \u22643 business days)'},
+    {key:'edoc_shared', sub:null, label:'EDOC Shared Within 3 Business Days (Non-Std SR)'},
+    {key:'resolution_meeting_edoc', sub:null, label:'Resolution Meeting EDOC (Non-Std SR)'}
+  ];
+  function getSlaEntry(g, key, sub, m){
+    const row = g.sla[key][m];
+    return sub ? row[sub] : row;
+  }
+  function cdaSlaDrillCols(key){
+    const GD = window.GovDrillCol;
+    if(key==='resp1') return [GD.frSla];
+    if(key==='subsequent_im') return [GD.periodicSla];
+    if(key==='resolution_im') return [GD.resSla];
+    if(key==='resolution_sr_standard') return [GD.slaBusiness, GD.srService];
+    if(key==='edoc_shared') return [GD.edoc, GD.srService];
+    if(key==='resolution_meeting_edoc') return [GD.edoc, GD.srService];
+    return [];
+  }
+  function cdaSlaChart(g){
+    const c = chartColors();
+    makeChart('cda_sla', {type:'line', data:{labels:labelsFor(g.months), datasets: SLA_ROWS.map(function(r,i){
+      return {label:r.label, data:g.months.map(function(m){ return getSlaEntry(g,r.key,r.sub,m).pct; }), borderColor:c.palette[i%c.palette.length], tension:0.3, spanGaps:true};
+    })}, options: Object.assign(baseLineOpts(c, {scales:{x:{ticks:{color:c.textMuted},grid:{color:c.gridLine}}, y:{min:0,max:100,ticks:{color:c.textMuted},grid:{color:c.gridLine}}}}),
+    { onHover: cdaHoverCursor, onClick: function(evt, elements){
+      if(!elements.length) return;
+      const r = SLA_ROWS[elements[0].datasetIndex];
+      const m = g.months[elements[0].index];
+      const e = getSlaEntry(g, r.key, r.sub, m);
+      cdaOpenDrill('Call Dump Analytics — ' + r.label + ' Breaches (' + labelsFor([m])[0] + ')', e.breachedRows, cdaSlaDrillCols(r.key), r.key+'_'+m);
+    }})});
+  }
+  function cdaSlaTable(g){
+    let rows = '<tr><th>SLA metric</th>' + labelsFor(g.months).map(function(m){ return '<th>'+esc(m)+'</th>'; }).join('') + '</tr>';
+    SLA_ROWS.forEach(function(r){
+      rows += '<tr><td>' + esc(r.label) + '</td>';
+      g.months.forEach(function(m){
+        const e = getSlaEntry(g, r.key, r.sub, m);
+        rows += '<td class="mono" style="cursor:pointer;" data-sla-key="' + r.key + '" data-sla-month="' + esc(m) + '" title="' + esc(e.compliant + ' of ' + e.applicable + ' compliant, ' + e.excluded + ' excluded — click to view breaches') + '"><span class="pill ' + pctClass(e.pct) + '">' + fmtPct(e.pct) + '</span></td>';
+      });
+      rows += '</tr>';
+    });
+    const tbl = document.getElementById('cda_sla_table');
+    tbl.innerHTML = rows;
+    tbl.onclick = function(evt){
+      const td = evt.target.closest('td[data-sla-key]');
+      if(!td) return;
+      const key = td.getAttribute('data-sla-key'), m = td.getAttribute('data-sla-month');
+      const row = SLA_ROWS.filter(function(r){ return r.key===key; })[0];
+      const e = getSlaEntry(g, key, row.sub, m);
+      cdaOpenDrill('Call Dump Analytics — ' + row.label + ' Breaches (' + labelsFor([m])[0] + ')', e.breachedRows, cdaSlaDrillCols(key), key+'_'+m);
+    };
+  }
+
+  function cdaSeverityTable(g){
+    const imKeys = ['Critical','Hotsite','Medium','Low'];
+    const srKeys = ['P1','P2','P3','P4'];
+    let rows = '<tr><th>Incident Mgmt</th><th>Count</th><th>Service Request</th><th>Count</th></tr>';
+    for(let i=0;i<4;i++){
+      rows += '<tr>' +
+        '<td class="mono" style="cursor:pointer;" data-sev-side="im" data-sev-key="' + esc(imKeys[i]) + '">' + imKeys[i] + '</td>' +
+        '<td class="mono" style="cursor:pointer;" data-sev-side="im" data-sev-key="' + esc(imKeys[i]) + '">' + fmtN(g.severity.IM[imKeys[i]]||0) + '</td>' +
+        '<td class="mono" style="cursor:pointer;" data-sev-side="sr" data-sev-key="' + esc(srKeys[i]) + '">' + srKeys[i] + '</td>' +
+        '<td class="mono" style="cursor:pointer;" data-sev-side="sr" data-sev-key="' + esc(srKeys[i]) + '">' + fmtN(g.severity.SR[srKeys[i]]||0) + '</td></tr>';
+    }
+    const tbl = document.getElementById('cda_severity');
+    tbl.innerHTML = rows;
+    tbl.onclick = function(evt){
+      const td = evt.target.closest('td[data-sev-key]');
+      if(!td) return;
+      const side = td.getAttribute('data-sev-side'), key = td.getAttribute('data-sev-key');
+      const rowsForCell = side==='im' ? (g.severity.imRows[key]||[]) : (g.severity.srRows[key]||[]);
+      cdaOpenDrill('Call Dump Analytics — ' + (side==='im'?'Incident Severity ':'SR Priority ') + key, rowsForCell, [], (side==='im'?'Severity_':'Priority_')+key);
+    };
+  }
+  function cdaKbTable(g){
+    const row = function(label, s, field){
+      return '<tr>' +
+        '<td>' + label + '</td>' +
+        '<td class="mono" style="cursor:pointer;" data-kb-field="' + field + '" data-kb-bucket="yes">' + fmtN(s.Yes) + '</td>' +
+        '<td class="mono" style="cursor:pointer;" data-kb-field="' + field + '" data-kb-bucket="no">' + fmtN(s.No) + '</td>' +
+        '<td class="mono" style="opacity:.6;cursor:pointer;" data-kb-field="' + field + '" data-kb-bucket="untracked">' + fmtN(s.Untracked) + '</td>' +
+        '<td class="mono"><span class="pill ' + pctClass(s.pct_yes) + '">' + fmtPct(s.pct_yes) + '</span></td></tr>';
+    };
+    const tbl = document.getElementById('cda_kb');
+    tbl.innerHTML = '<tr><th></th><th>Yes</th><th>No</th><th>Untracked</th><th>% Yes</th></tr>' +
+      row('KB Referred', g.kb_referred, 'kb_referred') + row('KB Added', g.kb_added, 'kb_added');
+    tbl.onclick = function(evt){
+      const td = evt.target.closest('td[data-kb-field]');
+      if(!td) return;
+      const field = td.getAttribute('data-kb-field'), bucket = td.getAttribute('data-kb-bucket');
+      const s = g[field];
+      const rowsForCell = bucket==='yes' ? s.yesRows : bucket==='no' ? s.noRows : s.untrackedRows;
+      cdaOpenDrill('Call Dump Analytics — ' + (field==='kb_referred'?'KB Referred':'KB Added') + ' = ' + bucket, rowsForCell, [], field+'_'+bucket);
+    };
+  }
+  function cdaEscalationTables(g){
+    let rows = '<tr><th>Month</th><th>Escalations</th></tr>';
+    g.months.forEach(function(m){
+      rows += '<tr><td class="mono" style="cursor:pointer;" data-esc-month="' + esc(m) + '">' + esc(labelsFor([m])[0]) + '</td><td class="mono" style="cursor:pointer;" data-esc-month="' + esc(m) + '">' + fmtN(g.escalation.by_month[m]) + '</td></tr>';
+    });
+    const tblMonth = document.getElementById('cda_esc_month');
+    tblMonth.innerHTML = rows;
+    tblMonth.onclick = function(evt){
+      const td = evt.target.closest('td[data-esc-month]');
+      if(!td) return;
+      const m = td.getAttribute('data-esc-month');
+      cdaOpenDrill('Call Dump Analytics — Escalations (' + labelsFor([m])[0] + ')', g.escalation.by_month_rows[m]||[], [window.GovDrillCol.escType, window.GovDrillCol.escReason], 'Escalation_'+m);
+    };
+
+    let rows2 = '<tr><th>Escalation Type</th><th>Count</th></tr>';
+    const types = Object.keys(g.escalation.by_type).sort(function(a,b){ return g.escalation.by_type[b]-g.escalation.by_type[a]; });
+    if(!types.length){ rows2 += '<tr><td colspan="2" style="opacity:.6;">No escalations in scope</td></tr>'; }
+    else { types.forEach(function(t){ rows2 += '<tr><td class="mono" style="cursor:pointer;" data-esc-type="' + esc(t) + '">' + esc(t) + '</td><td class="mono" style="cursor:pointer;" data-esc-type="' + esc(t) + '">' + fmtN(g.escalation.by_type[t]) + '</td></tr>'; }); }
+    const tblType = document.getElementById('cda_esc_type');
+    tblType.innerHTML = rows2;
+    tblType.onclick = function(evt){
+      const td = evt.target.closest('td[data-esc-type]');
+      if(!td) return;
+      const t = td.getAttribute('data-esc-type');
+      cdaOpenDrill('Call Dump Analytics — Escalation Type: ' + t, g.escalation.by_type_rows[t]||[], [window.GovDrillCol.escType, window.GovDrillCol.escReason], 'EscType_'+t);
+    };
+  }
+  function cdaSrHoursTable(g){
+    const arr = Object.keys(g.sr_hours.by_customer).map(function(name){ return Object.assign({name:name}, g.sr_hours.by_customer[name]); });
+    arr.sort(function(a,b){ return b.pct_consumed - a.pct_consumed; });
+    let rows = '<tr><th>Customer</th><th>Consumed (h)</th><th>Pool (h)</th><th>% Used</th></tr>';
+    if(!arr.length){ rows += '<tr><td colspan="4" style="opacity:.6;">No Service Request hours in scope</td></tr>'; }
+    else {
+      arr.slice(0,15).forEach(function(r){
+        rows += '<tr>' +
+          '<td style="cursor:pointer;" data-srh-cust="' + esc(r.name) + '">' + esc(r.name) + '</td>' +
+          '<td class="mono" style="cursor:pointer;" data-srh-cust="' + esc(r.name) + '">' + fmtN(r.consumed,1) + '</td>' +
+          '<td class="mono">' + fmtN(r.pool,1) + '</td>' +
+          '<td class="mono" style="cursor:pointer;" data-srh-cust="' + esc(r.name) + '"><span class="pill ' + (r.pct_consumed>=100?'pill-bad':r.pct_consumed>=75?'pill-warn':'pill-good') + '">' + fmtN(r.pct_consumed,1) + '%</span></td></tr>';
+      });
+    }
+    const tbl = document.getElementById('cda_srhours');
+    tbl.innerHTML = rows;
+    tbl.onclick = function(evt){
+      const td = evt.target.closest('td[data-srh-cust]');
+      if(!td) return;
+      const name = td.getAttribute('data-srh-cust');
+      const entry = g.sr_hours.by_customer[name];
+      cdaOpenDrill('Call Dump Analytics — SR Hours: ' + name, entry ? entry.rows : [], [window.GovDrillCol.srService, cdaCustomCol('SR Hours Deducted','sr_hours_deducted')], 'SRHours_'+name);
+    };
+  }
+
+  function renderCallDumpAnalyticsOverview(){
+    const wrap = document.getElementById('cdaWrap');
+    if(!wrap) return;
+    if(!(window.GovData && window.GovData.isLoaded)) return;
+    const rows = window.GovData.filteredRows || [];
+    if(!rows.length){
+      wrap.innerHTML = '<div class="fp-empty" style="padding:30px 20px;">No tickets match the current filters.</div>';
+      return;
+    }
+    const g = computeCda(rows);
+    if(!g.months.length){
+      wrap.innerHTML = '<div class="fp-empty" style="padding:30px 20px;">No creation-time data available for this selection.</div>';
+      return;
+    }
+    window.__cdaLastResult = g;
+    renderCdaKpis(g);
+    cdaVolumeChart(g);
+    cdaCsatChart(g);
+    cdaSlaChart(g);
+    cdaSlaTable(g);
+    cdaFcrChart(g);
+    cdaTatChart(g);
+    cdaEffortChart(g);
+    cdaSeverityTable(g);
+    cdaKbTable(g);
+    cdaEscalationTables(g);
+    cdaSrHoursTable(g);
+  }
+
+  // ---------------------------------------------------------------
+  // EXPORTS — Excel workbook + "Download as PDF" (print)
+  // ---------------------------------------------------------------
+  function exportCdaToExcel(){
+    const g = window.__cdaLastResult;
+    if(!g || !window.GovExportWorkbook) return;
+    const lg = g.months.reduce(function(a,m){ a.Total+=g.logged[m].Total; a.IM+=g.logged[m].IM; a.SR+=g.logged[m].SR; return a; }, {Total:0,IM:0,SR:0});
+    const rs = g.months.reduce(function(a,m){ a.Total+=g.resolved[m].Total; a.IM+=g.resolved[m].IM; a.SR+=g.resolved[m].SR; return a; }, {Total:0,IM:0,SR:0});
+    const csatCount = g.months.reduce(function(a,m){ return a+g.csat[m].count; },0);
+    const csatWeighted = g.months.reduce(function(a,m){ return a + (g.csat[m].mean!==null ? g.csat[m].mean*g.csat[m].count : 0); },0);
+    const csatMean = csatCount>0 ? round2(csatWeighted/csatCount) : null;
+    const monthLabels = labelsFor(g.months);
+
+    const kpiSheet = { name:'KPI Summary', headers:['Metric','Value'], rows:[
+      ['Logged — Total', lg.Total], ['Logged — IM', lg.IM], ['Logged — SR', lg.SR],
+      ['Resolved — Total', rs.Total], ['Resolved — IM', rs.IM], ['Resolved — SR', rs.SR],
+      ['Open — Current (Total)', g.open_current.Total], ['Open — Current (IM)', g.open_current.IM], ['Open — Current (SR)', g.open_current.SR],
+      ['CSAT (Mean)', csatMean], ['CSAT (Surveys)', csatCount]
+    ]};
+
+    const volCsatSheet = { name:'Volume & CSAT', headers:['Month','Logged','Logged IM','Logged SR','Resolved','Resolved IM','Resolved SR','CSAT Mean','CSAT Surveys'],
+      rows: g.months.map(function(m,i){ return [monthLabels[i], g.logged[m].Total, g.logged[m].IM, g.logged[m].SR, g.resolved[m].Total, g.resolved[m].IM, g.resolved[m].SR, g.csat[m].mean, g.csat[m].count]; }) };
+
+    const slaSheet = { name:'SLA Compliance', headers:['SLA Metric'].concat(monthLabels),
+      rows: SLA_ROWS.map(function(r){ return [r.label].concat(g.months.map(function(m){ return getSlaEntry(g,r.key,r.sub,m).pct; })); }) };
+
+    const fcrTatSheet = { name:'FCR & TAT', headers:['Month','FCR IM %','FCR SR %','24/7 SLA IM (Days)','24/7 SLA SR (Days)','Actual SLA IM (Days)','Actual SLA SR (Days)'],
+      rows: g.months.map(function(m,i){ return [monthLabels[i], g.sla.fcr_2bd[m].IM.pct, g.sla.fcr_2bd[m].SR.pct, g.tat_24x7[m].IM.avg, g.tat_24x7[m].SR.avg, g.tat_sla[m].IM.avg, g.tat_sla[m].SR.avg]; }) };
+
+    const effortSheet = { name:'Effort Hours', headers:['Month','IM Avg Effort (h)','SR Avg Effort (h)'],
+      rows: g.months.map(function(m,i){ return [monthLabels[i], g.effort_hours[m].IM.avg, g.effort_hours[m].SR.avg]; }) };
+
+    const sevSheet = { name:'Severity', headers:['Incident Mgmt','Count','Service Request','Count'],
+      rows: [0,1,2,3].map(function(i){
+        const imKeys=['Critical','Hotsite','Medium','Low'], srKeys=['P1','P2','P3','P4'];
+        return [imKeys[i], g.severity.IM[imKeys[i]]||0, srKeys[i], g.severity.SR[srKeys[i]]||0];
+      }) };
+
+    const kbSheet = { name:'Knowledge Base', headers:['Metric','Yes','No','Untracked','% Yes'],
+      rows: [['KB Referred', g.kb_referred.Yes, g.kb_referred.No, g.kb_referred.Untracked, g.kb_referred.pct_yes],
+             ['KB Added', g.kb_added.Yes, g.kb_added.No, g.kb_added.Untracked, g.kb_added.pct_yes]] };
+
+    const escMonthSheet = { name:'Escalation by Month', headers:['Month','Escalations'],
+      rows: g.months.map(function(m,i){ return [monthLabels[i], g.escalation.by_month[m]]; }) };
+    const escTypeKeys = Object.keys(g.escalation.by_type).sort(function(a,b){ return g.escalation.by_type[b]-g.escalation.by_type[a]; });
+    const escTypeSheet = { name:'Escalation by Type', headers:['Escalation Type','Count'],
+      rows: escTypeKeys.length ? escTypeKeys.map(function(t){ return [t, g.escalation.by_type[t]]; }) : [['No escalations in scope', 0]] };
+
+    const srArr = Object.keys(g.sr_hours.by_customer).map(function(name){ return Object.assign({name:name}, g.sr_hours.by_customer[name]); });
+    srArr.sort(function(a,b){ return b.pct_consumed - a.pct_consumed; });
+    const srSheet = { name:'SR Hour Utilization', headers:['Customer','Consumed (h)','Pool (h)','% Used'],
+      rows: srArr.length ? srArr.map(function(r){ return [r.name, r.consumed, r.pool, r.pct_consumed]; }) : [['No Service Request hours in scope', '', '', '']] };
+
+    window.GovExportWorkbook([kpiSheet, volCsatSheet, slaSheet, fcrTatSheet, effortSheet, sevSheet, kbSheet, escMonthSheet, escTypeSheet, srSheet], 'Call_Dump_Analytics_Overview');
+  }
+  const cdaExportBtn = document.getElementById('cdaExportExcelBtn');
+  if(cdaExportBtn) cdaExportBtn.addEventListener('click', exportCdaToExcel);
+
+  const cdaPdfBtn = document.getElementById('cdaDownloadPdfBtn');
+  if(cdaPdfBtn){
+    cdaPdfBtn.addEventListener('click', function(){
+      document.body.classList.add('printing-cda');
+      window.print();
+    });
+  }
+  window.addEventListener('afterprint', function(){
+    document.body.classList.remove('printing-cda');
+  });
+
+  window.GovRegisterModule(['executive'], renderCallDumpAnalyticsOverview);
+
+  document.addEventListener('govdata:reset', function(){
+    Object.keys(charts).forEach(destroyChart);
+  });
+
+  (window.__govThemeHooks = window.__govThemeHooks || []).push(function(){
+    if(window.GovData && window.GovData.isLoaded){
+      renderCallDumpAnalyticsOverview();
+    }
+  });
+})();
+</script>
+
+<script>
+/* ================================================================
    MODULE 5 — CUSTOMER DASHBOARD + CUSTOMER HEALTH SCORE
    ----------------------------------------------------------------
    Groups filteredRows by customer_name, computes per-customer
@@ -6617,7 +7491,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     { k:'country', l:'Country' }, { k:'service', l:'Service' },
     { k:'source', l:'Source' }, { k:'urgency', l:'Urgency' },
     { k:'creation_time', l:'Created' }, { k:'closed_time', l:'Closed' },
-    { k:'resolve_time', l:'Resolved' }, { k:'tat_days', l:'TAT (Days)' },
+    { k:'resolve_time', l:'Resolved' }, { k:'tat_days', l:'24/7 SLA' },
+    { k:'tat_sla', l:'Actual SLA(Business hours)' }, { k:'subsequent_response_miss_count', l:'Periodic SLA' },
     { k:'first_response_days', l:'First Response (Days)' }, { k:'service_rating', l:'Rating' },
     { k:'escalation_type', l:'Escalation Type' }, { k:'reason_for_escalation', l:'Escalation Reason' },
     { k:'class_sla_breached', l:'Classification SLA Breached', bool:true },
@@ -6657,7 +7532,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     { label:'Priority', get:function(r){ return r.priority || ''; } },
     { label:'Created', get:function(r){ return r._creation_date || null; }, isDate:true },
     { label:'Closed', get:function(r){ return r._closed_date || null; }, isDate:true },
-    { label:'TAT (Days)', get:function(r){ return toNum(r.tat_days); }, numFmt:'0.0' },
+    { label:'24/7 SLA', get:function(r){ return toNum(r.tat_days); }, numFmt:'0.0' },
+    { label:'Actual SLA(Business hours)', get:function(r){ return toNum(r.tat_sla); }, numFmt:'0.0' },
+    { label:'Periodic SLA', get:function(r){ return toNum(r.subsequent_response_miss_count); }, numFmt:'0' },
     { label:'First Response SLA', get:function(r){ return r._first_response_sla_breached ? 'Breached' : 'Met'; } },
     { label:'Resolution SLA', get:function(r){ return r._resolution_sla_breached ? 'Breached' : 'Met'; } },
     { label:'Escalated', get:function(r){ return r._is_escalated ? 'Yes' : 'No'; } },
@@ -6871,10 +7748,21 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     // ---- Performance (Avg Days) table ----
     function actualAvgDays(list){ const v = list.filter(function(r){ return r._is_closed; }).map(function(r){ return toNum(r.tat_days); }).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
     function targetAvgDays(list){ const v = list.filter(function(r){ return r._is_closed; }).map(policyTargetDaysFor).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
+    // Same "closed tickets only" convention as actualAvgDays() above, applied
+    // to the business-hours SLA field (tat_sla) instead of the 24/7 one.
+    function actualSlaBusinessAvg(list){ const v = list.filter(function(r){ return r._is_closed; }).map(function(r){ return toNum(r.tat_sla); }).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
+    // Periodic SLA misses accrue over a ticket's whole life, not just at
+    // closure, so — unlike the two functions above — this looks at every
+    // ticket in the list that has a value, open or closed.
+    function periodicSlaAvg(list){ const v = list.map(function(r){ return toNum(r.subsequent_response_miss_count); }).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
     const incActual = actualAvgDays(incRows), srActual = actualAvgDays(srRows);
     const incTarget = targetAvgDays(incRows), srTarget = targetAvgDays(srRows);
+    const incSlaBusiness = actualSlaBusinessAvg(incRows), srSlaBusiness = actualSlaBusinessAvg(srRows);
+    const incPeriodic = periodicSlaAvg(incRows), srPeriodic = periodicSlaAvg(srRows);
     document.getElementById('crPerfBody').innerHTML =
-      '<tr><td>Avg Closure (Days)</td><td>' + (incActual===null?'—':fmtN(incActual,1)) + '</td><td>' + (srActual===null?'—':fmtN(srActual,1)) + '</td></tr>' +
+      '<tr><td>Avg 24/7 SLA (Days)</td><td>' + (incActual===null?'—':fmtN(incActual,1)) + '</td><td>' + (srActual===null?'—':fmtN(srActual,1)) + '</td></tr>' +
+      '<tr><td>Avg Actual SLA (Business hours, Days)</td><td>' + (incSlaBusiness===null?'—':fmtN(incSlaBusiness,1)) + '</td><td>' + (srSlaBusiness===null?'—':fmtN(srSlaBusiness,1)) + '</td></tr>' +
+      '<tr><td>Avg Periodic SLA (Misses)</td><td>' + (incPeriodic===null?'—':fmtN(incPeriodic,1)) + '</td><td>' + (srPeriodic===null?'—':fmtN(srPeriodic,1)) + '</td></tr>' +
       '<tr><td>SLA Target (Days)</td><td>' + (incTarget===null?'—':fmtN(incTarget,1)) + '</td><td>' + (srTarget===null?'—':fmtN(srTarget,1)) + '</td></tr>';
 
     // ---- Open Cases Overview table ----
@@ -7897,7 +8785,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     { label:'Priority', get:function(r){ return r.priority || ''; } },
     { label:'Created', get:function(r){ return r._creation_date || null; }, isDate:true },
     { label:'Closed', get:function(r){ return r._closed_date || null; }, isDate:true },
-    { label:'TAT (Days)', get:function(r){ return toNum(r.tat_days); }, numFmt:'0.0' },
+    { label:'24/7 SLA', get:function(r){ return toNum(r.tat_days); }, numFmt:'0.0' },
+    { label:'Actual SLA(Business hours)', get:function(r){ return toNum(r.tat_sla); }, numFmt:'0.0' },
+    { label:'Periodic SLA', get:function(r){ return toNum(r.subsequent_response_miss_count); }, numFmt:'0' },
     { label:'First Response SLA', get:function(r){ return r._first_response_sla_breached ? 'Breached' : 'Met'; } },
     { label:'Resolution SLA', get:function(r){ return r._resolution_sla_breached ? 'Breached' : 'Met'; } },
     { label:'Escalated', get:function(r){ return r._is_escalated ? 'Yes' : 'No'; } },
@@ -8066,9 +8956,22 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       '<tr><td>Open</td><td>' + fmtN(e.open) + '</td><td>' + fmtN(e.openInc) + '</td><td>' + fmtN(e.openSr) + '</td></tr>';
 
     // ---- SLA & Quality table ----
+    // Same "closed tickets only" convention the KPI card's Avg Resolution
+    // figure already uses for tat_days — applied here to the 24/7 SLA and
+    // business-hours SLA fields; Periodic SLA misses accrue over a
+    // ticket's whole life, so that one looks at every ticket with a value.
+    const erClosedRows = e.rows.filter(function(r){ return r._is_closed; });
+    function erAvgOf(field){ const v = erClosedRows.map(function(r){ return toNum(r[field]); }).filter(function(x){ return x!==null; }); return v.length ? avg(v) : null; }
+    const erAvgTat = erAvgOf('tat_days');
+    const erAvgSlaBusiness = erAvgOf('tat_sla');
+    const erPeriodicVals = e.rows.map(function(r){ return toNum(r.subsequent_response_miss_count); }).filter(function(x){ return x!==null; });
+    const erAvgPeriodic = erPeriodicVals.length ? avg(erPeriodicVals) : null;
     document.getElementById('erQualityBody').innerHTML = [
       ['First Response SLA %', fmtN(e.frSlaPct,1)+'%'],
       ['Resolution SLA %', fmtN(e.resSlaPct,1)+'%'],
+      ['Avg 24/7 SLA (Days)', erAvgTat===null?'—':fmtN(erAvgTat,1)],
+      ['Avg Actual SLA (Business hours, Days)', erAvgSlaBusiness===null?'—':fmtN(erAvgSlaBusiness,1)],
+      ['Avg Periodic SLA (Misses)', erAvgPeriodic===null?'—':fmtN(erAvgPeriodic,1)],
       ['Total FCR', fmtN(e.totalFcr) + ' (' + fmtN(e.fcrPct,1) + '%)'],
       ['Total KB Referred', fmtN(e.totalKbRefer) + ' (' + fmtN(e.kbReferPct,1) + '%)']
     ].map(function(row){ return '<tr><td>' + row[0] + '</td><td>' + row[1] + '</td></tr>'; }).join('');
@@ -9268,6 +10171,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     breached: function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; },
     reopened: function(r){ return r._is_reopened; }
   };
+  function toNum(v){
+    if(v === null || v === undefined || v === '') return null;
+    if(typeof v === 'number') return isFinite(v) ? v : null;
+    const cleaned = String(v).replace(/,/g,'').trim();
+    if(cleaned === '' || /^n\/?a$/i.test(cleaned)) return null;
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  }
 
   function renderTicketTable(rows){
     const filtered = rows.filter(SEGMENT_PREDICATES[activeSegment]);
@@ -9277,6 +10188,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     if($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
     $tbl.find('tbody').html(filtered.map(function(r, idx){
       const slaFlag = r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached;
+      const tatDaysVal = toNum(r.tat_days);
+      const tatSlaVal = toNum(r.tat_sla);
+      const periodicVal = toNum(r.subsequent_response_miss_count);
       return '<tr data-ridx="' + idx + '">' +
         '<td>' + esc(r.ticket_id||'—') + '</td>' +
         '<td>' + esc((r.title||'—')).slice(0,36) + '</td>' +
@@ -9288,6 +10202,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         '<td>' + esc(r.support_category||'—') + '</td>' +
         '<td data-order="' + (r._creation_date ? r._creation_date.getTime() : 0) + '">' + fmtDateShort(r._creation_date) + '</td>' +
         '<td>' + (r._age_days===null?'—':r._age_days) + '</td>' +
+        '<td>' + (tatDaysVal===null?'—':tatDaysVal) + '</td>' +
+        '<td>' + (tatSlaVal===null?'—':tatSlaVal) + '</td>' +
+        '<td>' + (periodicVal===null?'—':periodicVal) + '</td>' +
         '<td>' + (slaFlag ? '<span class="pill pill-bad">Breach</span>' : '<span class="pill pill-good">Met</span>') + '</td>' +
         '</tr>';
     }).join(''));
@@ -10548,7 +11465,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     lastEmailTime: { key:'last_email_sent_time', label:'Last Email Time' },
     age:     { label:'Age (Days)', get:function(r){ return r._age_days===null||r._age_days===undefined ? '' : r._age_days; } },
     agingBucket: { label:'Aging Category', get:function(r){ return r._aging_bucket || ''; } },
-    tat:     { label:'TAT (Days)', get:function(r){ const n = toNum(r.tat_days); return n===null ? '' : n; } },
+    tat:     { label:'24/7 SLA', get:function(r){ const n = toNum(r.tat_days); return n===null ? '' : n; } },
+    slaBusiness: { label:'Actual SLA(Business hours)', get:function(r){ const n = toNum(r.tat_sla); return n===null ? '' : n; } },
+    periodicSla: { label:'Periodic SLA', get:function(r){ const n = toNum(r.subsequent_response_miss_count); return n===null ? '' : n; } },
     firstRespDays: { label:'First Response (Days)', get:function(r){ const n = toNum(r.first_response_days); return n===null ? '' : n; } },
     classSla:{ label:'Classification SLA Breached', get:function(r){ return r._class_sla_breached ? 'Yes' : 'No'; } },
     resSla:  { label:'Resolution SLA Breached', get:function(r){ return r._resolution_sla_breached ? 'Yes' : 'No'; } },
@@ -10606,7 +11525,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const sub = function(pred){ return closedRows.filter(pred).length; };
       return {
         title:'Closed Tickets — Detail', filenameBase:'Executive_Closed_Tickets', rows: closedRows,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.tat, COL.rating, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.tat, COL.slaBusiness, COL.periodicSla, COL.rating, COL.closed ],
         summary: [
           ['Total Closed', fmtN(closedRows.length)],
           ['Closed', fmtN(sub(function(r){ return !r._is_deferred && String(r.current_status||'').trim().toLowerCase()==='closed'; }))],
@@ -10631,7 +11550,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     tatDays: function(rows, k){
       const sub = rows.filter(function(r){ return toNum(r.tat_days) !== null; });
       return { title:'Avg. Resolution Time — Contributing Tickets', filenameBase:'Executive_Resolution_Time', rows: sub,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.tat, COL.created, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.tat, COL.slaBusiness, COL.periodicSla, COL.created, COL.closed ],
         summary:[['Average Resolution (Days)', k.tatDays===null?'—':k.tatDays.toFixed(1)], ['Tickets Counted', fmtN(sub.length)]] };
     },
     firstRespDays: function(rows, k){
@@ -10656,7 +11575,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     resSlaPct: function(rows, k){
       const breached = rows.filter(function(r){ return r._resolution_sla_breached; });
       return { title:'Resolution SLA — Breached Tickets', filenameBase:'Executive_Resolution_SLA_Breaches', rows: breached,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.priority, COL.tat, COL.created, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.priority, COL.tat, COL.slaBusiness, COL.periodicSla, COL.created, COL.closed ],
         summary:[['Resolution SLA %', k.resSlaPct.toFixed(1)+'%'], ['Breached', fmtN(breached.length)]] };
     },
     frSlaPct: function(rows, k){
@@ -10722,7 +11641,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 3; }).length;
       const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 3; }).length;
       return { title:'Closed SR — Standard (3-Day Target)', filenameBase:'Executive_Closed_SR_Std', rows: base,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.created, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.slaBusiness, COL.periodicSla, COL.created, COL.closed ],
         summary:[['Non-Violated (≤3 Days)', fmtN(nonViolated)], ['Violated (>3 Days)', fmtN(violated)], ['Total Closed Std SR', fmtN(base.length)]] };
     },
     closedSrNonStd: function(rows, k){
@@ -10730,7 +11649,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 5; }).length;
       const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 5; }).length;
       return { title:'Closed SR — Non-Standard (5-Day Target)', filenameBase:'Executive_Closed_SR_NonStd', rows: base,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.created, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.slaBusiness, COL.periodicSla, COL.created, COL.closed ],
         summary:[['Non-Violated (≤5 Days)', fmtN(nonViolated)], ['Violated (>5 Days)', fmtN(violated)], ['Total Closed Non-Std SR', fmtN(base.length)]] };
     },
     closedInc: function(rows, k){
@@ -10738,7 +11657,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const nonViolated = base.filter(function(r){ return r._age_days !== null && r._age_days <= 5; }).length;
       const violated = base.filter(function(r){ return r._age_days !== null && r._age_days > 5; }).length;
       return { title:'Closed INC (5-Day Target)', filenameBase:'Executive_Closed_INC', rows: base,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.tat, COL.created, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.tat, COL.slaBusiness, COL.periodicSla, COL.created, COL.closed ],
         summary:[['Non-Violated (≤5 Days)', fmtN(nonViolated)], ['Violated (>5 Days)', fmtN(violated)], ['Total Closed INC', fmtN(base.length)]] };
     },
     totalOpenSR: function(rows, k){
@@ -10760,13 +11679,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const std = sub.filter(function(r){ return !isNonStdSR(r); }).length;
       const nonStd = sub.filter(isNonStdSR).length;
       return { title:'Total Closed SR', filenameBase:'Executive_Total_Closed_SR', rows: sub,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.created, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.srService, COL.tat, COL.slaBusiness, COL.periodicSla, COL.created, COL.closed ],
         summary:[['Total Closed SR', fmtN(sub.length)], ['Standard', fmtN(std)], ['Non-Standard', fmtN(nonStd)]] };
     },
     totalClosedINC: function(rows, k){
       const sub = rows.filter(function(r){ return r._is_closed && !r._is_excluded && isINC(r); });
       return { title:'Total Closed INC', filenameBase:'Executive_Total_Closed_INC', rows: sub,
-        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.tat, COL.created, COL.closed ],
+        columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.status, COL.priority, COL.severity, COL.tat, COL.slaBusiness, COL.periodicSla, COL.created, COL.closed ],
         summary:[['Total Closed INC', fmtN(sub.length)]] };
     }
   };
@@ -11129,6 +12048,35 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       within1: withinDaysCount(1), within2: withinDaysCount(2), within3: withinDaysCount(3), within5: withinDaysCount(5)
     };
 
+    // --- Actual SLA (Business Hours) — tat_sla, the business-hours
+    //     counterpart to the 24/7 SLA (tat_days) above. Same "use as-is,
+    //     usually only populated at closure" caveat applies. ---
+    const tatSlaRows = rows.filter(function(r){ return toNumLocal(r.tat_sla) !== null; });
+    const tatSlaVals = tatSlaRows.map(function(r){ return toNumLocal(r.tat_sla); });
+    s.tatSla = {
+      count: tatSlaVals.length,
+      avg: tatSlaVals.length ? (tatSlaVals.reduce(function(a,b){ return a+b; },0) / tatSlaVals.length) : null,
+      min: tatSlaVals.length ? Math.min.apply(null, tatSlaVals) : null,
+      max: tatSlaVals.length ? Math.max.apply(null, tatSlaVals) : null,
+      rows: tatSlaRows
+    };
+
+    // --- Periodic SLA — subsequent_response_miss_count, a per-ticket
+    //     count of missed periodic (follow-up) responses rather than a
+    //     duration, so its "stats" are a miss-count average/max plus how
+    //     many tickets have at least one recorded miss. ---
+    const periodicRows = rows.filter(function(r){ return toNumLocal(r.subsequent_response_miss_count) !== null; });
+    const periodicVals = periodicRows.map(function(r){ return toNumLocal(r.subsequent_response_miss_count); });
+    const periodicMissRows = periodicRows.filter(function(r){ return toNumLocal(r.subsequent_response_miss_count) > 0; });
+    s.periodicSla = {
+      count: periodicVals.length,
+      avg: periodicVals.length ? (periodicVals.reduce(function(a,b){ return a+b; },0) / periodicVals.length) : null,
+      max: periodicVals.length ? Math.max.apply(null, periodicVals) : null,
+      missCount: periodicMissRows.length,
+      rows: periodicRows,
+      missRows: periodicMissRows
+    };
+
 
     // --- SLA (Classification/Assignment, Resolution, First Response) —
     //     "Applicable" = the source column actually carries a value for
@@ -11335,13 +12283,15 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       ['Delegation Delayed (Overdue, Still at L1)', fmtN(stats.delegation.delayedAtL1)],
       ['Tickets Requiring Attention', fmtN(stats.risk.attention)],
       ['Average Aging (Days)', decStr(stats.avgAge)],
-      ['Average TAT (Days)', stats.tat.count ? decStr(stats.tat.avg) : (isClosedScope ? 'N/A — no TAT value is populated for these tickets' : 'N/A — tickets still open, TAT not yet available')],
+      ['Average 24/7 SLA (Days)', stats.tat.count ? decStr(stats.tat.avg) : (isClosedScope ? 'N/A — no 24/7 SLA value is populated for these tickets' : 'N/A — tickets still open, 24/7 SLA not yet available')],
+      ['Average Actual SLA (Business hours)', stats.tatSla.count ? decStr(stats.tatSla.avg) : (isClosedScope ? 'N/A — no Actual SLA value is populated for these tickets' : 'N/A — tickets still open, Actual SLA not yet available')],
+      ['Periodic SLA — Tickets with a Missed Response', fmtN(stats.periodicSla.missCount) + ' of ' + fmtN(n)],
       ['Daily Review Compliance %', pctStr(stats.compliancePct)]
     ];
     const execColors = blankColors(execRows.length, 2);
     execColors[2][1] = ragPct(stats.overallSlaPct);
     execColors[4][1] = ragPct(stats.frSla.pct);
-    execColors[11][1] = ragPct(stats.compliancePct);
+    execColors[13][1] = ragPct(stats.compliancePct);
     execRows.push(
       [stdColLabel + ' Compliance % (<=3 Days)', pctStr(stats.agingCompliance.stdSR.pct)],
       [nonStdColLabel + ' Compliance % (<=5 Days)', pctStr(stats.agingCompliance.nonStdSR.pct)],
@@ -11475,20 +12425,39 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     })();
 
     sections.push({
-      title: '9. TURNAROUND TIME (TAT)',
+      title: '9. TURNAROUND TIME — 24/7 SLA (TAT)',
       headers: ['Metric','Value'],
       rows: stats.tat.count ? [
-        ['Average TAT (Days)', decStr(stats.tat.avg)],
-        ['Minimum TAT (Days)', decStr(stats.tat.min)],
-        ['Maximum TAT (Days)', decStr(stats.tat.max)],
-        ['Tickets with a TAT Value', fmtN(stats.tat.count) + ' of ' + fmtN(n)],
-        ['Resolved Within 1 Day', fmtN(stats.tat.within1) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value'],
-        ['Resolved Within 2 Days', fmtN(stats.tat.within2) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value'],
-        ['Resolved Within 3 Days', fmtN(stats.tat.within3) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value'],
-        ['Resolved Within 5 Days', fmtN(stats.tat.within5) + ' of ' + fmtN(stats.tat.count) + ' with a TAT value']
+        ['Average 24/7 SLA (Days)', decStr(stats.tat.avg)],
+        ['Minimum 24/7 SLA (Days)', decStr(stats.tat.min)],
+        ['Maximum 24/7 SLA (Days)', decStr(stats.tat.max)],
+        ['Tickets with a 24/7 SLA Value', fmtN(stats.tat.count) + ' of ' + fmtN(n)],
+        ['Resolved Within 1 Day', fmtN(stats.tat.within1) + ' of ' + fmtN(stats.tat.count) + ' with a 24/7 SLA value'],
+        ['Resolved Within 2 Days', fmtN(stats.tat.within2) + ' of ' + fmtN(stats.tat.count) + ' with a 24/7 SLA value'],
+        ['Resolved Within 3 Days', fmtN(stats.tat.within3) + ' of ' + fmtN(stats.tat.count) + ' with a 24/7 SLA value'],
+        ['Resolved Within 5 Days', fmtN(stats.tat.within5) + ' of ' + fmtN(stats.tat.count) + ' with a 24/7 SLA value']
       ] : [
-        ['TAT', isClosedScope ? 'N/A — no ticket in this export has a TAT value populated' : 'N/A — no ticket in this export has a TAT value yet (TAT is normally populated at closure; these tickets are still open)']
+        ['24/7 SLA', isClosedScope ? 'N/A — no ticket in this export has a 24/7 SLA value populated' : 'N/A — no ticket in this export has a 24/7 SLA value yet (24/7 SLA is normally populated at closure; these tickets are still open)']
       ]
+    });
+
+    sections.push({
+      title: '9a. ADDITIONAL SLA METRICS — ACTUAL SLA (BUSINESS HOURS) & PERIODIC SLA',
+      headers: ['Metric','Value'],
+      rows: (stats.tatSla.count ? [
+        ['Average Actual SLA (Business hours, Days)', decStr(stats.tatSla.avg)],
+        ['Minimum Actual SLA (Business hours, Days)', decStr(stats.tatSla.min)],
+        ['Maximum Actual SLA (Business hours, Days)', decStr(stats.tatSla.max)],
+        ['Tickets with an Actual SLA Value', fmtN(stats.tatSla.count) + ' of ' + fmtN(n)]
+      ] : [
+        ['Actual SLA (Business hours)', isClosedScope ? 'N/A — no ticket in this export has an Actual SLA value populated' : 'N/A — no ticket in this export has an Actual SLA value yet (normally populated at closure; these tickets are still open)']
+      ]).concat(stats.periodicSla.count ? [
+        ['Average Periodic SLA Miss Count', decStr(stats.periodicSla.avg)],
+        ['Maximum Periodic SLA Miss Count', fmtN(stats.periodicSla.max)],
+        ['Tickets with a Periodic SLA Miss', fmtN(stats.periodicSla.missCount) + ' of ' + fmtN(n)]
+      ] : [
+        ['Periodic SLA', 'N/A — no ticket in this export has a Periodic SLA value populated']
+      ])
     });
 
     const commRows = [
@@ -11726,7 +12695,9 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { key:'lastEmailFrom', label:'Last Email From', get:function(r){ return String(r.last_email_from||'').trim(); } },
       { key:'lastEmailSentTimeDisplay', label:'Last Email Sent Time', get:function(r){ return fmtDateTimeSpec(r.last_email_sent_time); } },
       { key:'updateTimeDisplay', label:'Update Time', get:function(r){ return fmtDateTimeSpec(r.update_time); } },
-      { key:'tatDays', label:'TAT Days', get:function(r){ return (r.tat_days===null||r.tat_days===undefined) ? '' : String(r.tat_days).trim(); } },
+      { key:'tatDays', label:'24/7 SLA', get:function(r){ return (r.tat_days===null||r.tat_days===undefined) ? '' : String(r.tat_days).trim(); } },
+      { key:'actualSlaBusinessHours', label:'Actual SLA(Business hours)', get:function(r){ return (r.tat_sla===null||r.tat_sla===undefined) ? '' : String(r.tat_sla).trim(); } },
+      { key:'periodicSla', label:'Periodic SLA', get:function(r){ return (r.subsequent_response_miss_count===null||r.subsequent_response_miss_count===undefined) ? '' : String(r.subsequent_response_miss_count).trim(); } },
       { key:'creationTimeDisplay', label:'Creation Time', get:function(r){ return fmtDateTimeSpec(r.creation_time); } }
     ]);
   }
@@ -15532,7 +16503,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   // ================================================================
   const REGISTER_HEADERS = ['Priority','Ticket ID','Title','Customer','L1 Team','Owner','Current Tier','Current Status','Priority','Severity','Service','Category','Feature','Sub Feature',
     'Age','Aging Category','Primary Issue','Issue Category','Condition Status','Why Action Is Required','Recommended Action','Action Owner','Action Due','Escalation Status','Escalation Reason','Additional Risks',
-    'Creation Time','Classification Time','Assignment Time','L1 Assignment Time','L2 Assignment Time','SME Assignment Time','L1 Duration','L2 Duration','SME Duration','TAT',
+    'Creation Time','Classification Time','Assignment Time','L1 Assignment Time','L2 Assignment Time','SME Assignment Time','L1 Duration','L2 Duration','SME Duration','24/7 SLA','Actual SLA(Business hours)','Periodic SLA',
     'EDOC','EDOC Update Time','Work In Progress Time','Last Email From','Last Email Time','Second Last Email From','Second Last Email Time','Waiting on Customer Time','Information Provided Time',
     'Requested Effort','Pending Effort Approval','Total Effort','L1 Effort','L2 Effort','SME Effort','Resolution Type','Resolution Steps','RCA','Internal Reference'];
   function registerRow(d){
@@ -15540,7 +16511,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     return [ d.priority, d.ticketId, r.title||'', d.customer, d.l1Team, d.owner, d.tier, d.status, d.priorityField, d.severity, r.service||'', r.support_category||'', r.support_feature||'', r.support_subfeature||'',
       d.ageDays===null?'':d.ageDays, d.agingBucket||'', p?p.name:'', p?p.category:'', p?p.status:'', p?(p.why||''):'', p?(p.action||''):'', p?(p.owner==='CurrentOwner'?d.owner:p.owner):'', p?p.due:'',
       d.hasEscalation?'Required':'No', p&&p.escalation?(p.why||''):'', d.findings.slice(1).map(function(f){return f.name;}).join('; '),
-      r.creation_time||'', r.classification_time||'', r.assign_time||'', r.assign_l1_time||'', r.assign_l2_time||'', r.assign_sme_time||'', r.l1_duration_days||'', r.l2_duration_days||'', r.sme_duration_days||'', r.tat_days||'',
+      r.creation_time||'', r.classification_time||'', r.assign_time||'', r.assign_l1_time||'', r.assign_l2_time||'', r.assign_sme_time||'', r.l1_duration_days||'', r.l2_duration_days||'', r.sme_duration_days||'',
+      (r.tat_days===null||r.tat_days===undefined)?'':r.tat_days, (r.tat_sla===null||r.tat_sla===undefined)?'':r.tat_sla, (r.subsequent_response_miss_count===null||r.subsequent_response_miss_count===undefined)?'':r.subsequent_response_miss_count,
       r.edoc||'', r.edoc_update_time||'', r.work_in_progress_time||'', r.last_email_from||'', r.last_email_sent_time||'', r.lastbefore_email_from||'', r.lastbefore_email_time||'', r.waiting_on_customer_time||'', r.information_provided_time||'',
       r.requested_effort_hours||'', r.pending_effort_approval_time||'', r.total_effort_hours||'', r.l1_time_spent_hrs||'', r.l2_time_spent_hrs||'', r.sme_time_spent_hrs||'', r.resolution_type||'', r.resolution_steps||'', r.rca||'', r.internal_reference_id||'' ];
   }
