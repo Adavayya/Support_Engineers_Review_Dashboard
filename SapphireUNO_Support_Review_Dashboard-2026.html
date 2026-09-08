@@ -1958,6 +1958,17 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
               </div>
             </div>
 
+            <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-layer-group"></i> SLA by Support Tier (L1 / L2 / SME)</div>
+            <div class="chart-grid">
+              <div class="chart-card span-12">
+                <div class="cc-head"><h6><i class="fa-solid fa-sitemap"></i> Actual SLA &amp; Periodic SLA by Tier</h6></div>
+                <div class="cc-body"><canvas id="cda_tier_sla"></canvas></div>
+              </div>
+            </div>
+            <div class="dt-wrap" style="margin-top:16px;">
+              <table class="table" id="cda_tier_sla_table" style="width:100%;"></table>
+            </div>
+
             <div class="chart-grid">
               <div class="chart-card span-12">
                 <div class="cc-head"><h6><i class="fa-solid fa-business-time"></i> Effort Hours</h6></div>
@@ -3588,9 +3599,10 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     'assign_l1_time','assign_to_l2_engineer','assign_l2_time','assign_to_sme','assign_sme_time',
     'first_response_days','edoc_share_days','l1_duration_days','l2_duration_days','sme_duration_days',
     'tat_days','tat_sla','subsequent_response_miss_count','total_effort_spent_hrs','l1_time_spent_hrs','l2_time_spent_hrs','sme_time_spent_hrs',
+    'l1_tat_sla','l2_tat_sla','sme_tat_sla','l1_subsequent_response_miss_count','l2_subsequent_response_miss_count','sme_subsequent_response_miss_count',
     'company_name','allocated_effort_hours','consumed_effort_hours','remaining_effort_hours',
     'requested_effort_hours','business_justification','total_used','balance_effort_hours',
-    'pending_effort_approval_time','internal_reference_id','edoc','edoc_update_time',
+    'pending_effort_approval_time','internal_reference_id','edoc','edoc_update_time','edoc_first_populated_time',
     'work_in_progress_time','resolution_type','strike_count','was_kb_referred','feedback_to','feedback',
     'sr_hours_deducted','oop_applied','oop_reference','add_to_kb','kb_review_publish_decision',
     'requirement_problem_statement','resolution_steps','resolution_code','rca','resolve_time',
@@ -6652,6 +6664,34 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       out.tat_sla[m] = row2;
     });
 
+    // ---- SLA by Support Tier — l1/l2/sme_tat_sla (Actual SLA at each
+    // tier) and l1/l2/sme_subsequent_response_miss_count (Periodic SLA
+    // misses at each tier). Actual SLA per tier follows the same
+    // "resolved population" convention as the overall tat_sla metric
+    // above; Periodic SLA per tier follows subsequent_response_miss_
+    // count's convention (any logged ticket, not resolution-scoped),
+    // across all services since tier assignment isn't IM/SR-specific
+    // the way the overall Periodic SLA metric is. ----
+    out.tier_sla = {};
+    months.forEach(function(m){
+      const resSeg = resolvedPop.filter(function(r){ return r._resolved_month === m; });
+      const logSeg = logged.filter(function(r){ return r._month_key === m; });
+      const row = {};
+      [['L1','l1_tat_sla','l1_subsequent_response_miss_count'],['L2','l2_tat_sla','l2_subsequent_response_miss_count'],['SME','sme_tat_sla','sme_subsequent_response_miss_count']].forEach(function(t){
+        const tier = t[0], slaField = t[1], missField = t[2];
+        const slaRows = resSeg.filter(function(r){ return toNumOrNull(r[slaField]) !== null; });
+        const slaVals = slaRows.map(function(r){ return toNumOrNull(r[slaField]); });
+        const missRows = logSeg.filter(function(r){ return toNumOrNull(r[missField]) !== null; });
+        const missVals = missRows.map(function(r){ return toNumOrNull(r[missField]); });
+        const missBreachRows = missRows.filter(function(r){ return toNumOrNull(r[missField]) > 0; });
+        row[tier] = {
+          slaAvg: slaVals.length ? round2(slaVals.reduce(function(a,b){return a+b;},0)/slaVals.length) : null, slaRows: slaRows,
+          missAvg: missVals.length ? round2(missVals.reduce(function(a,b){return a+b;},0)/missVals.length) : null, missCount: missBreachRows.length, missRows: missRows, missBreachRows: missBreachRows
+        };
+      });
+      out.tier_sla[m] = row;
+    });
+
     // ---- SLA compliance (6 metrics) + FCR ----
     const sla = {};
     // Every entry carries its applicable population (rows) AND the
@@ -6897,7 +6937,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       cdaKpiCard('fa-star', csatMean===null?'NA':fmtN(csatMean,2), 'CSAT', fmtN(csatCount) + ' surveys', 'cdaKpiCsat');
     const GD = window.GovDrillCol;
     document.getElementById('cdaKpiLogged').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Logged Tickets', lg.rows, [], 'Logged'); });
-    document.getElementById('cdaKpiResolved').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Resolved Tickets', rs.rows, [GD.tat, GD.slaBusiness], 'Resolved'); });
+    document.getElementById('cdaKpiResolved').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Resolved Tickets', rs.rows, [GD.tat, GD.slaBusiness, GD.periodicSla, GD.l1SlaBusiness, GD.l2SlaBusiness, GD.smeSlaBusiness], 'Resolved'); });
     document.getElementById('cdaKpiOpen').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Open (Current)', g.open_current.rows, [], 'Open_Current'); });
     document.getElementById('cdaKpiCsat').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Rated Tickets (CSAT)', csatRows, [GD.rating], 'CSAT'); });
   }
@@ -6947,8 +6987,65 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       if(!elements.length) return;
       const d = DATASETS[elements[0].datasetIndex];
       const m = g.months[elements[0].index];
-      cdaOpenDrill('Call Dump Analytics — ' + d.label + ' (' + labelsFor([m])[0] + ')', g[d.key][m][d.svc].rows, [GD.tat, GD.slaBusiness], d.label.replace(/\s+/g,'_')+'_'+m);
+      cdaOpenDrill('Call Dump Analytics — ' + d.label + ' (' + labelsFor([m])[0] + ')', g[d.key][m][d.svc].rows, [GD.tat, GD.slaBusiness, GD.l1SlaBusiness, GD.l2SlaBusiness, GD.smeSlaBusiness], d.label.replace(/\s+/g,'_')+'_'+m);
     }})});
+  }
+  // ---- SLA by Support Tier — l1/l2/sme_tat_sla + l1/l2/sme_subsequent_
+  // response_miss_count. Two lines per tier: Actual SLA (avg days, solid)
+  // and Periodic SLA misses (avg miss count, dashed, right-hand axis). ----
+  function cdaTierSlaChart(g){
+    const c = chartColors();
+    const TIERS = [
+      {tier:'L1', color:c.palette[0]}, {tier:'L2', color:c.palette[1]}, {tier:'SME', color:c.palette[2]}
+    ];
+    const datasets = [];
+    TIERS.forEach(function(t){
+      datasets.push({label:t.tier+' Actual SLA (avg days)', data:g.months.map(function(m){return g.tier_sla[m][t.tier].slaAvg;}), borderColor:t.color, yAxisID:'ySla', tension:0.3, spanGaps:true});
+      datasets.push({label:t.tier+' Periodic SLA (avg misses)', data:g.months.map(function(m){return g.tier_sla[m][t.tier].missAvg;}), borderColor:t.color, borderDash:[4,3], yAxisID:'yMiss', tension:0.3, spanGaps:true});
+    });
+    makeChart('cda_tier_sla', {type:'line', data:{labels:labelsFor(g.months), datasets: datasets}, options: Object.assign(baseLineOpts(c, {
+      scales:{
+        x:{ticks:{color:c.textMuted}, grid:{color:c.gridLine}},
+        ySla:{position:'left', beginAtZero:true, ticks:{color:c.textMuted}, grid:{color:c.gridLine}, title:{display:true,text:'Actual SLA (days)',color:c.textMuted}},
+        yMiss:{position:'right', beginAtZero:true, ticks:{color:c.textMuted}, grid:{drawOnChartArea:false}, title:{display:true,text:'Periodic SLA (avg misses)',color:c.textMuted}}
+      }
+    }), { onHover: cdaHoverCursor, onClick: function(evt, elements){
+      if(!elements.length) return;
+      const t = TIERS[Math.floor(elements[0].datasetIndex/2)];
+      const isSla = elements[0].datasetIndex % 2 === 0;
+      const m = g.months[elements[0].index];
+      const entry = g.tier_sla[m][t.tier];
+      if(isSla) cdaOpenDrill('Call Dump Analytics — ' + t.tier + ' Actual SLA (' + labelsFor([m])[0] + ')', entry.slaRows, cdaTierCols(t.tier), t.tier+'_SLA_'+m);
+      else cdaOpenDrill('Call Dump Analytics — ' + t.tier + ' Periodic SLA Misses (' + labelsFor([m])[0] + ')', entry.missBreachRows, cdaTierCols(t.tier), t.tier+'_Periodic_'+m);
+    }})});
+  }
+  function cdaTierCols(tier){
+    const GD = window.GovDrillCol;
+    if(tier==='L1') return [GD.l1SlaBusiness, GD.l1PeriodicSla];
+    if(tier==='L2') return [GD.l2SlaBusiness, GD.l2PeriodicSla];
+    return [GD.smeSlaBusiness, GD.smePeriodicSla];
+  }
+  function cdaTierSlaTable(g){
+    let rows = '<tr><th>Support Tier</th>' + labelsFor(g.months).map(function(m){ return '<th>'+esc(m)+' — Actual SLA (avg days)</th><th>'+esc(m)+' — Periodic SLA (avg misses)</th>'; }).join('') + '</tr>';
+    ['L1','L2','SME'].forEach(function(tier){
+      rows += '<tr><td>' + tier + '</td>';
+      g.months.forEach(function(m){
+        const e = g.tier_sla[m][tier];
+        rows += '<td class="mono" style="cursor:pointer;" data-tier="' + tier + '" data-tier-month="' + esc(m) + '" data-tier-kind="sla">' + (e.slaAvg===null?'—':fmtN(e.slaAvg,2)) + '</td>' +
+                '<td class="mono" style="cursor:pointer;" data-tier="' + tier + '" data-tier-month="' + esc(m) + '" data-tier-kind="miss">' + (e.missAvg===null?'—':fmtN(e.missAvg,2)) + ' <span style="opacity:.6;">(' + fmtN(e.missCount) + ' w/ miss)</span></td>';
+      });
+      rows += '</tr>';
+    });
+    const tbl = document.getElementById('cda_tier_sla_table');
+    tbl.innerHTML = rows;
+    tbl.onclick = function(evt){
+      const td = evt.target.closest('td[data-tier]');
+      if(!td) return;
+      const tier = td.getAttribute('data-tier'), m = td.getAttribute('data-tier-month'), kind = td.getAttribute('data-tier-kind');
+      const entry = g.tier_sla[m][tier];
+      if(kind==='sla') cdaOpenDrill('Call Dump Analytics — ' + tier + ' Actual SLA (' + labelsFor([m])[0] + ')', entry.slaRows, cdaTierCols(tier), tier+'_SLA_'+m);
+      else cdaOpenDrill('Call Dump Analytics — ' + tier + ' Periodic SLA Misses (' + labelsFor([m])[0] + ')', entry.missBreachRows, cdaTierCols(tier), tier+'_Periodic_'+m);
+    };
   }
   function cdaFcrChart(g){
     const c = chartColors();
@@ -7154,6 +7251,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     cdaSlaTable(g);
     cdaFcrChart(g);
     cdaTatChart(g);
+    cdaTierSlaChart(g);
+    cdaTierSlaTable(g);
     cdaEffortChart(g);
     cdaSeverityTable(g);
     cdaKbTable(g);
@@ -7190,6 +7289,15 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const fcrTatSheet = { name:'FCR & TAT', headers:['Month','FCR IM %','FCR SR %','24/7 SLA IM (Days)','24/7 SLA SR (Days)','Actual SLA IM (Days)','Actual SLA SR (Days)'],
       rows: g.months.map(function(m,i){ return [monthLabels[i], g.sla.fcr_2bd[m].IM.pct, g.sla.fcr_2bd[m].SR.pct, g.tat_24x7[m].IM.avg, g.tat_24x7[m].SR.avg, g.tat_sla[m].IM.avg, g.tat_sla[m].SR.avg]; }) };
 
+    const tierSlaSheet = { name:'SLA by Support Tier', headers:['Month','L1 Actual SLA (avg days)','L1 Periodic SLA (avg misses)','L1 Tickets w/ Miss','L2 Actual SLA (avg days)','L2 Periodic SLA (avg misses)','L2 Tickets w/ Miss','SME Actual SLA (avg days)','SME Periodic SLA (avg misses)','SME Tickets w/ Miss'],
+      rows: g.months.map(function(m,i){
+        const t = g.tier_sla[m];
+        return [monthLabels[i],
+          t.L1.slaAvg, t.L1.missAvg, t.L1.missCount,
+          t.L2.slaAvg, t.L2.missAvg, t.L2.missCount,
+          t.SME.slaAvg, t.SME.missAvg, t.SME.missCount];
+      }) };
+
     const effortSheet = { name:'Effort Hours', headers:['Month','IM Avg Effort (h)','SR Avg Effort (h)'],
       rows: g.months.map(function(m,i){ return [monthLabels[i], g.effort_hours[m].IM.avg, g.effort_hours[m].SR.avg]; }) };
 
@@ -7214,7 +7322,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const srSheet = { name:'SR Hour Utilization', headers:['Customer','Consumed (h)','Pool (h)','% Used'],
       rows: srArr.length ? srArr.map(function(r){ return [r.name, r.consumed, r.pool, r.pct_consumed]; }) : [['No Service Request hours in scope', '', '', '']] };
 
-    window.GovExportWorkbook([kpiSheet, volCsatSheet, slaSheet, fcrTatSheet, effortSheet, sevSheet, kbSheet, escMonthSheet, escTypeSheet, srSheet], 'Call_Dump_Analytics_Overview');
+    window.GovExportWorkbook([kpiSheet, volCsatSheet, slaSheet, fcrTatSheet, tierSlaSheet, effortSheet, sevSheet, kbSheet, escMonthSheet, escTypeSheet, srSheet], 'Call_Dump_Analytics_Overview');
   }
   const cdaExportBtn = document.getElementById('cdaExportExcelBtn');
   if(cdaExportBtn) cdaExportBtn.addEventListener('click', exportCdaToExcel);
@@ -7493,6 +7601,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     { k:'creation_time', l:'Created' }, { k:'closed_time', l:'Closed' },
     { k:'resolve_time', l:'Resolved' }, { k:'tat_days', l:'24/7 SLA' },
     { k:'tat_sla', l:'Actual SLA(Business hours)' }, { k:'subsequent_response_miss_count', l:'Periodic SLA' },
+    { k:'l1_tat_sla', l:'L1 Actual SLA(Business hours)' }, { k:'l2_tat_sla', l:'L2 Actual SLA(Business hours)' }, { k:'sme_tat_sla', l:'SME Actual SLA(Business hours)' },
+    { k:'l1_subsequent_response_miss_count', l:'L1 Periodic SLA' }, { k:'l2_subsequent_response_miss_count', l:'L2 Periodic SLA' }, { k:'sme_subsequent_response_miss_count', l:'SME Periodic SLA' },
     { k:'first_response_days', l:'First Response (Days)' }, { k:'service_rating', l:'Rating' },
     { k:'escalation_type', l:'Escalation Type' }, { k:'reason_for_escalation', l:'Escalation Reason' },
     { k:'class_sla_breached', l:'Classification SLA Breached', bool:true },
@@ -11468,6 +11578,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     tat:     { label:'24/7 SLA', get:function(r){ const n = toNum(r.tat_days); return n===null ? '' : n; } },
     slaBusiness: { label:'Actual SLA(Business hours)', get:function(r){ const n = toNum(r.tat_sla); return n===null ? '' : n; } },
     periodicSla: { label:'Periodic SLA', get:function(r){ const n = toNum(r.subsequent_response_miss_count); return n===null ? '' : n; } },
+    l1SlaBusiness: { label:'L1 Actual SLA(Business hours)', get:function(r){ const n = toNum(r.l1_tat_sla); return n===null ? '' : n; } },
+    l2SlaBusiness: { label:'L2 Actual SLA(Business hours)', get:function(r){ const n = toNum(r.l2_tat_sla); return n===null ? '' : n; } },
+    smeSlaBusiness: { label:'SME Actual SLA(Business hours)', get:function(r){ const n = toNum(r.sme_tat_sla); return n===null ? '' : n; } },
+    l1PeriodicSla: { label:'L1 Periodic SLA', get:function(r){ const n = toNum(r.l1_subsequent_response_miss_count); return n===null ? '' : n; } },
+    l2PeriodicSla: { label:'L2 Periodic SLA', get:function(r){ const n = toNum(r.l2_subsequent_response_miss_count); return n===null ? '' : n; } },
+    smePeriodicSla: { label:'SME Periodic SLA', get:function(r){ const n = toNum(r.sme_subsequent_response_miss_count); return n===null ? '' : n; } },
     firstRespDays: { label:'First Response (Days)', get:function(r){ const n = toNum(r.first_response_days); return n===null ? '' : n; } },
     classSla:{ label:'Classification SLA Breached', get:function(r){ return r._class_sla_breached ? 'Yes' : 'No'; } },
     resSla:  { label:'Resolution SLA Breached', get:function(r){ return r._resolution_sla_breached ? 'Yes' : 'No'; } },
