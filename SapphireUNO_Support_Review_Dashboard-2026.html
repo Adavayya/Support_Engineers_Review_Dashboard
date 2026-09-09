@@ -964,6 +964,7 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
   box-shadow:var(--shadow-card); display:flex; flex-direction:column;
 }
 .chart-card.span-4{ grid-column:span 4; }
+.chart-card.span-3{ grid-column:span 3; }
 .chart-card.span-8{ grid-column:span 8; }
 .chart-card.span-12{ grid-column:span 12; }
 .chart-card .cc-head{
@@ -978,7 +979,7 @@ html[data-theme="dark"] .sidebar-brand .logo-mark img.mark-expanded{ mix-blend-m
 .chart-card .cc-empty i{ font-size:20px; color:var(--border-strong); }
 
 @media (max-width: 1100px){
-  .chart-card, .chart-card.span-4, .chart-card.span-8{ grid-column:span 12; }
+  .chart-card, .chart-card.span-4, .chart-card.span-3, .chart-card.span-8{ grid-column:span 12; }
 }
 
 /* ================================================================
@@ -2097,6 +2098,10 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
               <div class="cc-body"><canvas id="chartCustTrendResSla"></canvas></div>
             </div>
             <div class="chart-card">
+              <div class="cc-head"><h6><i class="fa-solid fa-reply-all"></i> Subsequent Response SLA Compliance</h6></div>
+              <div class="cc-body"><canvas id="chartCustTrendSubSla"></canvas></div>
+            </div>
+            <div class="chart-card">
               <div class="cc-head"><h6><i class="fa-solid fa-headset"></i> SR Logged vs Closed</h6></div>
               <div class="cc-body"><canvas id="chartCustTrendSrLoggedClosed"></canvas></div>
             </div>
@@ -2130,7 +2135,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
                   <th>Total Open</th><th>Open INC</th><th>Open SR</th>
                   <th>Escalated</th><th>Total Reopened</th><th>Reopened %</th>
                   <th>Pending</th><th>Pending %</th>
-                  <th>First Response SLA %</th><th>Resolution SLA %</th>
+                  <th>First Response SLA %</th><th>Subsequent Response SLA %</th><th>Resolution SLA %</th>
                   <th>Avg Resolution (d)</th><th>Avg Response (d)</th>
                   <th>Total FCR</th><th>FCR %</th>
                   <th>Total KB Refer</th><th>KB Reference %</th>
@@ -2233,6 +2238,10 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
               <div class="cc-body"><canvas id="chartEngTrendResSla"></canvas></div>
             </div>
             <div class="chart-card">
+              <div class="cc-head"><h6><i class="fa-solid fa-reply-all"></i> Subsequent Response SLA Compliance</h6></div>
+              <div class="cc-body"><canvas id="chartEngTrendSubSla"></canvas></div>
+            </div>
+            <div class="chart-card">
               <div class="cc-head"><h6><i class="fa-solid fa-headset"></i> SR Logged vs Closed</h6></div>
               <div class="cc-body"><canvas id="chartEngTrendSrLoggedClosed"></canvas></div>
             </div>
@@ -2265,7 +2274,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
                   <th>Total Closed</th><th>Closed INC</th><th>Closed SR</th>
                   <th>Total Open</th><th>Open INC</th><th>Open SR</th>
                   <th>Escalated</th><th>Total Reopened</th><th>Reopened %</th>
-                  <th>First Response SLA %</th><th>Resolution SLA %</th>
+                  <th>First Response SLA %</th><th>Subsequent Response SLA %</th><th>Resolution SLA %</th>
                   <th>Avg Resolution (d)</th><th>Avg Response (d)</th>
                   <th>Total FCR</th><th>FCR %</th>
                   <th>Total KB Refer</th><th>KB Reference %</th>
@@ -2399,17 +2408,21 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
           <div class="kpi-group-label"><i class="fa-solid fa-gauge-high"></i> SLA Compliance Gauges</div>
           <div class="chart-grid">
-            <div class="chart-card span-4">
+            <div class="chart-card span-3">
               <div class="cc-head"><h6><i class="fa-solid fa-tags"></i> Classification SLA</h6></div>
               <div class="cc-body"><canvas id="gaugeClass"></canvas></div>
             </div>
-            <div class="chart-card span-4">
+            <div class="chart-card span-3">
               <div class="cc-head"><h6><i class="fa-solid fa-bolt"></i> First Response SLA</h6></div>
               <div class="cc-body"><canvas id="gaugeFirstResp"></canvas></div>
             </div>
-            <div class="chart-card span-4">
+            <div class="chart-card span-3">
               <div class="cc-head"><h6><i class="fa-solid fa-check-double"></i> Resolution SLA</h6></div>
               <div class="cc-body"><canvas id="gaugeResolution"></canvas></div>
+            </div>
+            <div class="chart-card span-3">
+              <div class="cc-head"><h6><i class="fa-solid fa-reply-all"></i> Subsequent Response SLA</h6></div>
+              <div class="cc-body"><canvas id="gaugeSubResponse"></canvas></div>
             </div>
           </div>
 
@@ -2442,7 +2455,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
           <div class="dt-wrap">
             <table class="table" id="slaBreachTable" style="width:100%;">
               <thead>
-                <tr><th>Ticket ID</th><th>Customer</th><th>Engineer</th><th>Severity</th><th>Priority</th><th>Class SLA</th><th>First Resp. SLA</th><th>Resolution SLA</th><th>Created</th></tr>
+                <tr><th>Ticket ID</th><th>Customer</th><th>Engineer</th><th>Severity</th><th>Priority</th><th>Class SLA</th><th>First Resp. SLA</th><th>Resolution SLA</th><th>Subsequent Resp. SLA</th><th>Created</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -4860,6 +4873,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     row._class_sla_breached = boolish(row.class_sla_breached);
     row._resolution_sla_breached = boolish(row.resolution_sla_breached);
     row._first_response_sla_breached = boolish(row.first_response_sla_breached);
+    // subsequent_response_miss_count is a per-ticket miss COUNT (0,1,2…),
+    // not a boolean flag column like the three above — breached means
+    // at least one missed periodic/follow-up response was recorded.
+    (function(){
+      const missVal = row.subsequent_response_miss_count;
+      const missNum = (missVal === null || missVal === undefined || missVal === '') ? null : Number(missVal);
+      row._subsequent_response_breached = (missNum !== null && !isNaN(missNum) && missNum > 0);
+    })();
 
     return row;
   }
@@ -6143,7 +6164,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function computePeriodMetrics(periodRows){
     const total = periodRows.length;
 
-    const breached = periodRows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; }).length;
+    const breached = periodRows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; }).length;
     const slaPct = total ? 100 - (breached/total*100) : null;
 
     const closedInPeriod = periodRows.filter(function(r){ return r._is_closed; });
@@ -6333,7 +6354,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const total = grp.length;
       const closedRows = grp.filter(function(r){ return r._is_closed; });
       const closed = closedRows.length;
-      const breached = grp.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; }).length;
+      const breached = grp.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; }).length;
       const slaPct = total ? 100 - (breached/total*100) : null;
       const resDaysVals = closedRows.map(function(r){ return toNum(r.tat_days); }).filter(function(v){ return v !== null; });
       const avgResDays = resDaysVals.length ? avg(resDaysVals) : null;
@@ -7500,10 +7521,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const classBreached = count(function(r){ return r._class_sla_breached; });
       const resBreached = count(function(r){ return r._resolution_sla_breached; });
       const frBreached = count(function(r){ return r._first_response_sla_breached; });
+      const subBreached = count(function(r){ return r._subsequent_response_breached; });
       const classSlaPct = 100 - (total ? classBreached/total*100 : 0);
       const resSlaPct = 100 - (total ? resBreached/total*100 : 0);
       const frSlaPct = 100 - (total ? frBreached/total*100 : 0);
-      const slaPct = (classSlaPct + resSlaPct + frSlaPct) / 3;
+      const subSlaPct = 100 - (total ? subBreached/total*100 : 0);
+      const slaPct = (classSlaPct + resSlaPct + frSlaPct + subSlaPct) / 4;
 
       // First Contact Resolution and Knowledge Base referral, both scored
       // as a share of Total Closed (a ticket must be closed to have a
@@ -7527,7 +7550,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         escalationRate: total ? escalated/total : 0,
         reopenRate: total ? reopened/total : 0,
         pendingRate: total ? pending/total : 0,
-        avgResolutionDays, avgResponseDays, slaPct, classSlaPct, resSlaPct, frSlaPct,
+        avgResolutionDays, avgResponseDays, slaPct, classSlaPct, resSlaPct, frSlaPct, subSlaPct,
         totalFcr, fcrPct, totalKbRefer, kbReferPct,
         avgRating, consumedHrs, remainingHrs,
         rows: crows
@@ -7646,6 +7669,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     { label:'Actual SLA(Business hours)', get:function(r){ return toNum(r.tat_sla); }, numFmt:'0.0' },
     { label:'Periodic SLA', get:function(r){ return toNum(r.subsequent_response_miss_count); }, numFmt:'0' },
     { label:'First Response SLA', get:function(r){ return r._first_response_sla_breached ? 'Breached' : 'Met'; } },
+    { label:'Subsequent Response SLA', get:function(r){ return r._subsequent_response_breached ? 'Breached' : 'Met'; } },
     { label:'Resolution SLA', get:function(r){ return r._resolution_sla_breached ? 'Breached' : 'Met'; } },
     { label:'Escalated', get:function(r){ return r._is_escalated ? 'Yes' : 'No'; } },
     { label:'Reopened', get:function(r){ return r._is_reopened ? 'Yes' : 'No'; } },
@@ -7658,6 +7682,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function custTicketRag(label, val){
     switch(label){
       case 'First Response SLA':
+      case 'Subsequent Response SLA':
       case 'Resolution SLA':   return val === 'Breached' ? 'RED' : (val === 'Met' ? 'GREEN' : null);
       case 'Escalated':
       case 'Reopened':         return val === 'Yes' ? 'RED' : (val === 'No' ? 'GREEN' : null);
@@ -7891,7 +7916,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const slaSeries = months.map(function(m){
       const mrows = c.rows.filter(function(r){ return r._month_key===m; });
       if(!mrows.length) return null;
-      const breached = mrows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; }).length;
+      const breached = mrows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; }).length;
       return 100 - (breached/mrows.length*100);
     });
     const actualResSeries = months.map(function(m){
@@ -7984,7 +8009,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       'Customer','Health','Total Assigned','Assigned INC','Assigned SR',
       'Total Closed','Closed INC','Closed SR','Total Open','Open INC','Open SR',
       'Escalated','Total Reopened','Reopened %','Pending','Pending %',
-      'First Response SLA %','Resolution SLA %','Avg Resolution (d)','Avg Response (d)',
+      'First Response SLA %','Subsequent Response SLA %','Resolution SLA %','Avg Resolution (d)','Avg Response (d)',
       'Total FCR','FCR %','Total KB Refer','KB Reference %',
       'Consumed Hrs','Remaining Hrs','Rating'
     ];
@@ -7992,7 +8017,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       null, null, '#,##0','#,##0','#,##0',
       '#,##0','#,##0','#,##0','#,##0','#,##0','#,##0',
       '#,##0','#,##0','0.0%','#,##0','0.0%',
-      '0.0%','0.0%','0.0','0.0',
+      '0.0%','0.0%','0.0%','0.0','0.0',
       '#,##0','0.0%','#,##0','0.0%',
       '#,##0','#,##0','0.0'
     ];
@@ -8006,7 +8031,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         c.open, c.openInc, c.openSr,
         c.escalated, c.reopened, c.reopenRate,
         c.pending, c.pendingRate,
-        c.frSlaPct/100, c.resSlaPct/100,
+        c.frSlaPct/100, c.subSlaPct/100, c.resSlaPct/100,
         c.avgResolutionDays===null?null:+c.avgResolutionDays.toFixed(1),
         c.avgResponseDays===null?null:+c.avgResponseDays.toFixed(1),
         c.totalFcr, c.fcrPct/100, c.totalKbRefer, c.kbReferPct/100,
@@ -8018,6 +8043,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         null, null, (c.reopenRate*100<=5?'GREEN':c.reopenRate*100<=10?'AMBER':'RED'),
         null, (c.pendingRate*100<=10?'GREEN':c.pendingRate*100<=20?'AMBER':'RED'),
         c.frSlaPct>=90?'GREEN':c.frSlaPct>=75?'AMBER':'RED',
+        c.subSlaPct>=90?'GREEN':c.subSlaPct>=75?'AMBER':'RED',
         c.resSlaPct>=90?'GREEN':c.resSlaPct>=75?'AMBER':'RED',
         null, null,
         null, c.fcrPct>=50?'GREEN':c.fcrPct>=35?'AMBER':'RED', null, null,
@@ -8209,9 +8235,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const classBreached = periodRows.filter(function(r){ return r._class_sla_breached; }).length;
     const classSlaPct = total ? 100 - (classBreached/total*100) : null;
 
-    // "Overall Performance" — same 3-way SLA composite used for the
+    const subBreached = periodRows.filter(function(r){ return r._subsequent_response_breached; }).length;
+    const subSlaPct = total ? 100 - (subBreached/total*100) : null;
+
+    // "Overall Performance" — same 4-way SLA composite used for the
     // per-customer/per-engineer Score elsewhere in this app.
-    const slaPct = (frSlaPct!==null && resSlaPct!==null && classSlaPct!==null) ? (frSlaPct+resSlaPct+classSlaPct)/3 : null;
+    const slaPct = (frSlaPct!==null && resSlaPct!==null && classSlaPct!==null && subSlaPct!==null) ? (frSlaPct+resSlaPct+classSlaPct+subSlaPct)/4 : null;
 
     const fcrPct = closedInPeriod.length ? (closedInPeriod.filter(isFcr).length / closedInPeriod.length * 100) : null;
 
@@ -8221,7 +8250,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const targetVals = closedInPeriod.map(policyTargetDaysFor).filter(function(v){ return v!==null; });
     const avgTargetDays = targetVals.length ? avg(targetVals) : null; // "SLA Target"
 
-    return { total:total, closedCount:closedInPeriod.length, frSlaPct:frSlaPct, resSlaPct:resSlaPct, slaPct:slaPct, fcrPct:fcrPct, avgResDays:avgResDays, avgTargetDays:avgTargetDays };
+    return { total:total, closedCount:closedInPeriod.length, frSlaPct:frSlaPct, resSlaPct:resSlaPct, subSlaPct:subSlaPct, slaPct:slaPct, fcrPct:fcrPct, avgResDays:avgResDays, avgTargetDays:avgTargetDays };
   }
   function custPeriodTableRows(rows, mode){
     const groups = custGroupByPeriod(rows, mode, '_creation_date');
@@ -8303,6 +8332,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     renderCustTrendLine('chartCustTrendFrSla', entries, [{ field:'frSlaPct', label:'1st Response SLA %', color:c.good }]);
     // 3) Resolution SLA Compliance
     renderCustTrendLine('chartCustTrendResSla', entries, [{ field:'resSlaPct', label:'Resolution SLA %', color:c.good }]);
+    // 3b) Subsequent Response SLA Compliance
+    renderCustTrendLine('chartCustTrendSubSla', entries, [{ field:'subSlaPct', label:'Subsequent Response SLA %', color:c.good }]);
     // 4) SR Logged vs Closed
     renderCustLoggedVsClosed('chartCustTrendSrLoggedClosed', rows.filter(function(r){ return classifyTicketType(r) === 'sr'; }), mode);
     // 5) INC Logged vs Closed
@@ -8312,7 +8343,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { field:'avgResDays', label:'24/7 TAT — Actual (Days)', color:c.accent },
       { field:'avgTargetDays', label:'SLA Target (Days)', color:c.textMuted }
     ]);
-    // 7) Overall Performance Trend (3-way SLA composite)
+    // 7) Overall Performance Trend (4-way SLA composite)
     renderCustTrendLine('chartCustTrendPerf', entries, [{ field:'slaPct', label:'Overall Performance %', color:c.accentDim }]);
     // 8) FCR Trend
     renderCustTrendLine('chartCustTrendFcr', entries, [{ field:'fcrPct', label:'FCR %', color:c.accent }]);
@@ -8370,6 +8401,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         '<td>' + fmtN(c.pending) + '</td>' +
         '<td data-order="' + (c.pendingRate*100) + '">' + pctPill(c.pendingRate*100, 10, 20, true) + '</td>' +
         '<td data-order="' + c.frSlaPct + '">' + pctPill(c.frSlaPct, 90, 75, false) + '</td>' +
+        '<td data-order="' + c.subSlaPct + '">' + pctPill(c.subSlaPct, 90, 75, false) + '</td>' +
         '<td data-order="' + c.resSlaPct + '">' + pctPill(c.resSlaPct, 90, 75, false) + '</td>' +
         '<td>' + (c.avgResolutionDays===null?'—':c.avgResolutionDays.toFixed(1)) + '</td>' +
         '<td>' + (c.avgResponseDays===null?'—':c.avgResponseDays.toFixed(1)) + '</td>' +
@@ -8766,11 +8798,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       const classBreached = count(function(r){ return r._class_sla_breached; });
       const resBreached = count(function(r){ return r._resolution_sla_breached; });
       const frBreached = count(function(r){ return r._first_response_sla_breached; });
+      const subBreached = count(function(r){ return r._subsequent_response_breached; });
       const classSlaPct = 100 - (total ? classBreached/total*100 : 0);
       const resSlaPct = 100 - (total ? resBreached/total*100 : 0);
       const frSlaPct = 100 - (total ? frBreached/total*100 : 0);
-      const slaPct = (classSlaPct + resSlaPct + frSlaPct) / 3;
-      const slaBreachCount = count(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; });
+      const subSlaPct = 100 - (total ? subBreached/total*100 : 0);
+      const slaPct = (classSlaPct + resSlaPct + frSlaPct + subSlaPct) / 4;
+      const slaBreachCount = count(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; });
 
       // First Contact Resolution and Knowledge Base referral, both scored
       // as a share of Total Closed — matches the reference workbook's
@@ -8808,7 +8842,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         serviceCompliancePct,
         escalationRate: total ? escalated/total : 0,
         reopenRate: total ? reopened/total : 0,
-        avgResolutionDays, avgResponseDays, slaPct, classSlaPct, resSlaPct, frSlaPct, slaBreachCount,
+        avgResolutionDays, avgResponseDays, slaPct, classSlaPct, resSlaPct, frSlaPct, subSlaPct, slaBreachCount,
         totalFcr, fcrPct, totalKbRefer, kbReferPct,
         delegatedOver2, delegatedUpto2, delegatedOver2Pct, delegatedUpto2Pct, delegationAvgDays,
         avgRating,
@@ -8899,6 +8933,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     { label:'Actual SLA(Business hours)', get:function(r){ return toNum(r.tat_sla); }, numFmt:'0.0' },
     { label:'Periodic SLA', get:function(r){ return toNum(r.subsequent_response_miss_count); }, numFmt:'0' },
     { label:'First Response SLA', get:function(r){ return r._first_response_sla_breached ? 'Breached' : 'Met'; } },
+    { label:'Subsequent Response SLA', get:function(r){ return r._subsequent_response_breached ? 'Breached' : 'Met'; } },
     { label:'Resolution SLA', get:function(r){ return r._resolution_sla_breached ? 'Breached' : 'Met'; } },
     { label:'Escalated', get:function(r){ return r._is_escalated ? 'Yes' : 'No'; } },
     { label:'Reopened', get:function(r){ return r._is_reopened ? 'Yes' : 'No'; } },
@@ -8911,6 +8946,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   function engTicketRag(label, val){
     switch(label){
       case 'First Response SLA':
+      case 'Subsequent Response SLA':
       case 'Resolution SLA':   return val === 'Breached' ? 'RED' : (val === 'Met' ? 'GREEN' : null);
       case 'Escalated':
       case 'Reopened':         return val === 'Yes' ? 'RED' : (val === 'No' ? 'GREEN' : null);
@@ -9204,7 +9240,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const headers = [
       'Engineer','Score','Total Assigned','Assigned INC','Assigned SR',
       'Total Closed','Closed INC','Closed SR','Total Open','Open INC','Open SR',
-      'Escalated','Total Reopened','Reopened %','First Response SLA %','Resolution SLA %',
+      'Escalated','Total Reopened','Reopened %','First Response SLA %','Subsequent Response SLA %','Resolution SLA %',
       'Avg Resolution (d)','Avg Response (d)','Total FCR','FCR %','Total KB Refer','KB Reference %',
       'Total Delegated > 2 Days','Delegated % (> 2 Days)','Total Delegated <= 2 Days','Delegated % (<= 2 Days)',
       'Delegation Avg time (d)',
@@ -9219,7 +9255,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const numFmts = [
       null, null, '#,##0','#,##0','#,##0',
       '#,##0','#,##0','#,##0','#,##0','#,##0','#,##0',
-      '#,##0','#,##0','0.0%','0.0%','0.0%',
+      '#,##0','#,##0','0.0%','0.0%','0.0%','0.0%',
       '0.0','0.0','#,##0','0.0%','#,##0','0.0%',
       '#,##0','0.0%','#,##0','0.0%',
       '0.0',
@@ -9240,7 +9276,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         e.closed, e.closedInc, e.closedSr,
         e.open, e.openInc, e.openSr,
         e.escalated, e.reopened, e.reopenRate,
-        e.frSlaPct/100, e.resSlaPct/100,
+        e.frSlaPct/100, e.subSlaPct/100, e.resSlaPct/100,
         e.avgResolutionDays===null?null:+e.avgResolutionDays.toFixed(1),
         e.avgResponseDays===null?null:+e.avgResponseDays.toFixed(1),
         e.totalFcr, e.fcrPct/100, e.totalKbRefer, e.kbReferPct/100,
@@ -9259,6 +9295,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         null, null, null, null, null, null, null, null, null,
         null, null, (e.reopenRate*100<=5?'GREEN':e.reopenRate*100<=10?'AMBER':'RED'),
         e.frSlaPct>=90?'GREEN':e.frSlaPct>=75?'AMBER':'RED',
+        e.subSlaPct>=90?'GREEN':e.subSlaPct>=75?'AMBER':'RED',
         e.resSlaPct>=90?'GREEN':e.resSlaPct>=75?'AMBER':'RED',
         null, null,
         null, e.fcrPct>=50?'GREEN':e.fcrPct>=35?'AMBER':'RED', null, null,
@@ -9457,9 +9494,12 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const classBreached = periodRows.filter(function(r){ return r._class_sla_breached; }).length;
     const classSlaPct = total ? 100 - (classBreached/total*100) : null;
 
-    // "Overall Performance" — same 3-way SLA composite used for the
+    const subBreached = periodRows.filter(function(r){ return r._subsequent_response_breached; }).length;
+    const subSlaPct = total ? 100 - (subBreached/total*100) : null;
+
+    // "Overall Performance" — same 4-way SLA composite used for the
     // per-engineer/per-customer Score elsewhere in this app.
-    const slaPct = (frSlaPct!==null && resSlaPct!==null && classSlaPct!==null) ? (frSlaPct+resSlaPct+classSlaPct)/3 : null;
+    const slaPct = (frSlaPct!==null && resSlaPct!==null && classSlaPct!==null && subSlaPct!==null) ? (frSlaPct+resSlaPct+classSlaPct+subSlaPct)/4 : null;
 
     const fcrPct = closedInPeriod.length ? (closedInPeriod.filter(isFcr).length / closedInPeriod.length * 100) : null;
 
@@ -9469,7 +9509,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const targetVals = closedInPeriod.map(policyTargetDaysFor).filter(function(v){ return v!==null; });
     const avgTargetDays = targetVals.length ? avg(targetVals) : null; // "SLA Target"
 
-    return { total:total, closedCount:closedInPeriod.length, frSlaPct:frSlaPct, resSlaPct:resSlaPct, slaPct:slaPct, fcrPct:fcrPct, avgResDays:avgResDays, avgTargetDays:avgTargetDays };
+    return { total:total, closedCount:closedInPeriod.length, frSlaPct:frSlaPct, resSlaPct:resSlaPct, subSlaPct:subSlaPct, slaPct:slaPct, fcrPct:fcrPct, avgResDays:avgResDays, avgTargetDays:avgTargetDays };
   }
   function engPeriodTableRows(rows, mode){
     const groups = engGroupByPeriod(rows, mode, '_creation_date');
@@ -9551,6 +9591,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     renderEngTrendLine('chartEngTrendFrSla', entries, [{ field:'frSlaPct', label:'1st Response SLA %', color:c.good }]);
     // 3) Resolution SLA Compliance
     renderEngTrendLine('chartEngTrendResSla', entries, [{ field:'resSlaPct', label:'Resolution SLA %', color:c.good }]);
+    // 3b) Subsequent Response SLA Compliance
+    renderEngTrendLine('chartEngTrendSubSla', entries, [{ field:'subSlaPct', label:'Subsequent Response SLA %', color:c.good }]);
     // 4) SR Logged vs Closed
     renderEngLoggedVsClosed('chartEngTrendSrLoggedClosed', rows.filter(function(r){ return classifyTicketType(r) === 'sr'; }), mode);
     // 5) INC Logged vs Closed
@@ -9560,7 +9602,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       { field:'avgResDays', label:'24/7 TAT — Actual (Days)', color:c.accent },
       { field:'avgTargetDays', label:'SLA Target (Days)', color:c.textMuted }
     ]);
-    // 7) Overall Performance Trend (3-way SLA composite)
+    // 7) Overall Performance Trend (4-way SLA composite)
     renderEngTrendLine('chartEngTrendPerf', entries, [{ field:'slaPct', label:'Overall Performance %', color:c.accentDim }]);
     // 8) FCR Trend
     renderEngTrendLine('chartEngTrendFcr', entries, [{ field:'fcrPct', label:'FCR %', color:c.accent }]);
@@ -9637,6 +9679,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         '<td>' + fmtN(e.escalated) + '</td><td>' + fmtN(e.reopened) + '</td>' +
         '<td data-order="' + (e.reopenRate*100) + '">' + pctPill(e.reopenRate*100, 5, 10, true) + '</td>' +
         '<td data-order="' + e.frSlaPct + '">' + pctPill(e.frSlaPct, 90, 75, false) + '</td>' +
+        '<td data-order="' + e.subSlaPct + '">' + pctPill(e.subSlaPct, 90, 75, false) + '</td>' +
         '<td data-order="' + e.resSlaPct + '">' + pctPill(e.resSlaPct, 90, 75, false) + '</td>' +
         '<td>' + (e.avgResolutionDays===null?'—':e.avgResolutionDays.toFixed(1)) + '</td>' +
         '<td>' + (e.avgResponseDays===null?'—':e.avgResponseDays.toFixed(1)) + '</td>' +
@@ -9798,7 +9841,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 /* ================================================================
    MODULE 7 — SLA DASHBOARD
    ----------------------------------------------------------------
-   Deep-dive on SLA compliance: gauges for each of the 3 SLA types,
+   Deep-dive on SLA compliance: gauges for each of the 4 SLA types
+   (Classification, First Response, Resolution, Subsequent Response),
    a breach-composition pie, a monthly compliance trend line, two
    segment breakdowns (Severity / Priority), and a Breached Tickets
    table with direct drill-down into the shared ticket detail modal.
@@ -9883,13 +9927,15 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const classBreached = count(function(r){ return r._class_sla_breached; });
     const resBreached = count(function(r){ return r._resolution_sla_breached; });
     const frBreached = count(function(r){ return r._first_response_sla_breached; });
-    const anyBreached = count(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; });
+    const subBreached = count(function(r){ return r._subsequent_response_breached; });
+    const anyBreached = count(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; });
     const met = total - anyBreached;
 
     const classPct = total ? 100 - classBreached/total*100 : null;
     const resPct = total ? 100 - resBreached/total*100 : null;
     const frPct = total ? 100 - frBreached/total*100 : null;
-    const overallPct = (classPct===null||resPct===null||frPct===null) ? null : (classPct+resPct+frPct)/3;
+    const subPct = total ? 100 - subBreached/total*100 : null;
+    const overallPct = (classPct===null||resPct===null||frPct===null||subPct===null) ? null : (classPct+resPct+frPct+subPct)/4;
 
     function card(icon,label,value,tone){
       return '<div class="kpi-card' + (tone?' tone-'+tone:'') + '"><div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div></div><div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div></div>';
@@ -9899,14 +9945,16 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       card('fa-tags','Classification SLA %', classPct===null?'—':fmtN(classPct,1)+'%', toneFor(classPct)) +
       card('fa-check-double','Resolution SLA %', resPct===null?'—':fmtN(resPct,1)+'%', toneFor(resPct)) +
       card('fa-bolt','First Response SLA %', frPct===null?'—':fmtN(frPct,1)+'%', toneFor(frPct)) +
+      card('fa-reply-all','Subsequent Response SLA %', subPct===null?'—':fmtN(subPct,1)+'%', toneFor(subPct)) +
       card('fa-circle-xmark','Breached Tickets', fmtN(anyBreached), 'bad') +
       card('fa-circle-check','Met Tickets', fmtN(met), 'good');
 
     drawGauge('gaugeClass', classPct, 'Classification SLA');
     drawGauge('gaugeFirstResp', frPct, 'First Response SLA');
     drawGauge('gaugeResolution', resPct, 'Resolution SLA');
+    drawGauge('gaugeSubResponse', subPct, 'Subsequent Response SLA');
 
-    return { classBreached, resBreached, frBreached, anyBreached, met };
+    return { classBreached, resBreached, frBreached, subBreached, anyBreached, met };
   }
 
   function emptyCanvas(canvas, msg){
@@ -9927,13 +9975,13 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const c = chartColors();
     destroyChart('chartBreachComposition');
     const canvas = document.getElementById('chartBreachComposition');
-    const total = breachCounts.classBreached + breachCounts.resBreached + breachCounts.frBreached;
+    const total = breachCounts.classBreached + breachCounts.resBreached + breachCounts.frBreached + breachCounts.subBreached;
     if(!total){ emptyCanvas(canvas, 'No SLA breaches in range'); return; }
     clearEmptyCanvas(canvas);
     charts.chartBreachComposition = new Chart(canvas, {
       type:'doughnut',
-      data:{ labels:['Classification','First Response','Resolution'],
-        datasets:[{ data:[breachCounts.classBreached, breachCounts.frBreached, breachCounts.resBreached], backgroundColor:[c.accent, c.warn, c.bad], borderColor:c.surface, borderWidth:2 }] },
+      data:{ labels:['Classification','First Response','Resolution','Subsequent Response'],
+        datasets:[{ data:[breachCounts.classBreached, breachCounts.frBreached, breachCounts.resBreached, breachCounts.subBreached], backgroundColor:[c.accent, c.warn, c.bad, c.info], borderColor:c.surface, borderWidth:2 }] },
       options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } }, cutout:'58%' }
     });
   }
@@ -9960,7 +10008,8 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       data:{ labels:labels, datasets:[
         { label:'Classification', data:pctSeries('_class_sla_breached'), borderColor:c.accent, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 },
         { label:'First Response', data:pctSeries('_first_response_sla_breached'), borderColor:c.warn, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 },
-        { label:'Resolution', data:pctSeries('_resolution_sla_breached'), borderColor:c.bad, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 }
+        { label:'Resolution', data:pctSeries('_resolution_sla_breached'), borderColor:c.bad, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 },
+        { label:'Subsequent Response', data:pctSeries('_subsequent_response_breached'), borderColor:c.info, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } },
@@ -9985,7 +10034,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
     const pcts = cats.map(function(cat){
       const grows = groups[cat];
-      const breached = grows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; }).length;
+      const breached = grows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; }).length;
       return +(100 - breached/grows.length*100).toFixed(1);
     });
     const colors = pcts.map(function(p){ return p>=90?c.good:p>=75?c.warn:c.bad; });
@@ -10004,7 +10053,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
   // ---------------------------------------------------------------
   let breachedRowsCache = [];
   function renderBreachTable(rows){
-    const breached = rows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; });
+    const breached = rows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; });
     breachedRowsCache = breached;
 
     const $tbl = $('#slaBreachTable');
@@ -10019,10 +10068,11 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         '<td>' + slaPill(r._class_sla_breached) + '</td>' +
         '<td>' + slaPill(r._first_response_sla_breached) + '</td>' +
         '<td>' + slaPill(r._resolution_sla_breached) + '</td>' +
+        '<td>' + slaPill(r._subsequent_response_breached) + '</td>' +
         '<td data-order="' + (r._creation_date ? r._creation_date.getTime() : 0) + '">' + fmtDateShort(r._creation_date) + '</td>' +
         '</tr>';
     }).join(''));
-    $tbl.DataTable({ pageLength: (window.GovSettings && window.GovSettings.tablePageLength) || 10, order:[[8,'desc']], language:{ searchPlaceholder:'Search breached tickets…' } });
+    $tbl.DataTable({ pageLength: (window.GovSettings && window.GovSettings.tablePageLength) || 10, order:[[9,'desc']], language:{ searchPlaceholder:'Search breached tickets…' } });
     $tbl.find('tbody').off('click').on('click', 'tr', function(){
       const idx = +$(this).attr('data-ridx');
       if(window.GovOpenTicketDetail) window.GovOpenTicketDetail(breachedRowsCache[idx]);
@@ -10278,7 +10328,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     open: function(r){ return r._is_open; },
     closed: function(r){ return r._is_closed; },
     escalated: function(r){ return r._is_escalated; },
-    breached: function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; },
+    breached: function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; },
     reopened: function(r){ return r._is_reopened; }
   };
   function toNum(v){
@@ -10297,7 +10347,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const $tbl = $('#ticketAnalyticsTable');
     if($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
     $tbl.find('tbody').html(filtered.map(function(r, idx){
-      const slaFlag = r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached;
+      const slaFlag = r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached;
       const tatDaysVal = toNum(r.tat_days);
       const tatSlaVal = toNum(r.tat_sla);
       const periodicVal = toNum(r.subsequent_response_miss_count);
@@ -11676,7 +11726,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
         summary:[['Average First Response (Days)', k.firstRespDays===null?'—':k.firstRespDays.toFixed(1)], ['Tickets Counted', fmtN(sub.length)]] };
     },
     overallSlaPct: function(rows, k){
-      const breached = rows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached; });
+      const breached = rows.filter(function(r){ return r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached; });
       return { title:'SLA Compliance — Breached Tickets', filenameBase:'Executive_SLA_Breaches', rows: breached,
         columns:[ COL.id, COL.title, COL.customer, COL.engineer, COL.priority, COL.classSla, COL.resSla, COL.frSla, COL.created ],
         summary:[['SLA Compliance %', k.overallSlaPct===null?'—':k.overallSlaPct.toFixed(1)+'%'], ['Breached', fmtN(breached.length)], ['Total', fmtN(rows.length)]] };
@@ -12209,15 +12259,16 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     s.classSla = slaBucket('class_sla_breached', '_class_sla_breached');
     s.resSla = slaBucket('resolution_sla_breached', '_resolution_sla_breached');
     s.frSla = slaBucket('first_response_sla_breached', '_first_response_sla_breached');
-    // Same "average of the 3 SLA %s" convention already used elsewhere
+    s.subSla = slaBucket('subsequent_response_miss_count', '_subsequent_response_breached');
+    // Same "average of the 4 SLA %s" convention already used elsewhere
     // in this app for its "Overall SLA %" KPI.
-    const slaPcts = [s.classSla.pct, s.resSla.pct, s.frSla.pct].filter(function(p){ return p !== null; });
+    const slaPcts = [s.classSla.pct, s.resSla.pct, s.frSla.pct, s.subSla.pct].filter(function(p){ return p !== null; });
     s.overallSlaPct = slaPcts.length ? (slaPcts.reduce(function(a,b){ return a+b; },0) / slaPcts.length) : null;
 
     let anySlaBreachedCount = 0;
     const anySlaBreachedRows = [];
     rows.forEach(function(r, i){
-      const flag = !!(r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached);
+      const flag = !!(r._class_sla_breached || r._resolution_sla_breached || r._first_response_sla_breached || r._subsequent_response_breached);
       enriched[i].anySlaBreached = flag;
       if(flag){ anySlaBreachedCount++; anySlaBreachedRows.push(r); }
     });
@@ -12341,7 +12392,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
     // --- Overall Daily Review Compliance % — average of every
     //     compliance dimension that could actually be computed here ---
-    const dims = [s.classSla.pct, s.resSla.pct, s.frSla.pct, s.comm.compliancePct, s.delegation.compliancePct, s.closure.pct]
+    const dims = [s.classSla.pct, s.resSla.pct, s.frSla.pct, s.subSla.pct, s.comm.compliancePct, s.delegation.compliancePct, s.closure.pct]
       .filter(function(p){ return p !== null; });
     s.compliancePct = dims.length ? (dims.reduce(function(a,b){ return a+b; },0) / dims.length) : null;
     s.complianceDimCount = dims.length;
@@ -12445,13 +12496,18 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       ['Resolution SLA — Within Target', stats.resSla.within, ''],
       ['Resolution SLA — Breached', stats.resSla.breached, ''],
       ['Resolution SLA — Compliance %', '', pctCell(stats.resSla.pct)],
-      ['Overall SLA Compliance % (avg. of Classification + Resolution + First Response)', '', pctCell(stats.overallSlaPct)],
+      ['Subsequent Response SLA — Applicable', stats.subSla.applicable, ''],
+      ['Subsequent Response SLA — Within Target', stats.subSla.within, ''],
+      ['Subsequent Response SLA — Breached', stats.subSla.breached, ''],
+      ['Subsequent Response SLA — Compliance %', '', pctCell(stats.subSla.pct)],
+      ['Overall SLA Compliance % (avg. of Classification + Resolution + First Response + Subsequent Response)', '', pctCell(stats.overallSlaPct)],
       ['Overall SLA Breach %', '', pctCell(stats.overallSlaPct === null ? null : 100 - stats.overallSlaPct)]
     ];
     const slaColors = blankColors(slaRows.length, 3);
     slaColors[3][2] = ragPct(stats.classSla.pct);
     slaColors[7][2] = ragPct(stats.resSla.pct);
-    slaColors[8][2] = ragPct(stats.overallSlaPct);
+    slaColors[11][2] = ragPct(stats.subSla.pct);
+    slaColors[12][2] = ragPct(stats.overallSlaPct);
     sections.push({ title: '3. SLA PERFORMANCE', headers: ['Metric','Count','Compliance %'], rows: slaRows, cellColors: slaColors, numFmts: [null, CNT_FMT, PCT_FMT] });
 
     const frRows = [
@@ -12664,13 +12720,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
       headers: ['Metric','Value'],
       rows: [
         ['Daily Review Compliance %', pctStr(stats.compliancePct)],
-        ['Formula', 'Average of ' + stats.complianceDimCount + ' available compliance dimension(s) of: Classification SLA %, Resolution SLA %, First Response SLA %, Communication Compliance %, Delegation Compliance %, Closure Compliance %. Only dimensions with usable source data for this export are included.']
+        ['Formula', 'Average of ' + stats.complianceDimCount + ' available compliance dimension(s) of: Classification SLA %, Resolution SLA %, First Response SLA %, Subsequent Response SLA %, Communication Compliance %, Delegation Compliance %, Closure Compliance %. Only dimensions with usable source data for this export are included.']
       ]
     });
 
     const ragRows = [
       ['SLA Compliance', pctCell(stats.overallSlaPct), ragLabel(ragPct(stats.overallSlaPct))],
       ['First Response Compliance', pctCell(stats.frSla.pct), ragLabel(ragPct(stats.frSla.pct))],
+      ['Subsequent Response Compliance', pctCell(stats.subSla.pct), ragLabel(ragPct(stats.subSla.pct))],
       ['Communication Compliance', pctCell(stats.comm.compliancePct), ragLabel(ragPct(stats.comm.compliancePct))],
       ['Delegation Compliance', pctCell(stats.delegation.compliancePct), ragLabel(ragPct(stats.delegation.compliancePct))],
       ['Overall Daily Review Health', pctCell(stats.compliancePct), ragLabel(ragPct(stats.compliancePct))]
@@ -12678,6 +12735,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
     const ragColors = [
       [null, null, ragPct(stats.overallSlaPct)],
       [null, null, ragPct(stats.frSla.pct)],
+      [null, null, ragPct(stats.subSla.pct)],
       [null, null, ragPct(stats.comm.compliancePct)],
       [null, null, ragPct(stats.delegation.compliancePct)],
       [null, null, ragPct(stats.compliancePct)]
