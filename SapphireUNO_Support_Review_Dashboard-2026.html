@@ -2289,8 +2289,7 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
                   <!-- Add your Excel file names from the MSPData folder below.
                        Each option's value is the file's path relative to this
                        HTML file, and must be committed to the same repo. -->
-                  <option value="MSPData/CallDump08Sep26.xlsx">SupportCalls_April_TO_8thSept-2026</option>
-                 <option value="MSPData/CallDump14Sep26-ComplexData.xlsx">SupportCalls_April_TO_14Sept26-Complex</option>
+                  <option value="MSPData/CallDump_April_To_Aug_2026.xlsx">SupportCalls_April_TO_Aug-2026</option>
                   
                   <!-- Add more <option> entries here, following the same
                        MSPData/filename.xlsx pattern, e.g.:
@@ -8646,13 +8645,17 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       Object.keys(closedGroups).forEach(function(k){ if(allKeys.indexOf(k) === -1) allKeys.push(k); });
       allKeys.sort();
       const loggedGroups = groupByPeriod(rows, execPeriodMode, '_creation_date');
+      const DLlc = window.ChartDataLabels;
       charts.chartLoggedClosed = new Chart(document.getElementById('chartLoggedClosed'), {
         type:'bar',
+        plugins: DLlc ? [DLlc] : [],
         data:{
           labels: allKeys.map(function(k){ return periodLabel(k, execPeriodMode); }),
           datasets:[
-            { label:'Logged', data: allKeys.map(function(k){ const g = loggedGroups[k]; return g ? g.length : 0; }), backgroundColor:c.accent, borderRadius:4 },
-            { label:'Closed', data: allKeys.map(function(k){ return closedGroups[k] ? closedGroups[k].length : 0; }), backgroundColor:c.accentDim, borderRadius:4 }
+            { label:'Logged', data: allKeys.map(function(k){ const g = loggedGroups[k]; return g ? g.length : 0; }), backgroundColor:c.accent, borderRadius:4,
+              datalabels: { anchor:'end', align:'end', clip:false, color:c.accent, font:{weight:'700',size:9}, formatter:function(v){ return v||''; } } },
+            { label:'Closed', data: allKeys.map(function(k){ return closedGroups[k] ? closedGroups[k].length : 0; }), backgroundColor:c.accentDim, borderRadius:4,
+              datalabels: { anchor:'end', align:'end', clip:false, color:c.accentDim, font:{weight:'700',size:9}, formatter:function(v){ return v||''; } } }
           ]
         },
         options:{ responsive:true, maintainAspectRatio:false,
@@ -9506,11 +9509,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     document.getElementById('cdaKpiCsat').addEventListener('click', function(){ cdaOpenDrill('Call Dump Analytics — Rated Tickets (CSAT)', csatRows, [GD.rating], 'CSAT'); });
   }
 
+  const CDA_DL = window.ChartDataLabels;
   function cdaVolumeChart(g){
     const c = chartColors();
-    makeChart('cda_volume', {type:'bar', data:{labels:labelsFor(g.months), datasets:[
-      {label:'Logged', data:g.months.map(function(m){return g.logged[m].Total;}), backgroundColor:c.palette[0]},
-      {label:'Resolved', data:g.months.map(function(m){return g.resolved[m].Total;}), backgroundColor:c.palette[2]}
+    makeChart('cda_volume', {type:'bar', plugins: CDA_DL ? [CDA_DL] : [], data:{labels:labelsFor(g.months), datasets:[
+      {label:'Logged', data:g.months.map(function(m){return g.logged[m].Total;}), backgroundColor:c.palette[0],
+        datalabels:{anchor:'end',align:'end',clip:false,color:c.palette[0],font:{weight:'700',size:9},formatter:function(v){return v||'';}}},
+      {label:'Resolved', data:g.months.map(function(m){return g.resolved[m].Total;}), backgroundColor:c.palette[2],
+        datalabels:{anchor:'end',align:'end',clip:false,color:c.palette[2],font:{weight:'700',size:9},formatter:function(v){return v||'';}}}
     ]}, options: Object.assign(baseLineOpts(c), { onHover: cdaHoverCursor, onClick: function(evt, elements){
       if(!elements.length) return;
       const m = g.months[elements[0].index];
@@ -9521,9 +9527,11 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
   }
   function cdaCsatChart(g){
     const c = chartColors();
-    makeChart('cda_csat', {data:{labels:labelsFor(g.months), datasets:[
-      {type:'bar', label:'Surveys', data:g.months.map(function(m){return g.csat[m].count;}), backgroundColor:c.gridLine, yAxisID:'ySurveys', order:2},
-      {type:'line', label:'CSAT (mean)', data:g.months.map(function(m){return g.csat[m].mean;}), borderColor:c.palette[3], backgroundColor:c.palette[3], yAxisID:'yCsat', tension:0.3, spanGaps:true, order:1}
+    makeChart('cda_csat', {plugins: CDA_DL ? [CDA_DL] : [], data:{labels:labelsFor(g.months), datasets:[
+      {type:'bar', label:'Surveys', data:g.months.map(function(m){return g.csat[m].count;}), backgroundColor:c.gridLine, yAxisID:'ySurveys', order:2,
+        datalabels:{anchor:'end',align:'end',clip:false,color:c.textMuted,font:{weight:'700',size:9},formatter:function(v){return v||'';}}},
+      {type:'line', label:'CSAT (mean)', data:g.months.map(function(m){return g.csat[m].mean;}), borderColor:c.palette[3], backgroundColor:c.palette[3], yAxisID:'yCsat', tension:0.3, spanGaps:true, order:1,
+        datalabels:{display:true,align:'top',anchor:'end',clip:false,color:c.palette[3],font:{weight:'700',size:9},formatter:function(v){return v===null?'':v.toFixed(2);}}}
     ]}, options: Object.assign(baseLineOpts(c, {
       scales:{
         x:{ticks:{color:c.textMuted}, grid:{color:c.gridLine}},
@@ -9545,8 +9553,9 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       {label:'IM Actual SLA', svc:'IM', key:'tat_sla', color:c.palette[2], dash:[4,3]},
       {label:'SR Actual SLA', svc:'SR', key:'tat_sla', color:c.palette[3], dash:[4,3]}
     ];
-    makeChart('cda_tat', {type:'line', data:{labels:labelsFor(g.months), datasets: DATASETS.map(function(d){
-      return {label:d.label, data:g.months.map(function(m){return g[d.key][m][d.svc].avg;}), borderColor:d.color, borderDash:d.dash, tension:0.3, spanGaps:true};
+    makeChart('cda_tat', {type:'line', plugins: CDA_DL ? [CDA_DL] : [], data:{labels:labelsFor(g.months), datasets: DATASETS.map(function(d){
+      return {label:d.label, data:g.months.map(function(m){return g[d.key][m][d.svc].avg;}), borderColor:d.color, borderDash:d.dash, tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'top',anchor:'end',clip:false,color:d.color,font:{weight:'700',size:8.5},formatter:function(v){return v===null?'':v.toFixed(1);}}};
     })}, options: Object.assign(baseLineOpts(c), { onHover: cdaHoverCursor, onClick: function(evt, elements){
       if(!elements.length) return;
       const d = DATASETS[elements[0].datasetIndex];
@@ -9564,10 +9573,12 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     ];
     const datasets = [];
     TIERS.forEach(function(t){
-      datasets.push({label:t.tier+' Actual SLA (avg days)', data:g.months.map(function(m){return g.tier_sla[m][t.tier].slaAvg;}), borderColor:t.color, yAxisID:'ySla', tension:0.3, spanGaps:true});
-      datasets.push({label:t.tier+' Periodic SLA (avg misses)', data:g.months.map(function(m){return g.tier_sla[m][t.tier].missAvg;}), borderColor:t.color, borderDash:[4,3], yAxisID:'yMiss', tension:0.3, spanGaps:true});
+      datasets.push({label:t.tier+' Actual SLA (avg days)', data:g.months.map(function(m){return g.tier_sla[m][t.tier].slaAvg;}), borderColor:t.color, yAxisID:'ySla', tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'top',anchor:'end',clip:false,color:t.color,font:{weight:'700',size:8},formatter:function(v){return v===null?'':v.toFixed(1);}}});
+      datasets.push({label:t.tier+' Periodic SLA (avg misses)', data:g.months.map(function(m){return g.tier_sla[m][t.tier].missAvg;}), borderColor:t.color, borderDash:[4,3], yAxisID:'yMiss', tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'bottom',anchor:'start',clip:false,color:t.color,font:{weight:'700',size:8},formatter:function(v){return v===null?'':v.toFixed(1);}}});
     });
-    makeChart('cda_tier_sla', {type:'line', data:{labels:labelsFor(g.months), datasets: datasets}, options: Object.assign(baseLineOpts(c, {
+    makeChart('cda_tier_sla', {type:'line', plugins: CDA_DL ? [CDA_DL] : [], data:{labels:labelsFor(g.months), datasets: datasets}, options: Object.assign(baseLineOpts(c, {
       scales:{
         x:{ticks:{color:c.textMuted}, grid:{color:c.gridLine}},
         ySla:{position:'left', beginAtZero:true, ticks:{color:c.textMuted}, grid:{color:c.gridLine}, title:{display:true,text:'Actual SLA (days)',color:c.textMuted}},
@@ -9614,9 +9625,11 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
   function cdaFcrChart(g){
     const c = chartColors();
     const GD = window.GovDrillCol;
-    makeChart('cda_fcr', {type:'line', data:{labels:labelsFor(g.months), datasets:[
-      {label:'IM', data:g.months.map(function(m){return g.sla.fcr_2bd[m].IM.pct;}), borderColor:c.palette[0], tension:0.3, spanGaps:true},
-      {label:'SR', data:g.months.map(function(m){return g.sla.fcr_2bd[m].SR.pct;}), borderColor:c.palette[1], tension:0.3, spanGaps:true}
+    makeChart('cda_fcr', {type:'line', plugins: CDA_DL ? [CDA_DL] : [], data:{labels:labelsFor(g.months), datasets:[
+      {label:'IM', data:g.months.map(function(m){return g.sla.fcr_2bd[m].IM.pct;}), borderColor:c.palette[0], tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'top',anchor:'end',clip:false,color:c.palette[0],font:{weight:'700',size:9},formatter:function(v){return v===null?'':v.toFixed(0)+'%';}}},
+      {label:'SR', data:g.months.map(function(m){return g.sla.fcr_2bd[m].SR.pct;}), borderColor:c.palette[1], tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'bottom',anchor:'start',clip:false,color:c.palette[1],font:{weight:'700',size:9},formatter:function(v){return v===null?'':v.toFixed(0)+'%';}}}
     ]}, options: Object.assign(baseLineOpts(c, {scales:{x:{ticks:{color:c.textMuted},grid:{color:c.gridLine}}, y:{min:0,max:100,ticks:{color:c.textMuted},grid:{color:c.gridLine}}}}),
     { onHover: cdaHoverCursor, onClick: function(evt, elements){
       if(!elements.length) return;
@@ -9628,9 +9641,11 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
   }
   function cdaEffortChart(g){
     const c = chartColors();
-    makeChart('cda_effort', {type:'line', data:{labels:labelsFor(g.months), datasets:[
-      {label:'IM avg effort (h)', data:g.months.map(function(m){return g.effort_hours[m].IM.avg;}), borderColor:c.palette[0], tension:0.3, spanGaps:true},
-      {label:'SR avg effort (h)', data:g.months.map(function(m){return g.effort_hours[m].SR.avg;}), borderColor:c.palette[1], tension:0.3, spanGaps:true}
+    makeChart('cda_effort', {type:'line', plugins: CDA_DL ? [CDA_DL] : [], data:{labels:labelsFor(g.months), datasets:[
+      {label:'IM avg effort (h)', data:g.months.map(function(m){return g.effort_hours[m].IM.avg;}), borderColor:c.palette[0], tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'top',anchor:'end',clip:false,color:c.palette[0],font:{weight:'700',size:9},formatter:function(v){return v===null?'':v.toFixed(1);}}},
+      {label:'SR avg effort (h)', data:g.months.map(function(m){return g.effort_hours[m].SR.avg;}), borderColor:c.palette[1], tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'bottom',anchor:'start',clip:false,color:c.palette[1],font:{weight:'700',size:9},formatter:function(v){return v===null?'':v.toFixed(1);}}}
     ]}, options: Object.assign(baseLineOpts(c), { onHover: cdaHoverCursor, onClick: function(evt, elements){
       if(!elements.length) return;
       const svc = elements[0].datasetIndex===0 ? 'IM' : 'SR';
@@ -9671,8 +9686,9 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
   }
   function cdaSlaChart(g){
     const c = chartColors();
-    makeChart('cda_sla', {type:'line', data:{labels:labelsFor(g.months), datasets: SLA_ROWS.map(function(r,i){
-      return {label:r.label, data:g.months.map(function(m){ return getSlaEntry(g,r.key,r.sub,m).pct; }), borderColor:c.palette[i%c.palette.length], tension:0.3, spanGaps:true};
+    makeChart('cda_sla', {type:'line', plugins: CDA_DL ? [CDA_DL] : [], data:{labels:labelsFor(g.months), datasets: SLA_ROWS.map(function(r,i){
+      return {label:r.label, data:g.months.map(function(m){ return getSlaEntry(g,r.key,r.sub,m).pct; }), borderColor:c.palette[i%c.palette.length], tension:0.3, spanGaps:true,
+        datalabels:{display:true,align:'top',anchor:'end',clip:false,color:c.palette[i%c.palette.length],font:{weight:'700',size:7.5},formatter:function(v){return v===null?'':v.toFixed(0)+'%';}}};
     })}, options: Object.assign(baseLineOpts(c, {scales:{x:{ticks:{color:c.textMuted},grid:{color:c.gridLine}}, y:{min:0,max:100,ticks:{color:c.textMuted},grid:{color:c.gridLine}}}}),
     { onHover: cdaHoverCursor, onClick: function(evt, elements){
       if(!elements.length) return;
@@ -10616,34 +10632,46 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
         ctx.clearRect(0,0,9999,9999);
       });
     } else {
+      const DL = window.ChartDataLabels;
       charts.chartCrVolume = new Chart(document.getElementById('chartCrVolume'), {
         type:'line',
+        plugins: DL ? [DL] : [],
         data:{ labels: labels, datasets:[
-          { label:'Logged Cases (by Creation Date)', data: loggedSeries, borderColor:CR_COLORS.blue, backgroundColor:CR_COLORS.blue+'26', fill:true, tension:0.35, pointRadius:3 },
-          { label:'Closed Cases (by Resolve Date)', data: closedSeries, borderColor:CR_COLORS.green, backgroundColor:CR_COLORS.green+'26', fill:true, tension:0.35, pointRadius:3 }
+          { label:'Logged Cases (by Creation Date)', data: loggedSeries, borderColor:CR_COLORS.blue, backgroundColor:CR_COLORS.blue+'26', fill:true, tension:0.35, pointRadius:3,
+            datalabels: { display:true, color:CR_COLORS.text, font:{weight:'700',size:9.5}, align:'top', anchor:'end', clip:false, formatter:function(v){ return v===null?'':v; } } },
+          { label:'Closed Cases (by Resolve Date)', data: closedSeries, borderColor:CR_COLORS.green, backgroundColor:CR_COLORS.green+'26', fill:true, tension:0.35, pointRadius:3,
+            datalabels: { display:true, color:CR_COLORS.text, font:{weight:'700',size:9.5}, align:'bottom', anchor:'start', clip:false, formatter:function(v){ return v===null?'':v; } } }
         ]},
         options:{ responsive:true, maintainAspectRatio:false,
+          layout:{ padding:{ top:14, bottom:6 } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
           scales:{ y:{ beginAtZero:true, ticks:{ color:CR_COLORS.text }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
         }
       });
       charts.chartCrSla = new Chart(document.getElementById('chartCrSla'), {
         type:'line',
+        plugins: DL ? [DL] : [],
         data:{ labels: labels, datasets:[
-          { label:'SLA Compliance %', data: slaSeries, borderColor:CR_COLORS.teal, backgroundColor:CR_COLORS.teal+'26', fill:true, tension:0.3, pointRadius:3, spanGaps:true }
+          { label:'SLA Compliance %', data: slaSeries, borderColor:CR_COLORS.teal, backgroundColor:CR_COLORS.teal+'26', fill:true, tension:0.3, pointRadius:3, spanGaps:true,
+            datalabels: { display:true, color:CR_COLORS.text, font:{weight:'700',size:9.5}, align:'top', anchor:'end', clip:false, formatter:function(v){ return v===null?'':v.toFixed(0)+'%'; } } }
         ]},
         options:{ responsive:true, maintainAspectRatio:false,
+          layout:{ padding:{ top:14 } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
           scales:{ y:{ min:0, max:100, ticks:{ color:CR_COLORS.text, callback:function(v){ return v+'%'; } }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
         }
       });
       charts.chartCrResTrend = new Chart(document.getElementById('chartCrResTrend'), {
         type:'line',
+        plugins: DL ? [DL] : [],
         data:{ labels: labels, datasets:[
-          { label:'24/7 Performance (Avg Days)', data: actualResSeries, borderColor:CR_COLORS.orange, backgroundColor:'transparent', tension:0.35, pointRadius:3, spanGaps:true },
-          { label:'Actual SLA Performance (Avg Days)', data: targetResSeries, borderColor:CR_COLORS.red, backgroundColor:'transparent', borderDash:[6,4], tension:0.35, pointRadius:3, spanGaps:true }
+          { label:'24/7 Performance (Avg Days)', data: actualResSeries, borderColor:CR_COLORS.orange, backgroundColor:'transparent', tension:0.35, pointRadius:3, spanGaps:true,
+            datalabels: { display:true, color:CR_COLORS.orange, font:{weight:'700',size:9.5}, align:'top', anchor:'end', clip:false, formatter:function(v){ return v===null?'':v.toFixed(1); } } },
+          { label:'Actual SLA Performance (Avg Days)', data: targetResSeries, borderColor:CR_COLORS.red, backgroundColor:'transparent', borderDash:[6,4], tension:0.35, pointRadius:3, spanGaps:true,
+            datalabels: { display:true, color:CR_COLORS.red, font:{weight:'700',size:9.5}, align:'bottom', anchor:'start', clip:false, formatter:function(v){ return v===null?'':v.toFixed(1); } } }
         ]},
         options:{ responsive:true, maintainAspectRatio:false,
+          layout:{ padding:{ top:14, bottom:6 } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
           scales:{ y:{ beginAtZero:true, ticks:{ color:CR_COLORS.text }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
         }
@@ -10787,12 +10815,16 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       }
       canvas.style.display='block';
       const body = canvas.closest('.cc-body'); const empty = body.querySelector('.cc-empty'); if(empty) empty.style.display='none';
+      const DL = window.ChartDataLabels;
       charts.chartCustHoursSplit = new Chart(canvas, {
         type:'bar',
+        plugins: DL ? [DL] : [],
         data:{ labels:topH.map(function(c){return c.name;}),
           datasets:[
-            { label:'Consumed', data:topH.map(function(c){return +c.consumedHrs.toFixed(1);}), backgroundColor:'#7C3AED', stack:'h' },
-            { label:'Remaining', data:topH.map(function(c){return +c.remainingHrs.toFixed(1);}), backgroundColor:'#C4B5FD', stack:'h' }
+            { label:'Consumed', data:topH.map(function(c){return +c.consumedHrs.toFixed(1);}), backgroundColor:'#7C3AED', stack:'h',
+              datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:9.5}, formatter:function(v){ return v; } } },
+            { label:'Remaining', data:topH.map(function(c){return +c.remainingHrs.toFixed(1);}), backgroundColor:'#C4B5FD', stack:'h',
+              datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#3B0764', font:{weight:'700',size:9.5}, formatter:function(v){ return v; } } }
           ] },
         options:{ responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } },
@@ -10959,19 +10991,25 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!entries.length){ custTrendEmptyState(canvas, 'No data in range'); return; }
     custTrendClearEmpty(canvas);
     const c = chartColors();
+    const DL = window.ChartDataLabels;
     charts[canvasId] = new Chart(canvas, {
       type:'line',
+      plugins: DL ? [DL] : [],
       data:{
         labels: entries.map(function(e){ return e.label; }),
         datasets: series.map(function(s){
+          const isPct = s.isPct !== false && (s.field.toLowerCase().indexOf('pct') !== -1 || s.field.toLowerCase().indexOf('rate') !== -1);
           return {
             label: s.label,
             data: entries.map(function(e){ const v = e.metrics[s.field]; return v===null?null:Math.round(v*10)/10; }),
-            borderColor: s.color, backgroundColor: s.color + '26', fill: !!s.fill, tension:0.35, pointRadius:3, spanGaps:true
+            borderColor: s.color, backgroundColor: s.color + '26', fill: !!s.fill, tension:0.35, pointRadius:3, spanGaps:true,
+            datalabels: { display:true, color:c.textPrimary, font:{ weight:'700', size:10 }, align:'top', anchor:'end', clip:false,
+              formatter: function(v){ return v===null?'':(isPct?(v+'%'):v); } }
           };
         })
       },
       options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:16 } },
         plugins:{ legend:{ display: series.length>1, position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, font:{size:11} } } },
         scales:{ y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, x:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
@@ -10999,17 +11037,22 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!allKeys.length){ custTrendEmptyState(canvas, 'No data in range'); return; }
     custTrendClearEmpty(canvas);
     const c = chartColors();
+    const DL2 = window.ChartDataLabels;
     const loggedGroups = custGroupByPeriod(filteredRows, mode, '_creation_date');
     charts[canvasId] = new Chart(canvas, {
       type:'line',
+      plugins: DL2 ? [DL2] : [],
       data:{
         labels: allKeys.map(function(k){ return custPeriodLabel(k, mode); }),
         datasets:[
-          { label:'Logged', data: allKeys.map(function(k){ const g = loggedGroups[k]; return g ? g.length : 0; }), borderColor:c.accent, backgroundColor:c.accent+'26', tension:0.35, pointRadius:3, fill:false },
-          { label:'Closed', data: allKeys.map(function(k){ return closedGroups[k] ? closedGroups[k].length : 0; }), borderColor:'#4C1D95', backgroundColor:'#4C1D9526', borderDash:[6,4], tension:0.35, pointRadius:3, fill:false }
+          { label:'Logged', data: allKeys.map(function(k){ const g = loggedGroups[k]; return g ? g.length : 0; }), borderColor:c.accent, backgroundColor:c.accent+'26', tension:0.35, pointRadius:3, fill:false,
+            datalabels: { display:true, color:c.accent, font:{weight:'700',size:10}, align:'top', anchor:'end', clip:false, formatter:function(v){ return v||''; } } },
+          { label:'Closed', data: allKeys.map(function(k){ return closedGroups[k] ? closedGroups[k].length : 0; }), borderColor:'#4C1D95', backgroundColor:'#4C1D9526', borderDash:[6,4], tension:0.35, pointRadius:3, fill:false,
+            datalabels: { display:true, color:'#4C1D95', font:{weight:'700',size:10}, align:'bottom', anchor:'start', clip:false, formatter:function(v){ return v||''; } } }
         ]
       },
       options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:16, bottom:6 } },
         plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, font:{size:11} } } },
         scales:{ y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, x:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
@@ -11175,10 +11218,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       customers.forEach(function(cu){ bandRows[cu.healthBand] = bandRows[cu.healthBand].concat(cu.rows); });
       const bandOrder = ['green','amber','red'];
       const bandLabels = { green:'Good (75+)', amber:'Watch (50-74)', red:'At Risk (<50)' };
+      const DL = window.ChartDataLabels;
       charts.chartHealthDist = new Chart(document.getElementById('chartHealthDist'), {
         type:'doughnut',
+        plugins: DL ? [DL] : [],
         data:{ labels:['Good (75+)','Watch (50-74)','At Risk (<50)'], datasets:[{ data:[bands.green,bands.amber,bands.red], backgroundColor:[c.good,c.warn,c.bad], borderColor:c.surface, borderWidth:2 }] },
-        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } }, cutout:'62%',
+        options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+          plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } },
+            datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:11}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v; } } },
           onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
           onClick:function(evt, elements){
             if(!elements.length || !window.GovOpenDrillModal || !window.GovDrillCol) return;
@@ -14246,11 +14293,15 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const total = breachCounts.classBreached + breachCounts.resBreached + breachCounts.frBreached + breachCounts.subBreached;
     if(!total){ emptyCanvas(canvas, 'No SLA breaches in range'); return; }
     clearEmptyCanvas(canvas);
+    const DL = window.ChartDataLabels;
     charts.chartBreachComposition = new Chart(canvas, {
       type:'doughnut',
+      plugins: DL ? [DL] : [],
       data:{ labels:['Classification','First Response','Resolution','Subsequent Response'],
         datasets:[{ data:[breachCounts.classBreached, breachCounts.frBreached, breachCounts.resBreached, breachCounts.subBreached], backgroundColor:[c.accent, c.warn, c.bad, c.info], borderColor:c.surface, borderWidth:2 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } }, cutout:'58%' }
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } },
+          datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:11}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v; } } } }
     });
   }
 
@@ -14271,8 +14322,11 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
         return +(100 - breached/mrows.length*100).toFixed(1);
       });
     }
+    const DL2 = window.ChartDataLabels;
+    const slaTrendColors = [c.accent, c.warn, c.bad, c.info];
     charts.chartSlaTrend = new Chart(canvas, {
       type:'line',
+      plugins: DL2 ? [DL2] : [],
       data:{ labels:labels, datasets:[
         { label:'Classification', data:pctSeries('_class_sla_breached'), borderColor:c.accent, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 },
         { label:'First Response', data:pctSeries('_first_response_sla_breached'), borderColor:c.warn, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 },
@@ -14280,7 +14334,11 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
         { label:'Subsequent Response', data:pctSeries('_subsequent_response_breached'), borderColor:c.info, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } },
+        layout:{ padding:{ top:16 } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } },
+          datalabels: { display:true, align:'top', anchor:'end', clip:false, font:{weight:'700',size:9},
+            color:function(ctx){ return slaTrendColors[ctx.datasetIndex]; },
+            formatter:function(v){ return v===null?'':v.toFixed(0)+'%'; } } },
         scales:{ x:{ ticks:{ color:c.textMuted }, grid:{ display:false } }, y:{ min:0, max:100, ticks:{ color:c.textMuted, callback:function(v){return v+'%';} }, grid:{ color:c.gridLine } } } }
     });
   }
@@ -14307,10 +14365,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     });
     const colors = pcts.map(function(p){ return p>=90?c.good:p>=75?c.warn:c.bad; });
 
+    const DL3 = window.ChartDataLabels;
     charts[canvasId] = new Chart(canvas, {
       type:'bar',
+      plugins: DL3 ? [DL3] : [],
       data:{ labels:cats, datasets:[{ data:pcts, backgroundColor:colors, borderRadius:5, maxBarThickness:34 }] },
       options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v+'%'; } },
         tooltip:{ callbacks:{ label:function(ctx){ return ctx.parsed.y + '% SLA compliant'; } } } },
         scales:{ x:{ ticks:{ color:c.textMuted, font:{size:10.5} }, grid:{ display:false } }, y:{ min:0, max:100, ticks:{ color:c.textMuted, callback:function(v){return v+'%';} }, grid:{ color:c.gridLine } } } }
     });
@@ -14564,12 +14625,15 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!dist.length){ emptyCanvas(canvas, 'No data for this field'); return; }
     clearEmptyCanvas(canvas);
     const data = horizontal ? dist.slice().reverse() : dist;
+    const DLrcb = window.ChartDataLabels;
     charts[canvasId] = new Chart(canvas, {
       type:'bar',
+      plugins: DLrcb ? [DLrcb] : [],
       data:{ labels:data.map(function(d){return d.label;}), datasets:[{ data:data.map(function(d){return d.value;}), backgroundColor:c.accent, borderRadius:5, maxBarThickness:28 }] },
       options:{
         indexAxis: horizontal ? 'y' : 'x',
-        responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+        responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+          datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } } },
         scales: horizontal ?
           { x:{ ticks:{ color:c.textMuted }, grid:{ color:c.gridLine }, beginAtZero:true }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } } :
           { x:{ ticks:{ color:c.textMuted, font:{size:10} }, grid:{ display:false } }, y:{ ticks:{ color:c.textMuted }, grid:{ color:c.gridLine }, beginAtZero:true } }
@@ -15004,10 +15068,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!total){ emptyCanvas(canvas, 'No open tickets in range'); return; }
     clearEmptyCanvas(canvas);
     const bucketColor = { '0-1 Days':c.good, '2-3 Days':c.good, '4-7 Days':c.info, '8-15 Days':c.warn, '15-30 Days':c.warn, '30+ Days':c.bad };
+    const DLad = window.ChartDataLabels;
     charts.chartAgingDistribution = new Chart(canvas, {
       type:'bar',
+      plugins: DLad ? [DLad] : [],
       data:{ labels:AGING_BUCKETS, datasets:[{ data:AGING_BUCKETS.map(function(b){return counts[b];}), backgroundColor:AGING_BUCKETS.map(function(b){return bucketColor[b];}), borderRadius:5, maxBarThickness:44 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+          datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10.5}, formatter:function(v){ return v||''; } } },
         scales:{ x:{ ticks:{ color:c.textMuted, font:{size:10.5} }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         onClick:function(evt, elements){
@@ -15028,11 +15095,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!total){ emptyCanvas(canvas, 'No open tickets in range'); return; }
     clearEmptyCanvas(canvas);
     const bucketColor = { '0-1 Days':c.good, '2-3 Days':c.good, '4-7 Days':c.info, '8-15 Days':c.warn, '15-30 Days':c.warn, '30+ Days':c.bad };
+    const DLac = window.ChartDataLabels;
     charts.chartAgingComposition = new Chart(canvas, {
       type:'doughnut',
+      plugins: DLac ? [DLac] : [],
       data:{ labels:AGING_BUCKETS, datasets:[{ data:AGING_BUCKETS.map(function(b){return counts[b];}), backgroundColor:AGING_BUCKETS.map(function(b){return bucketColor[b];}), borderColor:c.surface, borderWidth:2 }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } },
+          datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v; } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         onClick:function(evt, elements){
           if(!elements.length || !window.GovOpenDrillModal || !window.GovDrillCol) return;
@@ -15062,11 +15132,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
         backgroundColor: bucketColor[bucket]
       };
     });
+    const DLasbs = window.ChartDataLabels;
     charts[canvasId] = new Chart(canvas, {
       type:'bar',
+      plugins: DLasbs ? [DLasbs] : [],
       data:{ labels:segValues, datasets:datasets },
       options:{ responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:8, font:{size:10} } } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:8, font:{size:10} } },
+          datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:9}, formatter:function(v){ return v; } } },
         scales:{ x:{ stacked:true, ticks:{ color:c.textMuted, font:{size:10.5} }, grid:{ display:false } },
                  y:{ stacked:true, beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } } }
     });
@@ -15081,10 +15154,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!dist.length){ emptyCanvas(canvas, 'No tickets aged 15+ days'); return; }
     clearEmptyCanvas(canvas);
     const data = dist.slice().reverse();
+    const DLabg = window.ChartDataLabels;
     charts[canvasId] = new Chart(canvas, {
       type:'bar',
+      plugins: DLabg ? [DLabg] : [],
       data:{ labels:data.map(function(d){return d.label;}), datasets:[{ data:data.map(function(d){return d.value;}), backgroundColor:c.bad, borderRadius:5, maxBarThickness:24 }] },
       options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } },
         tooltip:{ callbacks:{ label:function(ctx){ return ctx.parsed.x + ' ticket' + (ctx.parsed.x===1?'':'s') + ' aged 15+ days'; } } } },
         scales:{ x:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } } }
     });
@@ -15217,11 +15293,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!(l1+l2+sme)){ emptyCanvas(canvas, 'No effort hours logged'); return; }
     clearEmptyCanvas(canvas);
     const tierField = ['l1_time_spent_hrs','l2_time_spent_hrs','sme_time_spent_hrs'];
+    const DLebt = window.ChartDataLabels;
     charts.chartEffortByTier = new Chart(canvas, {
       type:'doughnut',
+      plugins: DLebt ? [DLebt] : [],
       data:{ labels:['L1','L2','SME'], datasets:[{ data:[l1,l2,sme], backgroundColor:['#A78BFA','#7C3AED','#5B21B6'], borderColor:c.surface, borderWidth:2 }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:11} } } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:11} } },
+          datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v.toFixed(1); } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         onClick:function(evt, elements){
           if(!elements.length || !window.GovOpenDrillModal || !window.GovDrillCol) return;
@@ -15243,11 +15322,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const remaining = Math.max(0, totals.remaining);
     if(!(consumed+remaining)){ emptyCanvas(canvas, 'No effort hours logged'); return; }
     clearEmptyCanvas(canvas);
+    const DLes = window.ChartDataLabels;
     charts.chartEffortSplit = new Chart(canvas, {
       type:'doughnut',
+      plugins: DLes ? [DLes] : [],
       data:{ labels:['Consumed','Remaining'], datasets:[{ data:[consumed, remaining], backgroundColor:['#7C3AED','#C4B5FD'], borderColor:c.surface, borderWidth:2 }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:11} } } } }
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:11} } },
+          datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v.toFixed(1); } } } }
     });
   }
 
@@ -15268,14 +15350,17 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const customers = Object.keys(groups).sort(function(a,b){ return groups[b].allocated - groups[a].allocated; }).slice(0,10);
     if(!customers.length){ emptyCanvas(canvas, 'No customer effort data'); return; }
     clearEmptyCanvas(canvas);
+    const DLebc = window.ChartDataLabels;
     charts.chartEffortByCustomer = new Chart(canvas, {
       type:'bar',
+      plugins: DLebc ? [DLebc] : [],
       data:{ labels:customers, datasets:[
         { label:'Allocated', data:customers.map(function(cu){return +groups[cu].allocated.toFixed(1);}), backgroundColor:c.accentDim, borderRadius:4, maxBarThickness:16 },
         { label:'Consumed', data:customers.map(function(cu){return +groups[cu].consumed.toFixed(1);}), backgroundColor:c.accent, borderRadius:4, maxBarThickness:16 }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:8, font:{size:10.5} } } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:8, font:{size:10.5} } },
+          datalabels: { anchor:'end', align:'end', clip:false, color:c.textMuted, font:{weight:'700',size:8.5}, formatter:function(v){ return v>0?v:''; } } },
         scales:{ x:{ ticks:{ color:c.textMuted, font:{size:10} }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         onClick:function(evt, elements){
@@ -15306,10 +15391,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     clearEmptyCanvas(canvas);
     const orderedEngineers = engineers.slice().reverse();
     const data = orderedEngineers.map(function(e){ return +groups[e].hrs.toFixed(1); });
+    const DLebe = window.ChartDataLabels;
     charts.chartEffortByEngineer = new Chart(canvas, {
       type:'bar',
+      plugins: DLebe ? [DLebe] : [],
       data:{ labels:orderedEngineers, datasets:[{ data:data, backgroundColor:chartColors().accent, borderRadius:5, maxBarThickness:22 }] },
-      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+          datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } } },
         scales:{ x:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         onClick:function(evt, elements){
@@ -15332,13 +15420,18 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const labels = months.map(function(m){ const p=m.split('-'); return new Date(+p[0],+p[1]-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'}); });
     const consumedSeries = months.map(function(m){ return +sumField(rows.filter(function(r){ return r._month_key===m; }), 'consumed_effort_hours').toFixed(1); });
     const allocatedSeries = months.map(function(m){ return +sumField(rows.filter(function(r){ return r._month_key===m; }), 'allocated_effort_hours').toFixed(1); });
+    const DLet = window.ChartDataLabels;
     charts.chartEffortTrend = new Chart(canvas, {
       type:'line',
+      plugins: DLet ? [DLet] : [],
       data:{ labels:labels, datasets:[
-        { label:'Allocated', data:allocatedSeries, borderColor:c.accentDim, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2 },
-        { label:'Consumed', data:consumedSeries, borderColor:c.accent, backgroundColor:c.accentGlow||'transparent', fill:false, tension:0.35, pointRadius:2.5, borderWidth:2.2 }
+        { label:'Allocated', data:allocatedSeries, borderColor:c.accentDim, backgroundColor:'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2,
+          datalabels: { display:true, align:'top', anchor:'end', clip:false, color:c.accentDim, font:{weight:'700',size:9}, formatter:function(v){ return v||''; } } },
+        { label:'Consumed', data:consumedSeries, borderColor:c.accent, backgroundColor:c.accentGlow||'transparent', fill:false, tension:0.35, pointRadius:2.5, borderWidth:2.2,
+          datalabels: { display:true, align:'bottom', anchor:'start', clip:false, color:c.accent, font:{weight:'700',size:9}, formatter:function(v){ return v||''; } } }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:14, bottom:6 } },
         plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } },
         scales:{ x:{ ticks:{ color:c.textMuted }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } } }
     });
@@ -15495,11 +15588,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     });
     const labels = Object.keys(buckets).filter(function(k){ return buckets[k] > 0; });
     const colorMap = { 'Published':c.good, 'Pending Review':c.warn, 'Rejected':c.bad, 'Not Required':c.textMuted, 'Other':c.accent };
+    const DLkbd = window.ChartDataLabels;
     charts.chartKbDecision = new Chart(canvas, {
       type:'doughnut',
+      plugins: DLkbd ? [DLkbd] : [],
       data:{ labels:labels, datasets:[{ data:labels.map(function(l){return buckets[l];}), backgroundColor:labels.map(function(l){return colorMap[l];}), borderColor:c.surface, borderWidth:2 }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } },
+          datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v; } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         onClick:function(evt, elements){
           if(!elements.length || !window.GovOpenDrillModal || !window.GovDrillCol) return;
@@ -15520,12 +15616,15 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!dist.length){ emptyCanvas(canvas, label || 'No data for this field'); return; }
     clearEmptyCanvas(canvas);
     const data = horizontal ? dist.slice().reverse() : dist;
+    const DLcb = window.ChartDataLabels;
     charts[canvasId] = new Chart(canvas, {
       type:'bar',
+      plugins: DLcb ? [DLcb] : [],
       data:{ labels:data.map(function(d){return d.label;}), datasets:[{ data:data.map(function(d){return d.value;}), backgroundColor:color||c.accent, borderRadius:5, maxBarThickness:26 }] },
       options:{
         indexAxis: horizontal ? 'y' : 'x',
-        responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+        responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+          datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } } },
         scales: horizontal ?
           { x:{ ticks:{ color:c.textMuted }, grid:{ color:c.gridLine }, beginAtZero:true }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } } :
           { x:{ ticks:{ color:c.textMuted, font:{size:10} }, grid:{ display:false } }, y:{ ticks:{ color:c.textMuted }, grid:{ color:c.gridLine }, beginAtZero:true } }
@@ -15545,10 +15644,15 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       return rows.filter(function(r){ return r._month_key===m && boolish(r.was_kb_referred); }).length;
     });
     if(!series.some(function(v){ return v>0; })){ emptyCanvas(canvas, 'No KB-referred tickets in range'); return; }
+    const DLkrt = window.ChartDataLabels;
     charts.chartKbReferralTrend = new Chart(canvas, {
       type:'line',
-      data:{ labels:labels, datasets:[{ label:'KB Referred', data:series, borderColor:c.accent, backgroundColor:c.accentGlow||'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2, fill:true }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      plugins: DLkrt ? [DLkrt] : [],
+      data:{ labels:labels, datasets:[{ label:'KB Referred', data:series, borderColor:c.accent, backgroundColor:c.accentGlow||'transparent', tension:0.35, pointRadius:2.5, borderWidth:2.2, fill:true,
+        datalabels: { display:true, align:'top', anchor:'end', clip:false, color:c.accent, font:{weight:'700',size:10}, formatter:function(v){ return v||''; } } }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:14 } },
+        plugins:{ legend:{ display:false } },
         scales:{ x:{ ticks:{ color:c.textMuted }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted, precision:0 }, grid:{ color:c.gridLine } } } }
     });
   }
@@ -18330,11 +18434,14 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const dist = topN(escalatedRows, 'escalation_type', 8);
     if(!dist.length){ emptyCanvas(canvas, 'No escalation type data'); return; }
     clearEmptyCanvas(canvas);
+    const DLet2 = window.ChartDataLabels;
     charts.chartEscType = new Chart(canvas, {
       type:'doughnut',
+      plugins: DLet2 ? [DLet2] : [],
       data:{ labels:dist.map(function(d){return d.label;}), datasets:[{ data:dist.map(function(d){return d.value;}), backgroundColor:c.palette, borderColor:c.surface, borderWidth:2 }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
-        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } } },
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } },
+          datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v; } } },
         onHover: hoverCursor,
         onClick: function(evt, elements, chart){
           if(!elements.length) return;
@@ -18356,10 +18463,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!dist.length){ emptyCanvas(canvas, 'No escalation reason data'); return; }
     clearEmptyCanvas(canvas);
     const data = dist.slice().reverse();
+    const DLer = window.ChartDataLabels;
     charts.chartEscReason = new Chart(canvas, {
       type:'bar',
+      plugins: DLer ? [DLer] : [],
       data:{ labels:data.map(function(d){return d.label;}), datasets:[{ data:data.map(function(d){return d.value;}), backgroundColor:c.accent, borderRadius:5, maxBarThickness:22 }] },
-      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } } },
         scales:{ x:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } },
         onHover: hoverCursor,
         onClick: function(evt, elements, chart){
@@ -18381,10 +18491,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const dist = topN(escalatedRows, 'priority', 8);
     if(!dist.length){ emptyCanvas(canvas, 'No priority data'); return; }
     clearEmptyCanvas(canvas);
+    const DLep = window.ChartDataLabels;
     charts.chartEscPriority = new Chart(canvas, {
       type:'bar',
+      plugins: DLep ? [DLep] : [],
       data:{ labels:dist.map(function(d){return d.label;}), datasets:[{ data:dist.map(function(d){return d.value;}), backgroundColor:c.warn, borderRadius:5, maxBarThickness:34 }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10.5}, formatter:function(v){ return v; } } },
         scales:{ x:{ ticks:{ color:c.textMuted }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } },
         onHover: hoverCursor,
         onClick: function(evt, elements, chart){
@@ -18412,13 +18525,18 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const counts = months.map(function(m){ return monthRowsByKey[m].filter(function(r){ return r._is_escalated; }).length; });
     const rates = months.map(function(m, i){ return monthRowsByKey[m].length ? +(counts[i]/monthRowsByKey[m].length*100).toFixed(1) : 0; });
 
+    const DLetr = window.ChartDataLabels;
     charts.chartEscTrend = new Chart(canvas, {
       type:'bar',
+      plugins: DLetr ? [DLetr] : [],
       data:{ labels:labels, datasets:[
-        { type:'bar', label:'Escalated Tickets', data:counts, backgroundColor:c.bad, borderRadius:5, maxBarThickness:30, yAxisID:'y' },
-        { type:'line', label:'Escalation Rate %', data:rates, borderColor:c.accent, backgroundColor:'transparent', tension:0.35, pointRadius:3, pointBackgroundColor:c.accent, borderWidth:2.2, yAxisID:'y1' }
+        { type:'bar', label:'Escalated Tickets', data:counts, backgroundColor:c.bad, borderRadius:5, maxBarThickness:30, yAxisID:'y',
+          datalabels: { anchor:'end', align:'end', clip:false, color:c.bad, font:{weight:'700',size:9.5}, formatter:function(v){ return v||''; } } },
+        { type:'line', label:'Escalation Rate %', data:rates, borderColor:c.accent, backgroundColor:'transparent', tension:0.35, pointRadius:3, pointBackgroundColor:c.accent, borderWidth:2.2, yAxisID:'y1',
+          datalabels: { display:true, align:'top', anchor:'end', clip:false, color:c.accent, font:{weight:'700',size:9.5}, formatter:function(v){ return v===null?'':v.toFixed(0)+'%'; } } }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:16 } },
         plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:10, font:{size:11} } } },
         scales:{
           x:{ ticks:{ color:c.textMuted }, grid:{ display:false } },
@@ -18436,10 +18554,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const dist = topN(escalatedRows, 'customer_name', 10).reverse();
     if(!dist.length){ emptyCanvas(canvas, 'No customer data'); return; }
     clearEmptyCanvas(canvas);
+    const DLec = window.ChartDataLabels;
     charts.chartEscCustomer = new Chart(canvas, {
       type:'bar',
+      plugins: DLec ? [DLec] : [],
       data:{ labels:dist.map(function(d){return d.label;}), datasets:[{ data:dist.map(function(d){return d.value;}), backgroundColor:c.bad, borderRadius:5, maxBarThickness:20 }] },
-      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } } },
         scales:{ x:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } },
         onHover: hoverCursor,
         onClick: function(evt, elements, chart){
@@ -18461,10 +18582,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const dist = topN(escalatedRows, 'assign_owner_name', 10).reverse();
     if(!dist.length){ emptyCanvas(canvas, 'No engineer data'); return; }
     clearEmptyCanvas(canvas);
+    const DLee = window.ChartDataLabels;
     charts.chartEscEngineer = new Chart(canvas, {
       type:'bar',
+      plugins: DLee ? [DLee] : [],
       data:{ labels:dist.map(function(d){return d.label;}), datasets:[{ data:dist.map(function(d){return d.value;}), backgroundColor:c.accent, borderRadius:5, maxBarThickness:20 }] },
-      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } } },
         scales:{ x:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } },
         onHover: hoverCursor,
         onClick: function(evt, elements, chart){
@@ -19825,13 +19949,18 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const t = buildCombinedTrend(rows);
     if(!t.labels.length){ emptyCanvas(canvas, 'No delegation events yet'); return; }
     clearEmptyCanvas(canvas);
+    const DLdt = window.ChartDataLabels;
     charts.chartDelegTrend = new Chart(canvas, {
       type:'line',
+      plugins: DLdt ? [DLdt] : [],
       data:{ labels:t.labels, datasets:[
-        { label:'L1 → L2', data:t.l1l2, borderColor:c.accent, backgroundColor:c.accent, tension:0.35, pointRadius:2 },
-        { label:'→ SME', data:t.l2sme, borderColor:c.accentDim, backgroundColor:c.accentDim, tension:0.35, pointRadius:2 }
+        { label:'L1 → L2', data:t.l1l2, borderColor:c.accent, backgroundColor:c.accent, tension:0.35, pointRadius:2,
+          datalabels: { display:true, align:'top', anchor:'end', clip:false, color:c.accent, font:{weight:'700',size:8.5}, formatter:function(v){ return v||''; } } },
+        { label:'→ SME', data:t.l2sme, borderColor:c.accentDim, backgroundColor:c.accentDim, tension:0.35, pointRadius:2,
+          datalabels: { display:true, align:'bottom', anchor:'start', clip:false, color:c.accentDim, font:{weight:'700',size:8.5}, formatter:function(v){ return v||''; } } }
       ]},
       options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:12, bottom:4 } },
         plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, font:{size:10.5} } } },
         scales:{ x:{ ticks:{ color:c.textMuted, font:{size:9.5}, maxRotation:0 }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } }
       }
@@ -19876,10 +20005,15 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const canvas = document.getElementById(canvasId);
     if(!trend.labels.length){ emptyCanvas(canvas, 'No delegation events yet'); return; }
     clearEmptyCanvas(canvas);
+    const DLtl = window.ChartDataLabels;
     charts[canvasId] = new Chart(canvas, {
       type:'line',
-      data:{ labels:trend.labels, datasets:[{ label:label, data:trend.values, borderColor:color, backgroundColor:color, tension:0.35, pointRadius:2, fill:false }] },
-      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      plugins: DLtl ? [DLtl] : [],
+      data:{ labels:trend.labels, datasets:[{ label:label, data:trend.values, borderColor:color, backgroundColor:color, tension:0.35, pointRadius:2, fill:false,
+        datalabels: { display:true, align:'top', anchor:'end', clip:false, color:color, font:{weight:'700',size:9}, formatter:function(v){ return v||''; } } }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:12 } },
+        plugins:{ legend:{ display:false } },
         scales:{ x:{ ticks:{ color:c.textMuted, font:{size:9.5}, maxRotation:0 }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } }
       }
     });
@@ -23434,9 +23568,13 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       clearEmptyState('chartProSlaStatus');
       const c = chartColors();
       const colorFor = { 'Breach (Open)':c.bad, 'Breach (Closed)':c.bad, 'At Risk':c.warn, 'Action Required':c.warn, 'Data Gap':c.accent, 'Not Evaluable':c.textMuted };
+      const DLpss = window.ChartDataLabels;
       charts.chartProSlaStatus = new Chart(document.getElementById('chartProSlaStatus'), {
-        type:'doughnut', data:{ labels:labels, datasets:[{ data:labels.map(function(l){return statusCounts[l];}), backgroundColor:labels.map(function(l){return colorFor[l]||c.accent;}), borderWidth:0 }] },
-        options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, font:{size:11} } } },
+        type:'doughnut', plugins: DLpss ? [DLpss] : [],
+        data:{ labels:labels, datasets:[{ data:labels.map(function(l){return statusCounts[l];}), backgroundColor:labels.map(function(l){return colorFor[l]||c.accent;}), borderWidth:0 }] },
+        options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+          plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, font:{size:11} } },
+            datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v; } } },
           onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
           onClick:function(evt, elements){
             if(!elements.length) return;
@@ -23523,9 +23661,12 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     if(!counts.some(function(c){ return c>0; })){ emptyState('chartProBottleneck', 'No bottlenecks currently flagged'); return; }
     clearEmptyState('chartProBottleneck');
     const c = chartColors();
+    const DLpb = window.ChartDataLabels;
     charts.chartProBottleneck = new Chart(document.getElementById('chartProBottleneck'), {
-      type:'bar', data:{ labels:tiers.map(function(t){ return t + ' (currently holding flagged tickets)'; }), datasets:[{ data:counts, backgroundColor:[c.good,c.warn,c.bad], borderRadius:5, maxBarThickness:60 }] },
-      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      type:'bar', plugins: DLpb ? [DLpb] : [],
+      data:{ labels:tiers.map(function(t){ return t + ' (currently holding flagged tickets)'; }), datasets:[{ data:counts, backgroundColor:[c.good,c.warn,c.bad], borderRadius:5, maxBarThickness:60 }] },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
+        datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:11}, formatter:function(v){ return v; } } },
         scales:{ x:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } }, y:{ ticks:{ color:c.textSecondary }, grid:{ display:false } } },
         onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
         onClick:function(evt, elements){
@@ -27872,6 +28013,7 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     return ms / 86400000;
   }
   let charts = {};
+  const DL = window.ChartDataLabels; // loaded via CDN, applied per-chart only (not globally registered)
   function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
   function chartColors(){
     const css = getComputedStyle(document.documentElement);
@@ -27882,8 +28024,10 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       palette: ['#22c55e','#f59e0b','#7C3AED','#ef4444','#06b6d4']
     };
   }
-  function kpiCard(icon, label, value, tone, sub){
-    return '<div class="kpi-card' + (tone?' tone-'+tone:'') + '"><div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div></div>' +
+  function kpiCard(icon, label, value, tone, sub, drillKey){
+    const clickable = !!drillKey;
+    return '<div class="kpi-card' + (tone?' tone-'+tone:'') + (clickable?' clickable':'') + '"' + (clickable?' data-drill="'+drillKey+'" title="Click for detail & export"':'') + '>' +
+      '<div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div>' + (clickable?'<i class="fa-solid fa-arrow-up-right-from-square kc-drill-icon"></i>':'') + '</div>' +
       '<div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div>' +
       (sub ? '<div class="kc-sub">' + sub + '</div>' : '') + '</div>';
   }
@@ -28004,8 +28148,10 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
   const uiState = { topN: 10, custRankBy: 'customerWait', engRankBy: 'teamWorking' };
   let lastComputed = [], lastCustAgg = [], lastEngAgg = [];
 
+  let stageTimeKpiDrillRows = {};
   function renderStageTimeKpis(computed){
     const withWaitData = computed.filter(function(c){ return c.hasAnyStageData; });
+    const noWaitData = computed.filter(function(c){ return !c.hasAnyStageData; });
     const avg = function(arr, sel){ return arr.length ? arr.reduce(function(a,c){ return a+sel(c); },0)/arr.length : null; };
     const avgTotal = avg(computed, function(c){ return c.totalElapsed; });
     const avgTeam = avg(computed, function(c){ return c.teamWorking; });
@@ -28013,16 +28159,34 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const totalElapsedSum = computed.reduce(function(a,c){ return a+c.totalElapsed; },0);
     const totalCustSum = computed.reduce(function(a,c){ return a+c.customerSideTime; },0);
     const pctCaused = totalElapsedSum > 0 ? (totalCustSum/totalElapsedSum*100) : null;
-    const noStageDataCount = computed.length - withWaitData.length;
+    const noStageDataCount = noWaitData.length;
+
+    stageTimeKpiDrillRows = {
+      stAll: computed, stWithWait: withWaitData, stNoWait: noWaitData
+    };
 
     document.getElementById('stageTimeKpiGrid').innerHTML = [
-      kpiCard('fa-list', 'Tickets Analyzed', fmtN(computed.length), null, 'Have a valid creation timestamp'),
-      kpiCard('fa-clock', 'Avg Total Elapsed', avgTotal!==null?fmtN(avgTotal,1)+'d':'—', null, 'Creation to resolution / now'),
-      kpiCard('fa-user-gear', 'Avg True Team Working Time', avgTeam!==null?fmtN(avgTeam,1)+'d':'—', 'good', 'Customer-side wait removed'),
-      kpiCard('fa-hourglass-half', 'Avg Customer-Side Wait', avgCust!==null?fmtN(avgCust,1)+'d':'—', 'warn', 'Tickets with \u22651 wait window'),
-      kpiCard('fa-percent', '% of Time Customer-Caused', pctCaused!==null?fmtPct(pctCaused):'—', 'bad', 'Aggregate across all tickets'),
-      kpiCard('fa-circle-question', 'No Stage Data Recorded', fmtN(noStageDataCount), null, 'Still counted in Total / Team Working')
+      kpiCard('fa-list', 'Tickets Analyzed', fmtN(computed.length), null, 'Have a valid creation timestamp', 'stAll'),
+      kpiCard('fa-clock', 'Avg Total Elapsed', avgTotal!==null?fmtN(avgTotal,1)+'d':'—', null, 'Creation to resolution / now', 'stAll'),
+      kpiCard('fa-user-gear', 'Avg True Team Working Time', avgTeam!==null?fmtN(avgTeam,1)+'d':'—', 'good', 'Customer-side wait removed', 'stAll'),
+      kpiCard('fa-hourglass-half', 'Avg Customer-Side Wait', avgCust!==null?fmtN(avgCust,1)+'d':'—', 'warn', 'Tickets with \u22651 wait window', 'stWithWait'),
+      kpiCard('fa-percent', '% of Time Customer-Caused', pctCaused!==null?fmtPct(pctCaused):'—', 'bad', 'Aggregate across all tickets', 'stAll'),
+      kpiCard('fa-circle-question', 'No Stage Data Recorded', fmtN(noStageDataCount), null, 'Still counted in Total / Team Working', 'stNoWait')
     ].join('');
+  }
+  function wireKpiDrill(){
+    const grid = document.getElementById('stageTimeKpiGrid');
+    if(!grid || grid._wired) return;
+    grid._wired = true;
+    grid.addEventListener('click', function(e){
+      const card = e.target.closest('.kpi-card.clickable');
+      if(!card) return;
+      const key = card.getAttribute('data-drill');
+      const list = stageTimeKpiDrillRows[key];
+      if(!list) return;
+      const label = card.querySelector('.kc-label').textContent;
+      openStageTimeDrill('Stage-Time — ' + label, list, 'StageTime_' + key);
+    });
   }
 
   // ---- Drill-down ----
@@ -28077,13 +28241,22 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const monthLabel = function(m){ const p=m.split('-'); return new Date(+p[0], +p[1]-1, 1).toLocaleString('en-US',{month:'short',year:'2-digit'}); };
     charts.trend = new Chart(canvas, {
       type:'bar',
+      plugins: DL ? [DL] : [],
       data:{ labels: months.map(monthLabel), datasets:[
         { label:'True Team Working (avg d)', data: months.map(function(m){ return avgArr(byMonth[m].team); }), backgroundColor:'#22c55e', stack:'s' },
         { label:'Customer-Side Wait (avg d)', data: months.map(function(m){ return avgArr(byMonth[m].cust); }), backgroundColor:'#f59e0b', stack:'s' }
       ]},
       options:{ responsive:true, maintainAspectRatio:false, onHover: function(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
         scales:{ x:{ stacked:true }, y:{ stacked:true, beginAtZero:true, title:{ display:true, text:'Avg days' } } },
-        plugins:{ legend:{ position:'bottom' } },
+        plugins:{ legend:{ position:'bottom' },
+          datalabels: { color:'#fff', font:{ weight:'700', size:10 }, textStrokeColor:'rgba(0,0,0,0.35)', textStrokeWidth:2, clip:false,
+            formatter: function(value, ctx){
+              if(!value) return '';
+              let stackTotal = 0;
+              ctx.chart.data.datasets.forEach(function(ds){ stackTotal += (ds.data[ctx.dataIndex]||0); });
+              const pct = stackTotal ? (value/stackTotal*100).toFixed(0) : 0;
+              return value.toFixed(1) + 'd (' + pct + '%)';
+            } } },
         onClick: function(evt, elements){
           if(!elements.length) return;
           const m = months[elements[0].index];
@@ -28109,10 +28282,18 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const c = chartColors();
     charts.waitmix = new Chart(canvas, {
       type:'doughnut',
+      plugins: DL ? [DL] : [],
       data:{ labels:keys.map(function(k){ return WAIT_LABELS[k]; }), datasets:[{ data:keys.map(function(k){ return totals[k]; }), backgroundColor:c.palette, borderColor:c.surface, borderWidth:2 }] },
       options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
         onHover: function(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
-        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11} } } },
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:11} } },
+          datalabels: { color:'#fff', font:{ weight:'700', size:10.5 }, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', clip:false,
+            formatter: function(value, ctx){
+              if(!value) return '';
+              const total = ctx.dataset.data.reduce(function(a,b){ return a+(b||0); }, 0);
+              const pct = total ? (value/total*100).toFixed(0) : 0;
+              return value.toFixed(1) + 'd (' + pct + '%)';
+            } } },
         onClick: function(evt, elements){
           if(!elements.length) return;
           const k = keys[elements[0].index];
@@ -28122,7 +28303,7 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     });
   }
 
-  function renderTopChart(canvasId, list, valueSel, valueLabel, onBarClick){
+  function renderTopChart(canvasId, list, valueSel, valueLabel, onBarClick, isPctMetric){
     const canvas = document.getElementById(canvasId);
     const id = canvasId;
     destroyChart(id);
@@ -28131,10 +28312,20 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const c = chartColors();
     charts[id] = new Chart(canvas, {
       type:'bar',
+      plugins: DL ? [DL] : [],
       data:{ labels: list.map(function(g){ return g.key; }), datasets:[{ label:valueLabel, data:list.map(valueSel), backgroundColor:c.palette[2] }] },
       options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
         onHover: function(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
-        plugins:{ legend:{ display:false } }, scales:{ x:{ beginAtZero:true } },
+        plugins:{ legend:{ display:false },
+          datalabels: { color:c.textSecondary, font:{ weight:'700', size:10 }, anchor:'end', align:'end', clip:false,
+            formatter: function(value, ctx){
+              if(value === null || value === undefined) return '';
+              if(isPctMetric) return value.toFixed(1) + '%';
+              const total = ctx.dataset.data.reduce(function(a,b){ return a+(b||0); }, 0);
+              const pct = total ? (value/total*100).toFixed(0) : 0;
+              return fmtN(value,1) + ' (' + pct + '%)';
+            } } },
+        scales:{ x:{ beginAtZero:true } },
         onClick: function(evt, elements){
           if(!elements.length) return;
           onBarClick(list[elements[0].index]);
@@ -28172,7 +28363,7 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
 
     renderTopChart('chartStageTimeTopEng', top, RANK_FIELDS[uiState.engRankBy], 'Engineers', function(g){
       openStageTimeDrill('Stage-Time — ' + g.key, g.records, 'StageTime_Engineer_' + g.key);
-    });
+    }, uiState.engRankBy === 'pctCaused');
 
     document.querySelector('#stageTimeEngineerTable tbody').innerHTML = top.map(function(g){
       return '<tr class="row-clickable" data-drill="engineer" data-key="' + esc(g.key) + '"><td>' + esc(g.key) + '</td><td>' + esc(g.extra||'—') + '</td><td>' + fmtN(g.count) + '</td>' +
@@ -28320,6 +28511,7 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     renderStageTimeNotes();
 
     wireControls();
+    wireKpiDrill();
     wireExport('stageTimeExportBtn');
     wireTicketExport('stageTimeTicketExportBtn');
   }
@@ -28356,14 +28548,17 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     return isNaN(d.getTime()) ? null : d;
   }
   let charts = {};
+  const DL = window.ChartDataLabels; // loaded via CDN, applied per-chart only (not globally registered)
   function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
   function chartColors(){
     const css = getComputedStyle(document.documentElement);
     const read = function(name){ return css.getPropertyValue(name).trim(); };
     return { surface: read('--bg-surface'), palette: ['#22c55e','#f59e0b','#7C3AED','#ef4444','#06b6d4'] };
   }
-  function kpiCard(icon, label, value, tone, sub){
-    return '<div class="kpi-card' + (tone?' tone-'+tone:'') + '"><div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div></div>' +
+  function kpiCard(icon, label, value, tone, sub, drillKey){
+    const clickable = !!drillKey;
+    return '<div class="kpi-card' + (tone?' tone-'+tone:'') + (clickable?' clickable':'') + '"' + (clickable?' data-drill="'+drillKey+'" title="Click for detail & export"':'') + '>' +
+      '<div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div>' + (clickable?'<i class="fa-solid fa-arrow-up-right-from-square kc-drill-icon"></i>':'') + '</div>' +
       '<div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div>' +
       (sub ? '<div class="kc-sub">' + sub + '</div>' : '') + '</div>';
   }
@@ -28427,19 +28622,40 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     };
   }
 
+  let complexCalKpiDrillRows = {};
   function renderComplexCalKpis(records){
     const vc = verdictCounts(records);
     const reasonCounts = {};
+    const matchedRecs = records.filter(function(x){ return x.verdict === 'Matched'; });
+    const underRecs = records.filter(function(x){ return x.verdict === 'Under-Called'; });
+    const overRecs = records.filter(function(x){ return x.verdict === 'Over-Called'; });
     records.forEach(function(x){ if(x.verdict !== 'Matched' && x.reason){ reasonCounts[x.reason] = (reasonCounts[x.reason]||0)+1; } });
     const topReason = Object.keys(reasonCounts).sort(function(a,b){ return reasonCounts[b]-reasonCounts[a]; })[0];
+    const topReasonRecs = topReason ? records.filter(function(x){ return x.reason === topReason; }) : [];
+
+    complexCalKpiDrillRows = { ccAll: records, ccMatched: matchedRecs, ccUnder: underRecs, ccOver: overRecs, ccTopReason: topReasonRecs };
 
     document.getElementById('complexCalKpiGrid').innerHTML = [
-      kpiCard('fa-list-check', 'Assessments With Calibration Data', fmtN(vc.total), null, 'Tier calls with a recognized final complexity to compare'),
-      kpiCard('fa-check', 'Matched %', vc.total?fmtPct(vc.matched/vc.total*100):'—', 'good', fmtN(vc.matched) + ' of ' + fmtN(vc.total)),
-      kpiCard('fa-arrow-down', 'Under-Called %', vc.total?fmtPct(vc.under/vc.total*100):'—', 'warn', 'Assigned lower than it resolved at'),
-      kpiCard('fa-arrow-up', 'Over-Called %', vc.total?fmtPct(vc.over/vc.total*100):'—', 'bad', 'Assigned higher than it resolved at'),
-      kpiCard('fa-comment-dots', 'Most Common Mismatch Reason', topReason ? esc(topReason) : '—', null, topReason ? fmtN(reasonCounts[topReason]) + ' occurrences' : 'No reasons on file')
+      kpiCard('fa-list-check', 'Assessments With Calibration Data', fmtN(vc.total), null, 'Tier calls with a recognized final complexity to compare', 'ccAll'),
+      kpiCard('fa-check', 'Matched %', vc.total?fmtPct(vc.matched/vc.total*100):'—', 'good', fmtN(vc.matched) + ' of ' + fmtN(vc.total), 'ccMatched'),
+      kpiCard('fa-arrow-down', 'Under-Called %', vc.total?fmtPct(vc.under/vc.total*100):'—', 'warn', 'Assigned lower than it resolved at', 'ccUnder'),
+      kpiCard('fa-arrow-up', 'Over-Called %', vc.total?fmtPct(vc.over/vc.total*100):'—', 'bad', 'Assigned higher than it resolved at', 'ccOver'),
+      kpiCard('fa-comment-dots', 'Most Common Mismatch Reason', topReason ? esc(topReason) : '—', null, topReason ? fmtN(reasonCounts[topReason]) + ' occurrences' : 'No reasons on file', topReason ? 'ccTopReason' : null)
     ].join('');
+  }
+  function wireComplexCalKpiDrill(){
+    const grid = document.getElementById('complexCalKpiGrid');
+    if(!grid || grid._wired) return;
+    grid._wired = true;
+    grid.addEventListener('click', function(e){
+      const card = e.target.closest('.kpi-card.clickable');
+      if(!card) return;
+      const key = card.getAttribute('data-drill');
+      const list = complexCalKpiDrillRows[key];
+      if(!list) return;
+      const label = card.querySelector('.kc-label').textContent;
+      openComplexCalDrill('Complexity Calibration — ' + label, list, 'ComplexCal_' + key);
+    });
   }
 
   // ---- Drill-down ----
@@ -28480,8 +28696,18 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     });
     charts.bytier = new Chart(canvas, {
       type:'bar',
+      plugins: DL ? [DL] : [],
       data:{ labels:tiers, datasets:datasets },
-      options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true} }, plugins:{ legend:{position:'bottom'} },
+      options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true} },
+        plugins:{ legend:{position:'bottom'},
+          datalabels: { color:'#fff', font:{ weight:'700', size:10 }, textStrokeColor:'rgba(0,0,0,0.35)', textStrokeWidth:2, clip:false,
+            formatter: function(value, ctx){
+              if(!value) return '';
+              let stackTotal = 0;
+              ctx.chart.data.datasets.forEach(function(ds){ stackTotal += (ds.data[ctx.dataIndex]||0); });
+              const pct = stackTotal ? (value/stackTotal*100).toFixed(0) : 0;
+              return value + ' (' + pct + '%)';
+            } } },
         onHover: function(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
         onClick: function(evt, elements){
           if(!elements.length) return;
@@ -28504,8 +28730,16 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     const c = chartColors();
     charts.reasons = new Chart(canvas, {
       type:'bar',
+      plugins: DL ? [DL] : [],
       data:{ labels:top, datasets:[{ label:'Occurrences', data:top.map(function(t){ return byReason[t].length; }), backgroundColor:c.palette[3] }] },
-      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales:{ x:{beginAtZero:true} },
+      options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false},
+          datalabels: { color:c.textSecondary, font:{ weight:'700', size:10 }, anchor:'end', align:'end', clip:false,
+            formatter: function(value, ctx){
+              if(!value) return '';
+              const total = ctx.dataset.data.reduce(function(a,b){ return a+(b||0); }, 0);
+              const pct = total ? (value/total*100).toFixed(0) : 0;
+              return value + ' (' + pct + '%)';
+            } } }, scales:{ x:{beginAtZero:true} },
         onHover: function(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
         onClick: function(evt, elements){
           if(!elements.length) return;
@@ -28542,9 +28776,18 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     });
     charts.trend = new Chart(canvas, {
       type:'bar',
+      plugins: DL ? [DL] : [],
       data:{ labels: months.map(monthLabel), datasets:datasets },
       options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true, max:100, title:{display:true,text:'%'} } },
-        plugins:{ legend:{position:'bottom'} },
+        plugins:{ legend:{position:'bottom'},
+          datalabels: { color:'#fff', font:{ weight:'700', size:9.5 }, textStrokeColor:'rgba(0,0,0,0.35)', textStrokeWidth:2, clip:false,
+            formatter: function(value, ctx){
+              if(!value) return '';
+              const m = months[ctx.dataIndex];
+              const v = verdicts[ctx.datasetIndex];
+              const count = byMonth[m][v].length;
+              return count + ' (' + value.toFixed(0) + '%)';
+            } } },
         onHover: function(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
         onClick: function(evt, elements){
           if(!elements.length) return;
@@ -28588,8 +28831,18 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
       });
       charts.byfeature = new Chart(canvas, {
         type:'bar',
+        plugins: DL ? [DL] : [],
         data:{ labels: top.map(function(f){ return f.feature; }), datasets:datasets },
-        options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true} }, plugins:{ legend:{position:'bottom'} },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true} },
+          plugins:{ legend:{position:'bottom'},
+            datalabels: { color:'#fff', font:{ weight:'700', size:9.5 }, textStrokeColor:'rgba(0,0,0,0.35)', textStrokeWidth:2, clip:false,
+              formatter: function(value, ctx){
+                if(!value) return '';
+                let stackTotal = 0;
+                ctx.chart.data.datasets.forEach(function(ds){ stackTotal += (ds.data[ctx.dataIndex]||0); });
+                const pct = stackTotal ? (value/stackTotal*100).toFixed(0) : 0;
+                return value + ' (' + pct + '%)';
+              } } },
           onHover: function(evt, els){ evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
           onClick: function(evt, elements){
             if(!elements.length) return;
@@ -28774,6 +29027,7 @@ footer.eks-note{ padding:10px 16px 20px; font-size:11.5px; color:var(--eks-ink-m
     wireExport('complexCalExportBtn');
     wireTicketExport('complexCalTicketExportBtn');
     wireFeatureTopN();
+    wireComplexCalKpiDrill();
     wireRowDrillEngineer();
     wireRowDrillFeature();
     wireRowDrillTicket();
