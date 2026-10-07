@@ -128,6 +128,21 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
   .title-block .sub{color:var(--ink-dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   @media(max-width:900px){ .brand-row{flex-wrap:wrap;} .title-block{flex-basis:100%;order:3;} }
+
+  /* ---- #1 Smart Search: primary, attention-grabbing (brand gradient ring + soft glow), still calm ---- */
+  .smart-search{
+    flex:0 1 330px !important; max-width:330px !important; padding:3px 10px !important; gap:6px !important; border:2px solid transparent !important; border-radius:999px !important;
+    background:linear-gradient(var(--panel),var(--panel)) padding-box, var(--brand-grad) border-box !important;
+    box-shadow:0 1px 8px rgba(86,10,145,.22), 0 0 0 3px rgba(86,10,145,.06);
+    transition:box-shadow .18s ease, transform .18s ease;
+  }
+  .smart-search:hover{ box-shadow:0 4px 18px rgba(86,10,145,.30), 0 0 0 5px rgba(86,10,145,.09); }
+  .smart-search:focus-within{ border-color:transparent !important; box-shadow:0 4px 22px rgba(86,10,145,.38), 0 0 0 6px rgba(86,10,145,.14); transform:translateY(-1px); }
+  .smart-search > i{ color:#fff !important; background:var(--brand-grad); width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px !important; }
+  .smart-search input{ font-size:12px !important; font-weight:500; color:var(--ink) !important; }
+  .smart-search input::placeholder{ color:var(--purple-soft) !important; opacity:.85; font-weight:600; }
+  /* ---- #2 cleaner title + latest-data blocks: no background ---- */
+  .title-block, .meta.data-chip{ background:transparent !important; border:none !important; box-shadow:none !important; }
   .title-row{padding-bottom:14px;}
   .title-row h1{
     font-size:19px;font-weight:700;margin:0 0 3px;letter-spacing:0.1px;
@@ -1436,7 +1451,7 @@
 .dd-btn-primary:hover{ filter:brightness(.95); transform:translateY(-1px); }
 .dd-btn-ghost{ background:var(--panel-2); color:var(--ink-dim); border:1px solid var(--line); font-weight:600; }
 .dd-btn-ghost:hover{ background:var(--line); color:var(--purple); border-color:var(--purple-soft); }
-#govDetailOverlay{ z-index:210; }
+#govDetailOverlay{ z-index:1300; }
 
 /* ===== Reference design-token aliases (used verbatim by the faithful Team Level Metrics /
    KPI Snapshot / Global Filter ports; this app is light-theme only) ===== */
@@ -2874,7 +2889,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
   <div class="ssb-group"><i class="fa-solid fa-compass"></i><span class="ssb-tag">Reviewing:</span><span class="ssb-value" id="ssbSectionName">Overview</span></div>
     <div class="smart-search" id="smartSearchWrap">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="smartSearchInput" placeholder="Search ticket ID, customer, engineer, title…" autocomplete="off">
+      <input type="text" id="smartSearchInput" placeholder="Smart Search — ticket, customer, engineer…" autocomplete="off">
       <div class="smart-search-results" id="smartSearchResults" style="display:none;"></div>
     </div>
   <div class="viewing-range-bar" id="viewingRangeBar" style="display:none;"></div>
@@ -2915,7 +2930,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             <!-- Add your Excel file names from the MSPData folder below.
                  Each option's value is the file's path relative to this
                  HTML file, and must be committed to the same repo. -->
-           <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
+               <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
 
             <!-- Add more <option> entries here, following the same
                  MSPData/filename.xlsx pattern, e.g.:
@@ -9423,6 +9438,25 @@ function closeDelegTimeline(){ document.getElementById('delegTimelineOverlay').c
 document.getElementById('delegTimelineCloseBtn').addEventListener('click', closeDelegTimeline);
 document.getElementById('delegTimelineOverlay').addEventListener('click', (e) => { if(e.target.id==='delegTimelineOverlay') closeDelegTimeline(); });
 
+// Catch-all: any table row / ticket-number cell anywhere (page tables, drill-down popups, ported
+// reference modals) whose cells carry a ticket id opens the same popup, even where that table never
+// had its own click handler. Existing handlers route to sappOpenTicket too; duplicates are ignored.
+document.addEventListener('click', function(e){
+  const t = e.target;
+  if(!t || !t.closest) return;
+  if(t.closest('button, a, input, select, textarea, label, th, thead, .dataTables_paginate, .pagination, #govDetailOverlay, .tkd-strip')) return;
+  const tr = t.closest('tr');
+  if(!tr || !tr.closest('table')) return;
+  const cells = tr.children;
+  for(let i=0;i<cells.length && i<8;i++){
+    const txt = (cells[i].textContent||'').trim();
+    if(SAPP_TICKET_ID_RE.test(txt)){
+      if(!sappFindTicketRow(txt)) return;
+      sappOpenTicket(txt);
+      return;
+    }
+  }
+}, false);
 function closeGovDetail(){ document.getElementById('govDetailOverlay').classList.remove('open'); }
 document.getElementById('govDetailCloseBtn').addEventListener('click', closeGovDetail);
 document.getElementById('govDetailOverlay').addEventListener('click', (e) => { if(e.target.id==='govDetailOverlay') closeGovDetail(); });
@@ -11605,7 +11639,6 @@ function buildTimelineSteps(r){
 }
 function openDelegTimeline(r){
   const steps = buildTimelineSteps(r);
-  document.getElementById('delegTimelineTitle').textContent = `${r.ticket_id||''} — ${sappTruncate(r.title,70)}`;
   let stepsHtml = '<div class="tl-steps">';
   steps.forEach((s,i)=>{
     stepsHtml += `<div class="tl-step">
@@ -11614,24 +11647,8 @@ function openDelegTimeline(r){
     </div>`;
   });
   stepsHtml += '</div>';
-
-  const statsHtml = `<div class="tl-stats-strip">
-    <div class="tl-stat">Ownership Journey<b>${esc(r._d_journey)}</b></div>
-    <div class="tl-stat">Current Level<b>${esc(r._d_level)}</b></div>
-    <div class="tl-stat">Current Owner<b>${esc(r._d_levelEngineer||'')}</b></div>
-    <div class="tl-stat" title="24/7 calendar days since creation">Total Age (24/7)<b>${(r.cda_age_days!==null&&r.cda_age_days!==undefined)?r.cda_age_days.toFixed(1)+'d':(r.age_days===null?'—':r.age_days+'d')}</b></div>
-    <div class="tl-stat">Delegation Count<b>${r._d_delegationCount}</b></div>
-    <div class="tl-stat">Delegation SLA<b>${esc(r._d_slaStatus||'—')}</b></div>
-  </div>`;
-
-  let detailHtml = '<div class="tl-detail-grid">';
-  DTL_DETAIL_FIELDS.forEach(f=>{
-    detailHtml += `<div class="tl-detail-item"><b>${esc(f.label)}</b><span>${esc(r[f.key]||'—')}</span></div>`;
-  });
-  detailHtml += '</div>';
-
-  document.getElementById('delegTimelineBody').innerHTML = statsHtml + stepsHtml + detailHtml;
-  document.getElementById('delegTimelineOverlay').classList.add('open');
+  const extra = '<div class="tkd-sec"><div class="tkd-sec-h"><i class="fa-solid fa-route"></i><span class="tkd-sec-t">Delegation Timeline · '+esc(r._d_journey||'')+'</span></div><div style="padding:12px 16px;">'+stepsHtml+'</div></div>';
+  sappOpenTicket(r, extra);
 }
 
 // ---------------- Excel exports (Overview + Tier) ----------------
@@ -12814,10 +12831,36 @@ function tkdRenderBody(row){
 // out in the quick-glance stats strip above are skipped here so they aren't repeated twice.
 const GOV_DETAIL_STATS_KEYS = new Set(['ticket_id','title','current_status','age_days','aging_bucket','creation_time','closed_time','was_kb_referred','kb_decision']);
 let CURRENT_GOV_DETAIL_ROW = null;
-function openGovDetail(r){
+// ONE ticket popup for the whole dashboard: every ticket number / ticket row / drill-down row, on
+// every page, routes here (id string, or any row object carrying ticket_id/external_id/ticketId).
+// The popup is always built from the full gov_rows record so every page shows the same details.
+let SAPP_TICKET_INDEX = null, SAPP_TICKET_INDEX_SRC = null, SAPP_LAST_TICKET_OPEN = {id:null, t:0};
+const SAPP_TICKET_ID_RE = /^\d{4}-\d{2}-\d{2}:\d+$/;
+function sappTicketIdOf(x){
+  if(x===null || x===undefined) return null;
+  if(typeof x==='string') return x.trim();
+  return x.ticket_id || x.external_id || x.ticketId || x.id || (x._raw && (x._raw.ticket_id||x._raw.external_id)) || null;
+}
+function sappFindTicketRow(id){
+  const rows = (typeof DATA!=='undefined' && DATA && DATA.gov_rows) || [];
+  if(SAPP_TICKET_INDEX_SRC !== rows){ SAPP_TICKET_INDEX = new Map(); rows.forEach(r=>SAPP_TICKET_INDEX.set(r.ticket_id, r)); SAPP_TICKET_INDEX_SRC = rows; }
+  return SAPP_TICKET_INDEX.get(id) || null;
+}
+function sappOpenTicket(arg, extraHtml){
+  const id = sappTicketIdOf(arg);
+  const now = Date.now();
+  if(id && SAPP_LAST_TICKET_OPEN.id===id && now-SAPP_LAST_TICKET_OPEN.t<400) return;   // several handlers can fire for one click
+  SAPP_LAST_TICKET_OPEN = {id, t:now};
+  let row = id ? sappFindTicketRow(id) : null;
+  if(!row && arg && typeof arg==='object') row = (arg._raw && arg._raw.ticket_id) ? arg._raw : arg;
+  if(!row) return;
+  openGovDetail(row, extraHtml);
+}
+function openGovDetail(r, extraHtml){
+  SAPP_LAST_TICKET_OPEN = {id:r.ticket_id, t:Date.now()};
   CURRENT_GOV_DETAIL_ROW = r;
   document.getElementById('govDetailTitle').textContent = `${r.ticket_id||''} — ${gTruncate(r.title,70)}`;
-  document.getElementById('govDetailBody').innerHTML = tkdRenderBody(r);
+  document.getElementById('govDetailBody').innerHTML = tkdRenderBody(r) + (extraHtml||'');
   document.getElementById('govDetailOverlay').classList.add('open');
 }
 
@@ -23028,20 +23071,12 @@ async function drExportWorkbook(sheets, filename){
     return '<div class="tdg-item"><div class="tdl">' + esc(label) + '</div><div class="tdv">' + (val !== null && val !== undefined && val !== '' ? esc(val) : '<span style="color:var(--ink-faint);">—</span>') + '</div></div>';
   }
   function drOpenTicketDetail(item){
-    document.getElementById('proTicketDetailTitle').textContent = 'Ticket Detail — ' + item.ticketId;
     const p = item.primary;
     const additionalHtml = item.findings.slice(1).map(function(f){
       return '<div class="pro-risk-item"><span class="pill ' + drStatusPillClass(f.status) + '">' + esc(f.status) + '</span> <b>' + esc(f.ruleId) + '</b> · ' + esc(f.name) +
         ' <span style="color:var(--ink-faint);">(' + esc(f.stage) + ' · ' + esc(f.severity) + ' · ' + esc(f.breachTier) + ' / ' + esc(f.breachOwner) + ')</span>' + (f.why ? ' — ' + esc(f.why) : '') + '</div>';
     }).join('') || '<div style="color:var(--ink-faint);font-size:12.5px;">None.</div>';
     const html =
-      '<div class="ticket-detail-grid" style="margin-bottom:18px;">' +
-        drTdItem('Ticket ID', item.ticketId) + drTdItem('Title', item.row.title) + drTdItem('Customer', item.customer) +
-        drTdItem('Tower', item.tower) + drTdItem('Team', item.team) +
-        drTdItem('Owner', item.owner) + drTdItem('L1 Team', item.l1Team) + drTdItem('Current Tier', item.tier) + drTdItem('Tier Path', item.tierPath) +
-        drTdItem('Status', item.status) + drTdItem('Priority', item.priorityField) + drTdItem('Severity', item.severity) +
-        drTdItem('Age', item.ageDays === null ? null : item.ageDays + ' days') +
-      '</div>' +
       (p ? (
         '<div class="pro-detail-block pro-detail-primary"><h6><i class="fa-solid fa-circle-exclamation"></i> Primary Issue: ' + esc(p.ruleId) + ' · ' + esc(p.name) + ' <span class="pill ' + drStatusPillClass(p.status) + '" style="margin-left:8px;">' + esc(p.status) + '</span></h6>' +
         '<p>' + esc(p.why || '') + '</p>' +
@@ -23054,8 +23089,7 @@ async function drExportWorkbook(sheets, filename){
         '</div>'
       ) : '<div class="pro-detail-block"><p style="color:var(--ink-faint);">No deviations flagged for this ticket.</p></div>') +
       '<div class="pro-detail-block"><h6><i class="fa-solid fa-list"></i> Additional Deviations (' + Math.max(0, item.findings.length - 1) + ')</h6>' + additionalHtml + '</div>';
-    document.getElementById('proTicketDetailBody').innerHTML = html;
-    document.getElementById('proTicketDetailOverlay').classList.add('open');
+    sappOpenTicket(item.ticketId || item, '<div class="tkd-sec tkd-s-bad"><div class="tkd-sec-h"><i class="fa-solid fa-clipboard-check"></i><span class="tkd-sec-t">Proactive Review · Why flagged &amp; action</span></div><div style="padding:12px 16px;">' + html + '</div></div>');
   }
 
   // Generic table wiring: rows already rendered as <tr data-idx="i">…</tr>,
@@ -26014,7 +26048,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
     });
     new bootstrap.Modal(modalEl).show();
   }
-  REFGOV.OpenTicketDetail = openTicketDetail; // exposed so later modules (Engineer/SLA/Escalation/Aging) can reuse this modal
+  REFGOV.OpenTicketDetail = function(row){ sappOpenTicket(row); }; // exposed so later modules (Engineer/SLA/Escalation/Aging) can reuse this modal
 
   // Exports EVERY available field on the ticket (not just the curated
   // ~30-field grid shown on screen) — the curated fields first in their
@@ -26182,7 +26216,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
     $tbl.DataTable({ pageLength:6, lengthChange:false, order:[[7,'desc']], language:{ search:'', searchPlaceholder:'Search tickets…' } });
     $tbl.find('tbody').off('click').on('click', 'tr', function(){
       const idx = +$(this).attr('data-ridx');
-      openTicketDetail(activeModalTickets[idx]);
+      sappOpenTicket(activeModalTickets[idx]);
     });
 
     document.getElementById('custModalCount').textContent = fmtN(c.rows.length) + ' ticket' + (c.rows.length===1?'':'s');
