@@ -630,6 +630,13 @@
   .tkd-empty-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
   .tkd-empty-list span{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--panel-2);color:var(--ink-faint);}
   .tkd-host{display:block !important;}
+  .set-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;}
+  .set-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer;font-size:13px;color:var(--ink);}
+  .set-item i{color:var(--ink-faint);width:16px;text-align:center;}
+  .set-item.on{border-color:var(--purple-soft);background:rgba(86,10,145,0.05);} .set-item.on i{color:var(--purple-soft);}
+  .set-item input{accent-color:var(--purple);width:16px;height:16px;}
+  .set-label{flex:1;font-weight:600;}
+  .set-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--good);background:rgba(31,157,99,.12);border-radius:8px;padding:1px 7px;}
   .tl-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;margin-top:16px;font-size:12px;}
   .tl-detail-grid .tl-detail-item b{color:var(--ink);font-weight:600;display:block;font-size:11px;}
   .tl-detail-grid .tl-detail-item span{color:var(--ink-dim);}
@@ -2698,7 +2705,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
         <span class="nav-section-label">Executive Summary</span>
       </div>
       <div class="nav-section-body" id="navSectionBody-execsummary">
-        <a class="nav-item" data-view="execsummary" title="Executive Summary"><i class="fa-solid fa-chart-pie"></i><span class="nav-label">Executive Summary</span></a>
+        <a class="nav-item active" data-view="execsummary" title="Executive Summary"><i class="fa-solid fa-chart-pie"></i><span class="nav-label">Executive Summary</span></a>
       </div>
     </div>
 
@@ -2716,7 +2723,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
         <span class="nav-section-label">Support Analytics</span>
       </div>
       <div class="nav-section-body" id="navSectionBody-supportanalytics">
-        <a class="nav-item active" data-view="overview" title="Overview"><i class="fa-solid fa-grip"></i><span class="nav-label">Overview</span></a>
+        <a class="nav-item" data-view="overview" title="Overview"><i class="fa-solid fa-grip"></i><span class="nav-label">Overview</span></a>
         <a class="nav-item" data-view="engineers" title="Team / Engineer"><i class="fa-solid fa-users"></i><span class="nav-label">Team / Engineer</span></a>
         <a class="nav-item" data-view="towercust" title="Tower / Customer"><i class="fa-solid fa-building"></i><span class="nav-label">Tower / Customer</span></a>
         <a class="nav-item" data-view="stagetime" title="Stage-Time Breakdown"><i class="fa-solid fa-business-time"></i><span class="nav-label">Stage-Time Breakdown</span></a>
@@ -2768,6 +2775,15 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
       <div class="nav-section-body" id="navSectionBody-knowledge">
         <a class="nav-item" data-view="kb" title="Knowledge Base"><i class="fa-solid fa-book"></i><span class="nav-label">Knowledge Base</span></a>
         <a class="nav-item" data-view="notes" title="Notes"><i class="fa-solid fa-note-sticky"></i><span class="nav-label">Notes</span></a>
+      </div>
+    </div>
+
+    <div class="nav-section" data-section="settings">
+      <div class="nav-section-head" data-section-toggle="settings">
+        <span class="nav-section-label">Settings</span>
+      </div>
+      <div class="nav-section-body" id="navSectionBody-settings">
+        <a class="nav-item" data-view="settings" title="Settings"><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></a>
       </div>
     </div>
   </nav>
@@ -2899,7 +2915,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             <!-- Add your Excel file names from the MSPData folder below.
                  Each option's value is the file's path relative to this
                  HTML file, and must be committed to the same repo. -->
-            <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
+           <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
 
             <!-- Add more <option> entries here, following the same
                  MSPData/filename.xlsx pattern, e.g.:
@@ -2961,9 +2977,9 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
 
 <div class="controlbar" id="controlBar" style="display:none;">
   <nav class="tabs" id="tabNav">
-    <button data-view="execsummary">Executive Summary</button>
+    <button data-view="execsummary" class="active">Executive Summary</button>
     <button data-view="dailyreview">Daily Review</button>
-    <button data-view="overview" class="active">Overview</button>
+    <button data-view="overview">Overview</button>
     <button data-view="engineers">Team / Engineer</button>
     <button data-view="towercust">Tower / Customer</button>
     <button data-view="engcompliance">Engineer Performance</button>
@@ -2983,6 +2999,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
     <button data-view="aging">Aging Analysis</button>
     <button data-view="kb">Knowledge Base</button>
     <button data-view="notes">Notes</button>
+    <button data-view="settings">Settings</button>
   </nav>
   <div class="filterbar-tabfilters" id="tabFiltersRoot">
     <div class="filterbar-tabfilters" id="tabFilters_engineers" style="display:none;"></div>
@@ -2997,9 +3014,9 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
 </div>
 
 <main id="appMain" style="display:none;">
-  <section class="view sapp-view" id="view-execsummary"></section>
+  <section class="view sapp-view active" id="view-execsummary"></section>
   <section class="view sapp-view" id="view-dailyreview"></section>
-  <section class="view active" id="view-overview"></section>
+  <section class="view" id="view-overview"></section>
   <section class="view" id="view-engineers"></section>
   <section class="view" id="view-towercust"></section>
   <section class="view" id="view-engcompliance"></section>
@@ -3884,6 +3901,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
         </div>
   </section>
   <section class="view" id="view-notes"></section>
+  <section class="view sapp-view" id="view-settings"></section>
 </main>
 
 <div class="modal-overlay" id="drilldownOverlay">
@@ -7482,11 +7500,134 @@ function setupMonthFilter(){
       if(chosen.length === 0) chosen = MONTHS.slice();
       SELECTED_MONTHS = chosen;
       sappRunWithLoader('Applying time period…', ()=>{
-        renderOverview();
+        if(PAGE_LOADED.overview && sappGroupEnabled('overview')) renderOverview(); else PAGE_STALE.overview = true;
         RERENDER_CALLBACKS.forEach(fn => { try{ fn(); }catch(e){ console.error(e); } });
       }, 'Recalculating every section');
     }
   });
+}
+
+// ================= SETTINGS: choose which pages load =================
+// Default = Executive Summary + Daily Review only. Every other page is opt-in and is rendered the
+// first time it is opened/enabled (never at upload time), which keeps the landing fast. The choice is
+// remembered per browser (localStorage, wrapped in try/catch - the dashboard works without it).
+const SAPP_PAGE_CATALOG = [
+  {section:'Executive Summary', pages:[{v:'execsummary', l:'Executive Summary', g:'execsummary', icon:'fa-chart-pie'}]},
+  {section:'Daily Review', pages:[{v:'dailyreview', l:'Daily Review', g:'dailyreview', icon:'fa-calendar-check'}]},
+  {section:'Support Analytics', pages:[
+    {v:'overview', l:'Overview', g:'overview', icon:'fa-grip'}, {v:'engineers', l:'Team / Engineer', g:'engineers', icon:'fa-users'},
+    {v:'towercust', l:'Tower / Customer', g:'towercust', icon:'fa-building'}, {v:'stagetime', l:'Stage-Time Breakdown', g:'stagetime', icon:'fa-business-time'},
+    {v:'complexitycal', l:'Complexity Calibration', g:'complexitycal', icon:'fa-scale-balanced'}]},
+  {section:'Performance', pages:[
+    {v:'kpisnapshot', l:'KPI Snapshot', g:'refgov', icon:'fa-table-cells'}, {v:'teammetrics', l:'Team Level Metrics', g:'refgov', icon:'fa-people-group'},
+    {v:'engcompliance', l:'Engineer Performance', g:'engcompliance', icon:'fa-chart-line'}, {v:'engdash', l:'Engineer Dashboard', g:'refgov', icon:'fa-user-gear'},
+    {v:'custdash', l:'Customer Dashboard', g:'refgov', icon:'fa-address-card'}]},
+  {section:'Delegation & Ownership', pages:[
+    {v:'delegoverview', l:'Delegation Overview', g:'delegation', icon:'fa-diagram-project'}, {v:'delegtier', l:'L1 / L2 / SME Ownership', g:'delegation', icon:'fa-layer-group'},
+    {v:'delegengineer', l:'Engineer Ownership', g:'delegation', icon:'fa-user-clock'}, {v:'delegperf', l:'Delegation Performance', g:'delegation', icon:'fa-people-arrows'},
+    {v:'delegjourney', l:'Ticket Journey & Aging', g:'delegation', icon:'fa-route'}]},
+  {section:'Compliance', pages:[
+    {v:'sla', l:'SLA Dashboard', g:'gov', icon:'fa-gauge-high'}, {v:'escalation', l:'Escalation Analysis', g:'gov', icon:'fa-triangle-exclamation'},
+    {v:'aging', l:'Aging Analysis', g:'gov', icon:'fa-hourglass-half'}]},
+  {section:'Knowledge', pages:[
+    {v:'kb', l:'Knowledge Base', g:'refgov', icon:'fa-book'}, {v:'notes', l:'Notes', g:'notes', icon:'fa-note-sticky'}]},
+];
+const SAPP_DEFAULT_PAGES = ['execsummary','dailyreview'];
+const SAPP_PAGE_STORE_KEY = 'sapp_enabled_pages_v1';
+const SAPP_ALL_OPTIONAL_VIEWS = [].concat.apply([], SAPP_PAGE_CATALOG.map(c=>c.pages.map(p=>p.v)));
+const SAPP_VIEW_GROUP = {}; SAPP_PAGE_CATALOG.forEach(c=>c.pages.forEach(p=>{ SAPP_VIEW_GROUP[p.v] = p.g; }));
+let SAPP_ENABLED_PAGES = null;
+let PAGE_LOADED = {}, PAGE_STALE = {}, PAGE_RENDERERS = {}, PAGE_SELF_REACTIVE = new Set(), PAGE_REGISTERED = {};
+function sappLoadEnabledPages(){
+  if(SAPP_ENABLED_PAGES) return SAPP_ENABLED_PAGES;
+  let arr = null;
+  try{ const raw = localStorage.getItem(SAPP_PAGE_STORE_KEY); if(raw) arr = JSON.parse(raw); }catch(e){}
+  if(!Array.isArray(arr)) arr = SAPP_DEFAULT_PAGES.slice();
+  SAPP_ENABLED_PAGES = new Set(arr.filter(v=>SAPP_ALL_OPTIONAL_VIEWS.includes(v)));
+  return SAPP_ENABLED_PAGES;
+}
+function sappSaveEnabledPages(){
+  try{ localStorage.setItem(SAPP_PAGE_STORE_KEY, JSON.stringify(Array.from(sappLoadEnabledPages()))); }catch(e){}
+}
+function sappViewEnabled(v){ return v==='settings' || sappLoadEnabledPages().has(v); }
+function sappGroupEnabled(g){ return SAPP_ALL_OPTIONAL_VIEWS.some(v=>SAPP_VIEW_GROUP[v]===g && sappLoadEnabledPages().has(v)); }
+function sappEnsureGroup(g){
+  const render = PAGE_RENDERERS[g];
+  if(!render) return;
+  if(!PAGE_LOADED[g]){
+    PAGE_LOADED[g] = true; PAGE_STALE[g] = false;
+    try{ render(); }catch(e){ console.error('[page load] '+g+' failed:', e); }
+    if(!PAGE_SELF_REACTIVE.has(g) && g!=='overview' && !PAGE_REGISTERED[g]){
+      PAGE_REGISTERED[g] = true;
+      if(g==='refgov') RERENDER_CALLBACKS.push(function(){ REFGOV.markAllDirty(); });
+      else RERENDER_CALLBACKS.push(function(){ if(g!=='notes' && sappGroupEnabled(g)) render(); else if(g!=='notes') PAGE_STALE[g] = true; });
+    }
+  } else if(PAGE_STALE[g]){
+    PAGE_STALE[g] = false;
+    try{ if(g==='refgov') REFGOV.markAllDirty(); else if(g==='overview') renderOverview(); else if(!PAGE_SELF_REACTIVE.has(g)) render(); }catch(e){ console.error(e); }
+  }
+}
+function sappEnsureViewLoaded(view){
+  if(view==='settings') return;
+  const g = SAPP_VIEW_GROUP[view];
+  if(g && sappViewEnabled(view)) sappEnsureGroup(g);
+}
+function sappApplySettingsToNav(){
+  SAPP_ALL_OPTIONAL_VIEWS.forEach(v=>{
+    const on = sappViewEnabled(v);
+    const nav = document.querySelector('#sidebarNav .nav-item[data-view="'+v+'"]');
+    const tab = document.querySelector('#tabNav button[data-view="'+v+'"]');
+    if(nav) nav.style.display = on ? '' : 'none';
+    if(tab) tab.style.display = on ? '' : 'none';
+  });
+  document.querySelectorAll('#sidebarNav .nav-section').forEach(sec=>{
+    const any = Array.from(sec.querySelectorAll('.nav-item')).some(n=>n.style.display!=='none');
+    sec.style.display = any ? '' : 'none';
+  });
+}
+function sappRenderSettingsPage(){
+  const el = document.getElementById('view-settings');
+  if(!el) return;
+  const on = sappLoadEnabledPages();
+  let body = '';
+  SAPP_PAGE_CATALOG.forEach(c=>{
+    body += '<div class="gcard"><div class="gcard-head"><h6>'+esc(c.section)+'</h6></div><div class="gcard-pad"><div class="set-grid">';
+    c.pages.forEach(p=>{
+      body += '<label class="set-item'+(on.has(p.v)?' on':'')+'"><input type="checkbox" data-set-view="'+p.v+'"'+(on.has(p.v)?' checked':'')+'>' +
+        '<i class="fa-solid '+p.icon+'"></i><span class="set-label">'+esc(p.l)+'</span>' +
+        (SAPP_DEFAULT_PAGES.includes(p.v)?'<span class="set-tag">Default</span>':'')+'</label>';
+    });
+    body += '</div></div></div>';
+  });
+  el.innerHTML = `
+    <div class="section-header">
+      <div><div class="eyebrow">Settings</div><h2>Page Loading</h2><p>Choose which dashboard pages load. Only the pages you enable are built and shown; everything else stays unloaded, which keeps the dashboard fast. Executive Summary and Daily Review are on by default.</p></div>
+    </div>
+    <div class="config-bar">
+      <span class="hint" id="setSummary"></span>
+      <span style="margin-left:auto;display:flex;gap:8px;">
+        <button class="export-btn" id="setDefaultBtn" type="button">Reset to default</button>
+        <button class="export-btn" id="setAllBtn" type="button">Enable all</button>
+        <button class="export-btn" id="setNoneBtn" type="button">Disable all optional</button>
+      </span>
+    </div>` + body;
+  const summary = () => {
+    const n = sappLoadEnabledPages().size;
+    const sm = document.getElementById('setSummary');
+    if(sm) sm.textContent = n + ' of ' + SAPP_ALL_OPTIONAL_VIEWS.length + ' pages enabled · saved in this browser · a page loads the first time you open it.';
+  };
+  const apply = () => { sappSaveEnabledPages(); sappApplySettingsToNav(); sappRenderSettingsPage(); };
+  el.querySelectorAll('input[data-set-view]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const v = cb.dataset.setView, set = sappLoadEnabledPages();
+      if(cb.checked) set.add(v); else set.delete(v);
+      apply();
+    });
+  });
+  document.getElementById('setDefaultBtn').addEventListener('click', ()=>{ SAPP_ENABLED_PAGES = new Set(SAPP_DEFAULT_PAGES); apply(); });
+  document.getElementById('setAllBtn').addEventListener('click', ()=>{ SAPP_ENABLED_PAGES = new Set(SAPP_ALL_OPTIONAL_VIEWS); apply(); });
+  document.getElementById('setNoneBtn').addEventListener('click', ()=>{ SAPP_ENABLED_PAGES = new Set(SAPP_DEFAULT_PAGES); apply(); });
+  summary();
 }
 
 function startDashboard(){
@@ -7531,7 +7672,16 @@ function startDashboard(){
     escalation: DATA.escalation,
   };
 
-  renderOverview();
+  // ---- Settings-driven page loading ----
+  // Only pages enabled under Settings are rendered. Default = Executive Summary + Daily Review.
+  // Any other page is rendered the first time it is opened (or enabled) and, once loaded, kept
+  // fresh on filter/period changes only while it stays enabled.
+  PAGE_LOADED = {}; PAGE_STALE = {};
+  PAGE_REGISTERED = {};
+  ['execsummary','dailyreview','overview','engineers','towercust','engcompliance','stagetime','complexitycal','delegoverview','delegtier','delegengineer','delegjourney','delegperf','sla','aging','escalation','notes'].forEach(function(v){ const n = document.getElementById('view-'+v); if(n) n.innerHTML = ''; });
+  PAGE_RENDERERS = {
+    overview: function(){ renderOverview(); },
+    engineers: function(){
   const engineersCtl = renderCascadingTab({
     viewId:'engineers', aOptions:ALL_TEAMS, aLabel:'Team', bOptionsAll:ALL_OWNERS, bLabel:'Engineer',
     bMap:OWNER_TEAM_MAP, aggregator:aggregateOwners, showSrHours:false, searchableB:true,
@@ -7562,50 +7712,53 @@ function startDashboard(){
     engineersCtl.refresh();
   }
 
+    },
+    towercust: function(){
   renderCascadingTab({
     viewId:'towercust', aOptions:ALL_TOWERS, aLabel:'Tower', bOptionsAll:ALL_CUSTOMERS, bLabel:'Customer',
     bMap:CUSTOMER_TOWER_MAP, aggregator:aggregateCustomers, showSrHours:true, searchableB:true
   });
 
-  renderEngineerComplianceTab();
-  if(DATA.sapphire_delegation_records){
-    renderDelegationModule();
-    RERENDER_CALLBACKS.push(renderDelegationModule);
-  }
-  if(DATA.gov_rows){
-    renderGovModule();
-    RERENDER_CALLBACKS.push(renderGovModule);
-  }
-  // Customer Dashboard / Engineer Dashboard / Knowledge Base now run the reference modules (REFGOV.RegisterModule).
-  if(DATA.stagetime_rows){
-    renderStageTimeBreakdown();
-    RERENDER_CALLBACKS.push(renderStageTimeBreakdown);
-  }
-  if(DATA.complexitycal_rows){
-    renderComplexityCalibration();
-    RERENDER_CALLBACKS.push(renderComplexityCalibration);
-  }
-  if(DATA.execsummary_rows){
-    renderExecutiveSummary();
-    RERENDER_CALLBACKS.push(renderExecutiveSummary);
-  }
-  if(DATA.gov_rows){
-    renderDailyReviewModule();
-    RERENDER_CALLBACKS.push(renderDailyReviewModule);
-  }
-  if(DATA.refgov_rows){
-    // Faithful Team Level Metrics + KPI Snapshot: reset their state for this dataset, then render
-    // lazily (only the one on screen) now and after every filter/month change.
-    document.dispatchEvent(new CustomEvent('govdata:reset'));
-    REFGOV.markAllDirty();
-    RERENDER_CALLBACKS.push(function(){ REFGOV.markAllDirty(); });
-  }
-  renderNotes();
+    },
+    engcompliance: function(){ renderEngineerComplianceTab(); },
+    delegation: function(){ if(DATA.sapphire_delegation_records) renderDelegationModule(); },
+    gov: function(){ if(DATA.gov_rows) renderGovModule(); },
+    stagetime: function(){ if(DATA.stagetime_rows) renderStageTimeBreakdown(); },
+    complexitycal: function(){ if(DATA.complexitycal_rows) renderComplexityCalibration(); },
+    execsummary: function(){ if(DATA.execsummary_rows) renderExecutiveSummary(); },
+    dailyreview: function(){ if(DATA.gov_rows) renderDailyReviewModule(); },
+    refgov: function(){
+      if(!DATA.refgov_rows) return;
+      // Faithful Team Level Metrics + KPI Snapshot + Customer/Engineer Dashboards + KB: reset
+      // state for this dataset, then render lazily (only the one on screen).
+      document.dispatchEvent(new CustomEvent('govdata:reset'));
+      REFGOV.markAllDirty();
+    },
+    notes: function(){ renderNotes(); },
+  };
+  // Groups whose own render() registers its own reactive callbacks (cascading tabs) are rendered
+  // exactly once; every other group is re-rendered through one guarded callback.
+  PAGE_SELF_REACTIVE = new Set(['engineers','towercust','engcompliance']);
+  sappApplySettingsToNav();
+  Object.keys(PAGE_RENDERERS).forEach(function(g){ if(sappGroupEnabled(g)) sappEnsureGroup(g); });
+  sappRenderSettingsPage();
 
   document.getElementById('controlBar').style.display = '';
   document.getElementById('appMain').style.display = '';
   document.getElementById('appFooter').style.display = '';
   document.body.classList.add('dashboard-active');
+  // Land on the first enabled page (Executive Summary by default); Settings if none is enabled.
+  (function(){
+    const order = SAPP_ALL_OPTIONAL_VIEWS.filter(v=>sappViewEnabled(v));
+    const landing = order.includes('execsummary') ? 'execsummary' : (order[0] || 'settings');
+    const btn = document.querySelector('#tabNav button[data-view="'+landing+'"]');
+    const nav = document.querySelector('#sidebarNav .nav-item[data-view="'+landing+'"]');
+    if(landing!=='execsummary' && btn){
+      btn.click();
+      document.querySelectorAll('#sidebarNav .nav-item').forEach(n=>n.classList.remove('active'));
+      if(nav) nav.classList.add('active');
+    }
+  })();
 }
 
 // ================= SAPPHIREUNO APP SHELL (sidebar nav + filter panel) =================
@@ -8849,7 +9002,7 @@ const SAPP_SECTION_LABELS = {
   delegoverview:'Delegation Overview', delegtier:'L1 / L2 / SME Ownership', delegengineer:'Engineer Ownership',
   delegperf:'Delegation Performance', delegjourney:'Ticket Journey & Aging',
   sla:'SLA Dashboard', escalation:'Escalation Analysis', aging:'Aging Analysis',
-  kb:'Knowledge Base', notes:'Notes', dailyreview:'Daily Review',
+  kb:'Knowledge Base', notes:'Notes', dailyreview:'Daily Review', settings:'Settings',
 };
 function sappPresetLabel(key){ const p = SAPP_TIMESCALE_PRESETS.find(x=>x.key===key); return p ? p.label : key; }
 function sappFmtFilterValues(vals, max){
@@ -9089,7 +9242,7 @@ function sappRefreshGlobalFilterSectionsNow(){
   // failure in one section can never stop the rest from refreshing.
   if(typeof sappUpdateSectionStatusBar === 'function') sappUpdateSectionStatusBar();
   const safe = fn => { try { fn(); } catch(e){ console.error('[global filter] section render failed:', e); } };
-  safe(renderOverview);
+  if(PAGE_LOADED.overview && sappGroupEnabled('overview')) safe(renderOverview); else PAGE_STALE.overview = true;
   RERENDER_CALLBACKS.forEach(fn => safe(fn));
 }
 function sappTimescaleSelectHtml(selectedKey){
@@ -16531,6 +16684,7 @@ document.querySelectorAll('#tabNav button').forEach(btn=>{
     // Heavy per-view rendering runs behind a loading popup so the user always sees progress.
     const _view = btn.dataset.view, _label = (btn.textContent || '').trim();
     sappRunWithLoader('Loading ' + _label + '…', ()=>{
+      sappEnsureViewLoaded(_view);
       (window.__sappViewHooks || []).forEach(h => h(_view));
     }, 'Preparing the data for this section');
   });
@@ -16538,7 +16692,6 @@ document.querySelectorAll('#tabNav button').forEach(btn=>{
 // Overview is the tab active by default when the dashboard first opens (see the
 // `view active` class on #view-overview and `active` on its #tabNav button in the
 // HTML) - without this, #controlBar would stay hidden until the first tab click.
-document.body.classList.add('sapp-native-filters');
 
 // ================= "VIEW LARGER" CHART EXPAND (purely additive UI) =================
 // Adds a small expand button to every Chart.js canvas on the page (all tabs, all
