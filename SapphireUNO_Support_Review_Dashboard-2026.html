@@ -2275,14 +2275,14 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 .cr-chart-wrap{ position:relative; height:230px; }
 .cr-chart-wrap.tall{ height:260px; }
 .cr-chart-wrap canvas{ max-height:none !important; }
-#engineerReportModal .cr-kpi-card.warn{ border-color:var(--status-warn); background:rgba(245,158,11,0.06); }
-#engineerReportModal .cr-kpi-card.bad{ border-color:var(--status-bad); background:rgba(239,68,68,0.06); }
-#engineerReportModal .cr-kpi-card.good{ background:rgba(34,197,94,0.06); }
-#engineerReportModal .cr-kpi-card.good .cr-kpi-value{ color:var(--status-good); }
-#engineerReportModal .cr-kpi-card.warn .cr-kpi-value{ color:var(--status-warn); }
-#engineerReportModal .cr-kpi-card.bad .cr-kpi-value{ color:var(--status-bad); }
-#engineerReportModal .cr-kpi-card.warn .cr-kpi-sub{ color:var(--status-warn); font-weight:700; }
-#engineerReportModal .cr-kpi-card.bad .cr-kpi-sub{ color:var(--status-bad); font-weight:700; }
+#engineerReportModal .cr-kpi-card.warn, #customerReportModal .cr-kpi-card.warn{ border-color:var(--status-warn); background:rgba(245,158,11,0.06); }
+#engineerReportModal .cr-kpi-card.bad, #customerReportModal .cr-kpi-card.bad{ border-color:var(--status-bad); background:rgba(239,68,68,0.06); }
+#engineerReportModal .cr-kpi-card.good, #customerReportModal .cr-kpi-card.good{ background:rgba(34,197,94,0.06); }
+#engineerReportModal .cr-kpi-card.good .cr-kpi-value, #customerReportModal .cr-kpi-card.good .cr-kpi-value{ color:var(--status-good); }
+#engineerReportModal .cr-kpi-card.warn .cr-kpi-value, #customerReportModal .cr-kpi-card.warn .cr-kpi-value{ color:var(--status-warn); }
+#engineerReportModal .cr-kpi-card.bad .cr-kpi-value, #customerReportModal .cr-kpi-card.bad .cr-kpi-value{ color:var(--status-bad); }
+#engineerReportModal .cr-kpi-card.warn .cr-kpi-sub, #customerReportModal .cr-kpi-card.warn .cr-kpi-sub{ color:var(--status-warn); font-weight:700; }
+#engineerReportModal .cr-kpi-card.bad .cr-kpi-sub, #customerReportModal .cr-kpi-card.bad .cr-kpi-sub{ color:var(--status-bad); font-weight:700; }
 .cr-section-title{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#560a91; margin:4px 0 8px; }
 .cr-scorebar-wrap{ height:280px; }
 .cr-scorebar-wrap canvas{ max-height:280px !important; }
@@ -4104,7 +4104,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
         <div class="cust-report-sheet" id="custReportSheet">
           <div class="cr-topbar">
             <div class="cr-brand">
-              <div class="cr-brand-icon"><img src="https://sapphireuno.com/wp-content/uploads/2025/11/SapphireUno-Logo-Web-min.png" alt="SapphireUNO" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'SU',style:'font-family:var(--font-display);font-weight:800;font-size:16px;color:#1A1A2E;'}));"></div>
+              <div class="cr-brand-icon"><img class="cr-logo-img" alt="SapphireUNO" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'SU',style:'font-family:var(--font-display);font-weight:800;font-size:16px;color:#1A1A2E;'}));"></div>
               <div class="cr-title">MONTHLY ACCOUNT REVIEW</div>
             </div>
             <div class="cr-period-pill" id="crPeriod">—</div>
@@ -4136,6 +4136,17 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             </div>
           </div>
 
+          <div class="cr-charts-row">
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-bullseye"></i> SLA &amp; Quality Rates (%)</div>
+              <div class="cr-chart-wrap"><canvas id="chartCrRates"></canvas></div>
+            </div>
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-chart-pie"></i> Ticket Mix — Closed / Open × Incident / SR</div>
+              <div class="cr-chart-wrap"><canvas id="chartCrMix"></canvas></div>
+            </div>
+          </div>
+
           <div class="cr-chart-card">
             <div class="cr-chart-head"><i class="fa-solid fa-chart-area"></i> Overall Volume Trend (Logged vs Closed)</div>
             <canvas id="chartCrVolume"></canvas>
@@ -4147,6 +4158,17 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
           <div class="cr-chart-card">
             <div class="cr-chart-head"><i class="fa-solid fa-arrow-trend-up"></i> Average Resolution Trend</div>
             <canvas id="chartCrResTrend"></canvas>
+          </div>
+
+          <div class="cr-charts-row">
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-heart-pulse"></i> Account Health Score Breakdown</div>
+              <div class="cr-chart-wrap"><canvas id="chartCrHealth"></canvas></div>
+            </div>
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-hourglass-half"></i> Effort Hours — Consumed vs Remaining</div>
+              <div class="cr-chart-wrap"><canvas id="chartCrEffort"></canvas></div>
+            </div>
           </div>
 
           <div class="cr-table-card" style="margin-bottom:8px;">
@@ -4231,7 +4253,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
         <div class="cust-report-sheet" id="engReportSheet">
           <div class="cr-topbar">
             <div class="cr-brand">
-              <div class="cr-brand-icon"><img src="https://sapphireuno.com/wp-content/uploads/2025/11/SapphireUno-Logo-Web-min.png" alt="SapphireUNO" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'SU',style:'font-family:var(--font-display);font-weight:800;font-size:16px;color:#1A1A2E;'}));"></div>
+              <div class="cr-brand-icon"><img class="cr-logo-img" alt="SapphireUNO" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'SU',style:'font-family:var(--font-display);font-weight:800;font-size:16px;color:#1A1A2E;'}));"></div>
               <div class="cr-title">ENGINEER PERFORMANCE REVIEW</div>
             </div>
             <div class="cr-period-pill" id="erPeriod">—</div>
@@ -20073,6 +20095,56 @@ function setUploadStatus(msg, isError){
 // see handleGenerate's PENDING_DASHBOARD_FINALIZE below) or via the Close
 // button once an error state is shown (setGenModalState('error')).
 let PENDING_DASHBOARD_FINALIZE = null;
+
+// Report logos: the Engineer / Customer report sheets reuse the dashboard header's own embedded
+// SapphireUNO logo (a data: URI). The old external image URL is cross-origin, so the PDF capture
+// (html2canvas) could not draw it and the logo was missing from the downloaded PDF.
+(function(){
+  const src = document.querySelector('header.top .brand-logos img:last-of-type');
+  if(!src) return;
+  document.querySelectorAll('img.cr-logo-img').forEach(function(img){ img.src = src.src; });
+})();
+
+// Shared "Download as PDF" for the report popups. Builds a real A4 portrait PDF file: each direct
+// child of the sheet (header, KPI grid, every chart card, every table card) is captured as an image
+// and placed top-to-bottom on A4 pages, starting a new page whenever the next section would not
+// fit, so no card is cut in half. Falls back to the browser print dialog (styled A4 portrait) if the
+// PDF libraries could not be loaded or the capture fails.
+async function sappSheetToA4Pdf(sheet, btn, filename){
+  const jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+  const fallbackPrint = function(){ document.body.classList.add('printing-report'); window.print(); };
+  if(!jsPDFCtor || typeof html2canvas !== 'function' || !sheet){ fallbackPrint(); return; }
+  const origHtml = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Preparing PDF…'; }
+  try{
+    const imgs = Array.from(sheet.querySelectorAll('img'));
+    await Promise.all(imgs.map(function(im){ return im.complete ? null : new Promise(function(r){ im.onload = im.onerror = r; }); }));
+    const doc = new jsPDFCtor({ unit:'mm', format:'a4', orientation:'portrait' });
+    const PW = 210, PH = 297, M = 10, GAP = 3, CW = PW - 2*M, MAXH = PH - 2*M - 6;
+    const blocks = Array.from(sheet.children).filter(function(el){ return el.offsetHeight > 0; });
+    let y = M, first = true;
+    for(const el of blocks){
+      const cv = await html2canvas(el, { scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false });
+      let w = CW, h = cv.height * CW / cv.width;
+      if(h > MAXH){ w = w * MAXH / h; h = MAXH; }
+      if(!first && y + h > PH - M - 6){ doc.addPage(); y = M; }
+      doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', M + (CW - w)/2, y, w, h);
+      y += h + GAP; first = false;
+    }
+    const pages = doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150);
+      doc.text('Page ' + i + ' of ' + pages, PW/2, PH - 6, { align:'center' });
+    }
+    doc.save(filename);
+  }catch(err){
+    console.error('PDF export failed, falling back to print:', err);
+    fallbackPrint();
+  }finally{
+    if(btn){ btn.disabled = false; btn.innerHTML = origHtml; }
+  }
+}
+
 function openGenModal(){
   const overlay = document.getElementById('genModalOverlay');
   if(overlay) overlay.classList.add('open');
@@ -26623,14 +26695,41 @@ REFGOV.ExportWorkbook = exportWorkbook;
 
     // ---- KPI cards ----
     const slaLabel = c.slaPct===null ? '—' : (c.slaPct>=90 ? 'On Track' : (c.slaPct>=75 ? 'Needs Attention' : 'At Risk'));
+    function ctone(v, good, warn, inverse){
+      if(v===null || v===undefined || isNaN(v)) return '';
+      return inverse ? (v<=good?'good':v<=warn?'warn':'bad') : (v>=good?'good':v>=warn?'warn':'bad');
+    }
+    const cPct = function(v){ return (v===null||v===undefined||isNaN(v)) ? '—' : fmtN(v,1)+'%'; };
+    const cDays = function(v){ return (v===null||v===undefined) ? '—' : fmtN(v,1)+'d'; };
+    const cRating10 = Math.max(0, Math.min(10, c.avgRating<=5 ? c.avgRating*2 : c.avgRating));
+    const cClosure = c.total ? c.closed/c.total*100 : 0;
     const kpis = [
-      { label:'SLA Compliance', value: c.slaPct===null?'—':fmtN(c.slaPct,0)+'%', sub: slaLabel, good: c.slaPct!==null && c.slaPct>=90 },
+      // ---- existing four cards (unchanged) ----
+      { label:'SLA Compliance', value: c.slaPct===null?'—':fmtN(c.slaPct,0)+'%', sub: slaLabel, good: c.slaPct!==null && c.slaPct>=90, tone: ctone(c.slaPct,90,75,false) },
       { label:'CSAT Score', value:'N/A', sub:'0 Surveys', good:false },
       { label:'Tickets Logged', value: fmtN(c.total), sub:'All Categories', good:false },
-      { label:'Tickets Resolved', value: fmtN(c.closed), sub:'This Period', good:false }
+      { label:'Tickets Resolved', value: fmtN(c.closed), sub:'This Period', good:false },
+      // ---- additional KPIs available from the uploaded data ----
+      { label:'Account Health', value: fmtN(c.healthScore)+'/100', sub: c.healthLabel, tone: c.healthBand==='green'?'good':c.healthBand==='amber'?'warn':'bad' },
+      { label:'Open Tickets', value: fmtN(c.open), sub: fmtN(incVol.open)+' INC · '+fmtN(srVol.open)+' SR', tone: crOpenStatus(c.open).cls==='low'?'good':crOpenStatus(c.open).cls==='medium'?'warn':'bad' },
+      { label:'Closure Rate', value: cPct(cClosure), sub: fmtN(c.closed)+' of '+fmtN(c.total)+' resolved', tone: ctone(cClosure,70,50,false) },
+      { label:'Pending', value: fmtN(c.pending), sub: fmtN(c.pendingRate*100,1)+'% of tickets', tone: ctone(c.pendingRate*100,5,15,true) },
+      { label:'Escalated', value: fmtN(c.escalated), sub: fmtN(c.escalationRate*100,1)+'% of tickets', tone: ctone(c.escalationRate*100,10,20,true) },
+      { label:'Reopened', value: fmtN(c.reopened), sub: fmtN(c.reopenRate*100,1)+'% reopen rate', tone: ctone(c.reopenRate*100,5,10,true) },
+      { label:'Avg Resolution', value: cDays(c.avgResolutionDays), sub:'Closure time', tone:'' },
+      { label:'Avg Response', value: cDays(c.avgResponseDays), sub:'First response', tone:'' },
+      { label:'1st Response SLA', value: cPct(c.frSlaPct), sub:'Target ≥ 90%', tone: ctone(c.frSlaPct,90,75,false) },
+      { label:'Subsequent Resp. SLA', value: cPct(c.subSlaPct), sub:'Target ≥ 90%', tone: ctone(c.subSlaPct,90,75,false) },
+      { label:'Resolution SLA', value: cPct(c.resSlaPct), sub:'Target ≥ 90%', tone: ctone(c.resSlaPct,90,75,false) },
+      { label:'Classification SLA', value: cPct(c.classSlaPct), sub:'Target ≥ 90%', tone: ctone(c.classSlaPct,90,75,false) },
+      { label:'FCR %', value: cPct(c.fcrPct), sub: fmtN(c.totalFcr)+' first-contact fixes', tone: ctone(c.fcrPct,50,35,false) },
+      { label:'KB Reference %', value: cPct(c.kbReferPct), sub: fmtN(c.totalKbRefer)+' ticket'+(c.totalKbRefer===1?'':'s')+' with KB', tone:'' },
+      { label:'Avg Rating', value: fmtN(cRating10,1)+'/10', sub:'Customer rating', tone: ctone(cRating10,8,6,false) },
+      { label:'Effort Hours', value: fmtN(c.consumedHrs+c.remainingHrs,0)+'h', sub: fmtN(c.consumedHrs,0)+' consumed · '+fmtN(c.remainingHrs,0)+' remaining', tone:'' }
     ];
     document.getElementById('crKpiGrid').innerHTML = kpis.map(function(k){
-      return '<div class="cr-kpi-card' + (k.good?' good':'') + '"><div class="cr-kpi-label">' + k.label + '</div><div class="cr-kpi-value">' + k.value + '</div><div class="cr-kpi-sub">' + k.sub + '</div></div>';
+      const t = k.tone !== undefined ? k.tone : (k.good ? 'good' : '');
+      return '<div class="cr-kpi-card' + (t?' '+t:'') + '"><div class="cr-kpi-label">' + k.label + '</div><div class="cr-kpi-value">' + k.value + '</div><div class="cr-kpi-sub">' + k.sub + '</div></div>';
     }).join('');
 
     // ---- Ticket Volume Analysis table ----
@@ -26706,7 +26805,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
           { label:'Closed Cases (by Resolve Date)', data: closedSeries, borderColor:CR_COLORS.green, backgroundColor:CR_COLORS.green+'26', fill:true, tension:0.35, pointRadius:3,
             datalabels: { display:true, color:CR_COLORS.text, font:{weight:'700',size:9.5}, align:'bottom', anchor:'start', clip:false, formatter:function(v){ return v===null?'':v; } } }
         ]},
-        options:{ responsive:true, maintainAspectRatio:false,
+        options:{ responsive:true, maintainAspectRatio:false, animation:false,
           layout:{ padding:{ top:14, bottom:6 } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
           scales:{ y:{ beginAtZero:true, ticks:{ color:CR_COLORS.text }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
@@ -26719,7 +26818,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
           { label:'SLA Compliance %', data: slaSeries, borderColor:CR_COLORS.teal, backgroundColor:CR_COLORS.teal+'26', fill:true, tension:0.3, pointRadius:3, spanGaps:true,
             datalabels: { display:true, color:CR_COLORS.text, font:{weight:'700',size:9.5}, align:'top', anchor:'end', clip:false, formatter:function(v){ return v===null?'':v.toFixed(0)+'%'; } } }
         ]},
-        options:{ responsive:true, maintainAspectRatio:false,
+        options:{ responsive:true, maintainAspectRatio:false, animation:false,
           layout:{ padding:{ top:14 } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
           scales:{ y:{ min:0, max:100, ticks:{ color:CR_COLORS.text, callback:function(v){ return v+'%'; } }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
@@ -26734,7 +26833,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
           { label:'Actual SLA Performance (Avg Days)', data: targetResSeries, borderColor:CR_COLORS.red, backgroundColor:'transparent', borderDash:[6,4], tension:0.35, pointRadius:3, spanGaps:true,
             datalabels: { display:true, color:CR_COLORS.red, font:{weight:'700',size:9.5}, align:'bottom', anchor:'start', clip:false, formatter:function(v){ return v===null?'':v.toFixed(1); } } }
         ]},
-        options:{ responsive:true, maintainAspectRatio:false,
+        options:{ responsive:true, maintainAspectRatio:false, animation:false,
           layout:{ padding:{ top:14, bottom:6 } },
           plugins:{ legend:{ position:'bottom', labels:{ color:'#444', boxWidth:10, font:{size:10.5} } } },
           scales:{ y:{ beginAtZero:true, ticks:{ color:CR_COLORS.text }, grid:{ color:CR_COLORS.grid } }, x:{ ticks:{ color:CR_COLORS.text, font:{size:10} }, grid:{ display:false } } }
@@ -26742,14 +26841,63 @@ REFGOV.ExportWorkbook = exportWorkbook;
       });
     }
 
+    // ---- Additional charts (animation off so the PDF capture sees the final canvases) ----
+    const DLX = window.ChartDataLabels;
+    const rtone = function(v, good, warn){ return v===null||v===undefined||isNaN(v) ? '#C9CCD6' : (v>=good ? CR_COLORS.green : v>=warn ? CR_COLORS.orange : CR_COLORS.red); };
+    const clbl = function(color, extra){ return Object.assign({ display:true, color:color, font:{ weight:'700', size:11 }, clip:false }, extra||{}); };
+    function mkc(id, cfg){
+      destroyChart(id);
+      cfg.options = cfg.options || {};
+      cfg.options.animation = false; cfg.options.responsive = true; cfg.options.maintainAspectRatio = false;
+      cfg.plugins = DLX ? [DLX] : [];
+      charts[id] = new Chart(document.getElementById(id), cfg);
+    }
+    const legendOpts = { position:'right', labels:{ boxWidth:12, font:{ size:11 }, color:'#1A1A2E' } };
+
+    const rateDefs = [
+      { l:'SLA Compliance (overall)', v:c.slaPct, g:90, w:75 }, { l:'1st Response SLA', v:c.frSlaPct, g:90, w:75 },
+      { l:'Subsequent Resp. SLA', v:c.subSlaPct, g:90, w:75 }, { l:'Resolution SLA', v:c.resSlaPct, g:90, w:75 },
+      { l:'Classification SLA', v:c.classSlaPct, g:90, w:75 }, { l:'FCR', v:c.fcrPct, g:50, w:35 }, { l:'KB Reference', v:c.kbReferPct, g:50, w:35 }
+    ];
+    mkc('chartCrRates', { type:'bar',
+      data:{ labels: rateDefs.map(function(d){ return d.l; }), datasets:[{ data: rateDefs.map(function(d){ return d.v===null||isNaN(d.v)?0:+d.v.toFixed(1); }),
+        backgroundColor: rateDefs.map(function(d){ return rtone(d.v,d.g,d.w); }), borderRadius:4, barPercentage:0.7 }] },
+      options:{ indexAxis:'y', layout:{ padding:{ right:56 } },
+        plugins:{ legend:{ display:false }, datalabels: clbl('#1A1A2E', { anchor:'end', align:'right', formatter:function(v,x){ const d=rateDefs[x.dataIndex]; return d.v===null||isNaN(d.v)?'—':fmtN(v,1)+'%'; } }) },
+        scales:{ x:{ min:0, max:100, ticks:{ color:CR_COLORS.text, callback:function(v){ return v+'%'; } }, grid:{ color:CR_COLORS.grid } }, y:{ ticks:{ color:'#1A1A2E', font:{ size:11, weight:'600' } }, grid:{ display:false } } } } });
+
+    mkc('chartCrMix', { type:'doughnut',
+      data:{ labels:['Closed · Incident','Closed · SR','Open · Incident','Open · SR'],
+        datasets:[{ data:[c.closedInc, c.closedSr, c.openInc, c.openSr], backgroundColor:['#22C55E','#86EFAC','#F59E0B','#FCD34D'], borderWidth:2, borderColor:'#fff' }] },
+      options:{ cutout:'55%', plugins:{ legend:legendOpts, datalabels: clbl('#1A1A2E', { formatter:function(v){ return v>0 ? fmtN(v) : ''; } }) } } });
+
+    const hc = c.healthComponents || {};
+    const hDefs = [
+      { l:'SLA', v:hc.sla||0, m:30 }, { l:'Escalation', v:hc.escalation||0, m:20 }, { l:'Reopen', v:hc.reopen||0, m:15 },
+      { l:'Resolution Time', v:hc.resolution||0, m:15 }, { l:'Rating', v:hc.rating||0, m:10 }, { l:'Pending', v:hc.pending||0, m:10 }
+    ].map(function(d){ d.p = d.m ? d.v/d.m*100 : 0; return d; }).sort(function(a,b){ return a.p - b.p; });
+    mkc('chartCrHealth', { type:'bar',
+      data:{ labels: hDefs.map(function(d){ return d.l; }), datasets:[{ data: hDefs.map(function(d){ return +d.p.toFixed(1); }),
+        backgroundColor: hDefs.map(function(d){ return rtone(d.p,75,50); }), borderRadius:4, barPercentage:0.7 }] },
+      options:{ indexAxis:'y', layout:{ padding:{ right:104 } },
+        plugins:{ legend:{ display:false }, datalabels: clbl('#1A1A2E', { anchor:'end', align:'right', formatter:function(v,x){ const d=hDefs[x.dataIndex]; return fmtN(v,0)+'%  ('+fmtN(d.v,1)+'/'+d.m+')'; } }) },
+        scales:{ x:{ min:0, max:100, ticks:{ color:CR_COLORS.text, callback:function(v){ return v+'%'; } }, grid:{ color:CR_COLORS.grid } }, y:{ ticks:{ color:'#1A1A2E', font:{ size:11, weight:'600' } }, grid:{ display:false } } } } });
+
+    const effTot = (c.consumedHrs||0) + (c.remainingHrs||0);
+    mkc('chartCrEffort', { type:'doughnut',
+      data:{ labels:['Consumed','Remaining'], datasets:[{ data:[c.consumedHrs||0, c.remainingHrs||0], backgroundColor:['#560a91','#C4A1E8'], borderWidth:2, borderColor:'#fff' }] },
+      options:{ cutout:'55%', plugins:{ legend:legendOpts,
+        title:{ display:true, text: effTot>0 ? 'Total '+fmtN(effTot,0)+' hours' : 'No effort hours recorded', color:CR_COLORS.text, font:{ size:11, weight:'600' } },
+        datalabels: clbl('#fff', { formatter:function(v){ return v>0 ? fmtN(v,0)+'h' : ''; } }) } } });
+
     new bootstrap.Modal(document.getElementById('customerReportModal')).show();
   }
   document.getElementById('crTamInput').addEventListener('input', function(){
     if(activeReportCustomer) custReportTAM[activeReportCustomer] = this.value;
   });
   document.getElementById('crDownloadPdfBtn').addEventListener('click', function(){
-    document.body.classList.add('printing-report');
-    window.print();
+    const nm = (document.getElementById('crCustName').textContent || 'Customer').replace(/[^a-z0-9]+/gi,'_');
+    sappSheetToA4Pdf(document.getElementById('custReportSheet'), document.getElementById('crDownloadPdfBtn'), 'Monthly_Account_Review_' + nm + '.pdf');
   });
   window.addEventListener('afterprint', function(){
     document.body.classList.remove('printing-report');
@@ -28245,7 +28393,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
       { label:'Resolution SLA', value: pctTxt(e.resSlaPct), sub:'Target ≥ 90%', tone: tone(e.resSlaPct,90,75,false) },
       { label:'Overall SLA', value: pctTxt(e.slaPct), sub: fmtN(e.slaBreachCount)+' breach'+(e.slaBreachCount===1?'':'es'), tone: tone(e.slaPct,90,75,false) },
       { label:'FCR %', value: pctTxt(e.fcrPct), sub: fmtN(e.totalFcr)+' first-contact fixes', tone: tone(e.fcrPct,50,35,false) },
-      { label:'KB Reference %', value: pctTxt(e.kbReferPct), sub: fmtN(e.totalKbRefer)+' tickets with KB', tone:'' },
+      { label:'KB Reference %', value: pctTxt(e.kbReferPct), sub: fmtN(e.totalKbRefer)+' ticket'+(e.totalKbRefer===1?'':'s')+' with KB', tone:'' },
       { label:'Service Compliance', value: pctTxt(e.serviceCompliancePct), sub:'Open + closed service targets', tone: tone(e.serviceCompliancePct,90,75,false) },
       { label:'Delegated > 2 Days', value: pctTxt(e.delegatedOver2Pct), sub: fmtN(e.delegatedOver2)+' ticket'+(e.delegatedOver2===1?'':'s'), tone: tone(e.delegatedOver2Pct,25,40,true) },
       { label:'Avg Delegation Time', value: daysTxt(e.delegationAvgDays), sub:'Target ≤ 2 days', tone: e.delegationAvgDays===null?'':tone(e.delegationAvgDays,2,3,true) },
@@ -28457,44 +28605,9 @@ REFGOV.ExportWorkbook = exportWorkbook;
   // A4 pages top-to-bottom, starting a new page whenever the next section would not fit, so no card
   // is ever cut in half. If the PDF libraries could not be loaded (offline / blocked CDN) it falls
   // back to the browser's print dialog, which is already styled for A4 portrait.
-  async function exportEngineerReportPdf(){
-    const btn = document.getElementById('erDownloadPdfBtn');
-    const sheet = document.getElementById('engReportSheet');
-    const jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
-    if(!jsPDFCtor || typeof html2canvas !== 'function' || !sheet){
-      document.body.classList.add('printing-report');
-      window.print();
-      return;
-    }
-    const origHtml = btn.innerHTML;
-    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Preparing PDF…';
-    try{
-      const doc = new jsPDFCtor({ unit:'mm', format:'a4', orientation:'portrait' });
-      const PW = 210, PH = 297, M = 10, GAP = 3, CW = PW - 2*M, MAXH = PH - 2*M - 6;
-      const blocks = Array.from(sheet.children).filter(function(el){ return el.offsetHeight > 0; });
-      let y = M, first = true;
-      for(const el of blocks){
-        const cv = await html2canvas(el, { scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false });
-        let w = CW, h = cv.height * CW / cv.width;
-        if(h > MAXH){ w = w * MAXH / h; h = MAXH; }
-        if(!first && y + h > PH - M - 6){ doc.addPage(); y = M; }
-        doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', M + (CW - w)/2, y, w, h);
-        y += h + GAP; first = false;
-      }
-      const pages = doc.getNumberOfPages();
-      for(let i=1;i<=pages;i++){
-        doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150);
-        doc.text('Page ' + i + ' of ' + pages, PW/2, PH - 6, { align:'center' });
-      }
-      const nm = (document.getElementById('erEngName').textContent || 'Engineer').replace(/[^a-z0-9]+/gi,'_');
-      doc.save('Engineer_Performance_Review_' + nm + '.pdf');
-    }catch(err){
-      console.error('PDF export failed, falling back to print:', err);
-      document.body.classList.add('printing-report');
-      window.print();
-    }finally{
-      btn.disabled = false; btn.innerHTML = origHtml;
-    }
+  function exportEngineerReportPdf(){
+    const nm = (document.getElementById('erEngName').textContent || 'Engineer').replace(/[^a-z0-9]+/gi,'_');
+    return sappSheetToA4Pdf(document.getElementById('engReportSheet'), document.getElementById('erDownloadPdfBtn'), 'Engineer_Performance_Review_' + nm + '.pdf');
   }
   document.getElementById('erDownloadPdfBtn').addEventListener('click', exportEngineerReportPdf);
   window.addEventListener('afterprint', function(){
