@@ -70,6 +70,19 @@
   .meta.data-chip .dc-label{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);font-weight:700;}
   .meta.data-chip .dc-val{font-size:12.5px;color:var(--ink);font-weight:700;}
   .meta.data-chip .dc-sub{font-size:11px;color:var(--ink-dim);}
+  .meta.data-chip{flex-direction:row;align-items:center;gap:10px;}
+  .meta.data-chip .dc-text{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+  .dc-reupload{width:30px;height:30px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--purple-soft);font-size:13px;cursor:pointer;}
+  .dc-reupload:hover{border-color:var(--purple-soft);color:var(--purple);background:rgba(86,10,145,0.06);}
+  /* Re-upload: the intake card is shown again as an overlay on top of the loaded dashboard. */
+  .upload-card{position:relative;}
+  .upload-close{display:none;position:absolute;top:10px;right:12px;width:28px;height:28px;border:none;border-radius:50%;background:none;color:var(--ink-faint);font-size:16px;cursor:pointer;}
+  .upload-close:hover{background:var(--panel-2);color:var(--ink);}
+  body.sapp-reupload .upload-close{display:block;}
+  body.dashboard-active.sapp-reupload > #uploadScreen{
+    position:fixed;inset:0;z-index:150;margin:0 !important;overflow-y:auto;
+    align-items:flex-start;padding-top:8vh;background:rgba(43,39,51,0.55);
+  }
   /* ---- Smart Search (item #3): ticket ID / keyword lookup across
      DATA.gov_rows (every uploaded ticket, regardless of status) - reuses
      the existing openGovDetail() ticket modal, never reads from or
@@ -2909,6 +2922,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
 
 <div id="uploadScreen" class="upload-screen">
   <div class="upload-card">
+    <button type="button" class="upload-close" id="uploadCloseBtn" title="Cancel and keep the current data" aria-label="Cancel">&times;</button>
     <h2>Generate the dashboard</h2>
     <p class="upload-intro">Upload your <b>Call Dump &ndash; Support Review Report</b> (.xlsx) below. Everything runs locally in your browser — nothing is uploaded anywhere. Team/Tower roll-ups, holiday calendar and delegation SLA cutoffs use this tool's built-in default roster and rules, so no separate master files are needed.</p>
 
@@ -7699,8 +7713,11 @@ function startDashboard(){
     const ldTxt = isNaN(ld) ? String(DATA.meta.last_data_date).slice(0,10) : ld.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
     hm.classList.add('data-chip');
     hm.title = 'Latest ticket activity found in the uploaded Call Dump. Time-based metrics (aging, open-call counts) are measured up to this date.';
-    hm.innerHTML = `<span class="dc-label">Latest data</span><span class="dc-val">${ldTxt}</span>` +
-      `<span class="dc-sub">${DATA.meta.total_rows_after_service_exclusion.toLocaleString()} tickets analyzed</span>`;
+    hm.innerHTML = `<button type="button" class="dc-reupload" id="reuploadBtn" title="Upload a new file or load another from the repository" aria-label="Upload a new data file"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>` +
+      `<span class="dc-text"><span class="dc-label">Latest data</span><span class="dc-val">${ldTxt}</span>` +
+      `<span class="dc-sub">${DATA.meta.total_rows_after_service_exclusion.toLocaleString()} tickets analyzed</span></span>`;
+    const rb = document.getElementById('reuploadBtn');
+    if(rb) rb.addEventListener('click', openReuploadScreen);
   })();
 
   setupMonthFilter();
@@ -20151,6 +20168,7 @@ async function handleGenerate(){
     setGenModalState('success');
     PENDING_DASHBOARD_FINALIZE = () => {
       document.getElementById('uploadScreen').style.display = 'none';
+      document.body.classList.remove('sapp-reupload');
       startDashboard();
     };
   } catch(err){
@@ -20159,6 +20177,18 @@ async function handleGenerate(){
     showErrorBanner('Could not generate the dashboard', 'Reading or processing this file failed (' + err.message + '). Please make sure you are uploading the Call Dump – Support Review Report (.xlsx).');
     btn.disabled = false;
   }
+}
+
+function openReuploadScreen(){
+  const us = document.getElementById('uploadScreen');
+  if(!us) return;
+  document.body.classList.add('sapp-reupload');
+  us.style.display = 'flex';
+}
+function closeReuploadScreen(){
+  document.body.classList.remove('sapp-reupload');
+  const us = document.getElementById('uploadScreen');
+  if(us) us.style.display = 'none';
 }
 
 function initUploadScreen(){
@@ -20211,6 +20241,8 @@ function initUploadScreen(){
   });
 
   if(genBtn) genBtn.addEventListener('click', handleGenerate);
+  const uploadCloseBtn = document.getElementById('uploadCloseBtn');
+  if(uploadCloseBtn) uploadCloseBtn.addEventListener('click', closeReuploadScreen);
 
   // ---- Repository file selection (ported from the SapphireUNO reference) ----
   // Picks a file already published next to this HTML (MSPData/...), fetches it, wraps it in a
