@@ -2145,6 +2145,10 @@ body.printing-mgmt-snapshot .dt-wrap,body.printing-mgmt-snapshot .dt-wrap{ overf
   @keyframes sappSpin{to{transform:rotate(360deg);}}
   .error-banner .es-expected{margin-top:8px;padding-top:8px;border-top:1px dashed currentColor;opacity:.9;}
 
+#view-kb .kb-filter-row{ display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin-bottom:14px; }
+#view-kb .kb-filter-row .dp-filter-field select{ max-width:240px; }
+#view-kb #kbTable th, #view-kb #kbGapTable th{ white-space:normal; min-width:90px; }
+#view-kb #kbTable td, #view-kb #kbGapTable td{ vertical-align:top; max-width:260px; }
 /* ===== Customer / Engineer / Knowledge Base ports: reference component styles ===== */
 table.dataTable{ color:var(--text-secondary); border-collapse:collapse !important; width:100% !important; }
 table.dataTable thead th{
@@ -2930,7 +2934,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             <!-- Add your Excel file names from the MSPData folder below.
                  Each option's value is the file's path relative to this
                  HTML file, and must be committed to the same repo. -->
-               <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
+            <option value="MSPData/CallDump_April_To_Aug_2026.xlsx">SupportCalls_April_TO_Aug-2026</option>
 
             <!-- Add more <option> entries here, following the same
                  MSPData/filename.xlsx pattern, e.g.:
@@ -3840,7 +3844,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
   <section class="view sapp-view" id="view-escalation"></section>
   <section class="view sapp-view" id="view-kb">
         <div class="section-header">
-          <div><div class="eyebrow">Knowledge</div><h2>Knowledge Base</h2><p>KB referred, published, pending, usage %.</p></div>
+          <div><div class="eyebrow">Knowledge</div><h2>Knowledge Base</h2><p>KB referred, published, pending, usage %, KB assessment / resolution source, Add to KB, and Problem Statement / Resolution Steps — user entered vs recommended. Resolved - Pending for Confirmation, Closed and Customer Agreed tickets only.</p></div>
           <button type="button" class="btn-ghost-gov export-toolbar-btn" id="kbExportBtn"><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
         </div>
 
@@ -3850,21 +3854,56 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
 
         <div id="kbWrap" style="display:none;">
 
+          <div class="kb-filter-row">
+            <div class="dp-filter-field"><label>Status</label><select id="kbFltStatus"></select></div>
+            <div class="dp-filter-field"><label>KB Referred</label><select id="kbFltRef"><option value="">All</option><option>Yes</option><option>No</option></select></div>
+            <div class="dp-filter-field"><label>KB Assessment / Resolution Source</label><select id="kbFltBasis"></select></div>
+            <div class="dp-filter-field"><label>Add to KB</label><select id="kbFltAdd"><option value="">All</option><option>Yes</option><option>No</option></select></div>
+            <div class="dp-filter-field"><label>Recommended Version</label><select id="kbFltRec"><option value="">All</option><option value="With">Has recommended</option><option value="Without">No recommended</option></select></div>
+            <button type="button" class="btn-ghost-gov" id="kbFltReset" style="align-self:flex-end;"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+          </div>
+          <div class="text-secondary" id="kbColsNote" style="font-size:11.5px;margin:-4px 0 16px;"></div>
+
           <div class="kpi-grid" id="kbKpiGrid" style="margin-bottom:20px;"></div>
 
           <div class="kpi-group-label"><i class="fa-solid fa-book"></i> KB Overview</div>
           <div class="chart-grid">
-            <div class="chart-card span-4">
-              <div class="cc-head"><h6><i class="fa-solid fa-chart-pie"></i> KB Review Decision</h6></div>
+            <div class="chart-card span-4 clickable">
+              <div class="cc-head"><h6><i class="fa-solid fa-chart-pie"></i> KB Review Decision</h6><span class="chart-drill-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to drill down</span></div>
               <div class="cc-body"><canvas id="chartKbDecision"></canvas></div>
             </div>
-            <div class="chart-card span-4">
-              <div class="cc-head"><h6><i class="fa-solid fa-magnifying-glass-chart"></i> Most Common RCA</h6></div>
+            <div class="chart-card span-4 clickable">
+              <div class="cc-head"><h6><i class="fa-solid fa-magnifying-glass-chart"></i> Most Common RCA</h6><span class="chart-drill-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to drill down</span></div>
               <div class="cc-body"><canvas id="chartKbRca"></canvas></div>
             </div>
-            <div class="chart-card span-4">
-              <div class="cc-head"><h6><i class="fa-solid fa-folder-tree"></i> KB Referred by Category</h6></div>
+            <div class="chart-card span-4 clickable">
+              <div class="cc-head"><h6><i class="fa-solid fa-folder-tree"></i> KB Referred by Category</h6><span class="chart-drill-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to drill down</span></div>
               <div class="cc-body"><canvas id="chartKbCategory"></canvas></div>
+            </div>
+          </div>
+
+          <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-clipboard-check"></i> KB Assessment, Resolution Source &amp; Add to KB</div>
+          <div class="chart-grid">
+            <div class="chart-card span-4 clickable">
+              <div class="cc-head"><h6><i class="fa-solid fa-clipboard-check"></i> KB Assessment (KB Referred = Yes)</h6><span class="chart-drill-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to drill down</span></div>
+              <div class="cc-body"><canvas id="chartKbAssessment"></canvas></div>
+            </div>
+            <div class="chart-card span-4 clickable">
+              <div class="cc-head"><h6><i class="fa-solid fa-route"></i> Resolution Source (KB Referred = No)</h6><span class="chart-drill-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to drill down</span></div>
+              <div class="cc-body"><canvas id="chartKbSource"></canvas></div>
+            </div>
+            <div class="chart-card span-4 clickable">
+              <div class="cc-head"><h6><i class="fa-solid fa-circle-plus"></i> Add to KB</h6><span class="chart-drill-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to drill down</span></div>
+              <div class="cc-body"><canvas id="chartKbAddToKb"></canvas></div>
+            </div>
+          </div>
+
+          <div class="kpi-group-label" style="margin-top:22px;"><i class="fa-solid fa-code-compare"></i> Problem Statement &amp; Resolution Steps — User Entered vs Recommended</div>
+          <div class="kpi-grid" id="kbEnhKpiGrid" style="margin-bottom:16px;"></div>
+          <div class="chart-grid">
+            <div class="chart-card span-12 clickable">
+              <div class="cc-head"><h6><i class="fa-solid fa-chart-column"></i> Content Coverage — Entered vs Recommended</h6><span class="chart-drill-hint"><i class="fa-solid fa-arrow-up-right-from-square"></i> Click to drill down</span></div>
+              <div class="cc-body"><canvas id="chartKbContent"></canvas></div>
             </div>
           </div>
 
@@ -3896,7 +3935,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
           <div class="dt-wrap">
             <table class="table" id="kbGapTable" style="width:100%;">
               <thead>
-                <tr><th>Ticket ID</th><th>Customer</th><th>Category</th><th>Service Type</th><th>Problem Statement</th><th>Resolution Steps</th><th>RCA</th><th>Resolution Type</th><th>Created</th></tr>
+                <tr><th>Ticket ID</th><th>Customer</th><th>Category</th><th>Service Type</th><th>Problem Statement – User Entered</th><th>Problem Statement – Recommended</th><th>Resolution Steps – User Entered</th><th>Resolution Steps – Recommended</th><th>RCA</th><th>Resolution Type</th><th>Created</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -3907,8 +3946,8 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
           <div class="dt-wrap">
             <table class="table" id="kbTable" style="width:100%;">
               <thead>
-                <tr><th>Ticket ID</th><th>Customer</th><th>Category</th><th>Service Type</th><th>RCA</th><th>Resolution Type</th><th>KB Referred</th><th>KB Decision</th><th>Created</th>
-                  <th>Problem Statement</th><th>Resolution Steps</th><th>Add to KB</th><th>KB Review / Publish Decision</th></tr>
+                <tr><th>Ticket ID</th><th>Customer</th><th>Category</th><th>Service Type</th><th>RCA</th><th>Resolution Type</th><th>KB Referred</th><th>KB Assessment / Resolution Source</th><th>KB Decision</th><th>Created</th>
+                  <th>Problem Statement – User Entered</th><th>Problem Statement – Recommended</th><th>Resolution Steps – User Entered</th><th>Resolution Steps – Recommended</th><th>Add to KB</th><th>KB Review / Publish Decision</th></tr>
               </thead>
               <tbody></tbody>
             </table>
@@ -10756,7 +10795,8 @@ function renderNotes(){
           <li><b>Aging bucket scheme</b> (Aging Analysis): 0-1 / 2-3 / 4-7 / 8-15 / 15-30 / 30+ days — a separate, finer 6-bucket scheme, different from both this tool's own 15/30/60/90-day buckets and the Ticket Journey &amp; Aging tab's own 0-2/3-5/6-10/11-15/16-30/30+ scheme. All three coexist independently.</li>
           <li><b>Escalation taxonomy</b> (Escalation Analysis): any ticket with a non-blank <code>escalation_type</code> counts as escalated, and every distinct value present becomes its own chart/segment (SapphireUNO treats it as open text, not a fixed list). In this tool's real export data that currently resolves to exactly the same three values used elsewhere (<i>potentialEscalation</i>, <i>salesEscalation</i>, <i>businessEscalation</i>), so in practice the two models agree here even though the code doesn't assume a fixed list.</li>
           <li><b>KB Decision buckets</b> (Knowledge Base): <code>kb_review_publish_decision</code> is classified into Published/Pending Review/Rejected/Not Required/Other by a blunt substring match on the raw text (SapphireUNO's own logic, kept as-is) — checking for "publish"/"approv", then "pending"/"review", then "reject"/"declin", then "not requir"/"n/a", in that order; a blank value displays as Pending Review. Against this tool's real decision values this produces one notable quirk: <code>doNotPublish</code> contains the substring "publish" and so is bucketed as <b>Published</b> — the opposite of its plain-English meaning — while <code>notApplicable</code> and <code>customerSpecificKb</code> fall through to <b>Other</b>. Not corrected here, to keep this module a faithful port rather than a reinterpretation.</li>
-          <li><b>New raw columns</b> used only by these sections (not read anywhere else in this tool): <code>priority</code>, <code>reason_for_escalation</code>, <code>rca</code>, <code>kb_review_publish_decision</code>, and the full value set of <code>resolution_type</code> (elsewhere in this tool only two of its values are special-cased for open-bucket classification).</li>
+          <li><b>Knowledge Base enhancements</b>: the page now processes only tickets whose status is <i>Resolved - Pending for Confirmation</i>, <i>Closed</i> or <i>Customer Agreed</i>. It reads <code>was_kb_referred</code> (→ <code>kb_assessment</code> when Yes, <code>resolution_source</code> when No), <code>add_to_kb</code>, <code>kb_review_publish_decision</code>, <code>rca</code>, <code>resolution_code</code> and the Problem Statement / Resolution Steps pairs (user entered and recommended) straight from the uploaded Excel; the matching columns are found with case, spaces and punctuation ignored and the page shows which ones it picked. User-entered text is never modified or replaced by the recommended text. Where the file has no Recommended value for a ticket with Add to KB = Yes, a deterministic rule-based version is generated (no AI service is called): the Problem Statement becomes <i>Problem / Details / Applies to</i> (sign-offs and greetings removed, the customer name replaced by \"the customer\"), and the Resolution Steps become a numbered list of imperative steps followed by the RCA and resolution type/code when they are short; it re-orders and tidies existing wording but cannot add technical detail that is not in the entry. Such values are tagged <i>Auto-generated (rule-based)</i> in the tables, popup and Excel exports. Every card, chart bar, category and table row opens a drill-down whose Excel export contains all KB columns for exactly those tickets, with User Entered and Recommended side by side.</li>
+      <li><b>New raw columns</b> used only by these sections (not read anywhere else in this tool): <code>priority</code>, <code>reason_for_escalation</code>, <code>rca</code>, <code>kb_review_publish_decision</code>, and the full value set of <code>resolution_type</code> (elsewhere in this tool only two of its values are special-cased for open-bucket classification).</li>
           <li>Every KPI card, chart segment, table row, and heatmap cell in these sections is independently drillable to its exact underlying ticket list, and every section has its own "Export to Excel" button with the same Red/Amber/Green cell coloring as the rest of this tool. Row clicks on the Aging/Escalation/KB tables open a shared ticket-detail popup (not SapphireUNO's own ticket-detail modal, rebuilt here in this tool's own modal style); row clicks on the Ticket Journey table open a dedicated delegation-timeline popup instead.</li>
         </ul>
       </li>
@@ -12633,7 +12673,7 @@ const TKD_FIELDS = [
 
     { section:'EDOC & Knowledge Base' },
     { k:'edoc', l:'EDOC' }, { k:'edoc_update_time', l:'EDOC Update Time' }, { k:'edoc_first_populated_time', l:'EDOC First Populated' }, { k:'edoc_share_days', l:'EDOC Share (Days)' },
-    { k:'was_kb_referred', l:'KB Referred' }, { k:'add_to_kb', l:'Add to KB' }, { k:'kb_review_publish_decision', l:'KB Review / Publish Decision' },
+    { k:'was_kb_referred', l:'KB Referred' }, { k:'kb_assessment', l:'KB Assessment' }, { k:'kb_resolution_source', l:'Resolution Source' }, { k:'add_to_kb', l:'Add to KB' }, { k:'kb_review_publish_decision', l:'KB Review / Publish Decision' },
 
     { section:'Effort & Hours' },
     { k:'total_effort_spent_hrs', l:'Total Effort (h)' }, { k:'l1_time_spent_hrs', l:'L1 Effort (h)' }, { k:'l2_time_spent_hrs', l:'L2 Effort (h)' }, { k:'sme_time_spent_hrs', l:'SME Effort (h)' },
@@ -12659,9 +12699,195 @@ const TKD_FIELDS = [
     { section:'Resolution Details' },
     { k:'resolution_type', l:'Resolution Type' }, { k:'resolution_code', l:'Resolution Code' },
     { k:'title', l:'Title', full:true }, { k:'description', l:'Description', full:true },
-    { k:'requirement_problem_statement', l:'Problem Statement', full:true },
-    { k:'resolution_steps', l:'Resolution Steps', full:true }, { k:'rca', l:'Root Cause (RCA)', full:true }
+    { k:'kb_ps_user', l:'Problem Statement – User Entered', full:true }, { k:'kb_ps_rec', l:'Problem Statement – Recommended', full:true }, { k:'kb_ps_rec_src', l:'Problem Statement – Recommended Source' },
+    { k:'kb_rs_user', l:'Resolution Steps – User Entered', full:true }, { k:'kb_rs_rec', l:'Resolution Steps – Recommended', full:true }, { k:'kb_rs_rec_src', l:'Resolution Steps – Recommended Source' },
+    { k:'rca', l:'Root Cause (RCA)', full:true }
   ];
+// ================= Knowledge Base enhancement: tolerant column resolver =================
+// Finds the Problem Statement / Resolution Steps columns (user entered vs recommended) and the
+// KB Assessment / Resolution Source columns in whatever spelling the uploaded Excel uses, by
+// comparing header names with case, spaces and punctuation ignored. The originals are never
+// modified: kbWithFields() returns a COPY of the row carrying extra kb_* fields that point at the
+// untouched uploaded values.
+let KB_FIELD_MAP_CACHE = null;
+function kbNormKey(k){ return String(k).toLowerCase().replace(/[^a-z0-9]+/g, ''); }
+function kbDetectFieldMap(keys){
+  const norm = keys.map(k => ({k:k, n:kbNormKey(k)}));
+  const REC = /recommend|optimi[sz]|suggest|improv|enhanc|refine|propos/;
+  const USER = /user|original|entered|engineer|raw/;
+  const shortest = arr => arr.slice().sort((a,b)=>a.n.length-b.n.length)[0];
+  function pair(topic, baseNames){
+    const hits = norm.filter(x => topic.test(x.n));
+    const rec = hits.filter(x => REC.test(x.n));
+    const non = hits.filter(x => !REC.test(x.n));
+    let user = non.find(x => USER.test(x.n));
+    if(!user) user = non.find(x => baseNames.indexOf(x.n) !== -1);
+    if(!user && non.length) user = shortest(non);
+    return {user: user ? user.k : null, rec: rec.length ? shortest(rec).k : null};
+  }
+  const ps = pair(/problemstatement/, ['requirementproblemstatement', 'problemstatement']);
+  const rs = pair(/resolutionsteps/, ['resolutionsteps']);
+  const find = re => { const h = norm.find(x => re.test(x.n)); return h ? h.k : null; };
+  return {ps_user:ps.user, ps_rec:ps.rec, rs_user:rs.user, rs_rec:rs.rec,
+    kb_assessment: find(/kbassessment/), resolution_source: find(/resolutionsource/)};
+}
+function kbFieldMap(row){
+  const rows = (typeof DATA!=='undefined' && DATA && DATA.refgov_rows) || null;
+  const src = rows || row || {};
+  if(KB_FIELD_MAP_CACHE && KB_FIELD_MAP_CACHE.src === src) return KB_FIELD_MAP_CACHE.map;
+  const keySet = new Set();
+  if(rows){ for(let i = 0; i < rows.length && i < 200; i++) Object.keys(rows[i]).forEach(k => keySet.add(k)); }
+  else Object.keys(src).forEach(k => keySet.add(k));
+  const map = kbDetectFieldMap(Array.from(keySet));
+  KB_FIELD_MAP_CACHE = {src: src, map: map};
+  return map;
+}
+// ---- Rule-based "Recommended" versions (used only when the uploaded file has none and Add to KB = Yes) ----
+// Deterministic tidy-up of the user-entered text - no new facts are added. The user-entered text itself is never touched.
+const KB_BASE_VERBS = ('restart reboot run rerun execute clear check verify validate update upgrade install uninstall reinstall configure reconfigure modify change correct fix apply deploy redeploy ' +
+  'enable disable delete remove add create recreate reset restore repair rebuild refresh reload replace review analyze analyse investigate identify provide share inform confirm escalate assign test retest ' +
+  'monitor collect capture send resend open close stop start kill terminate map unlock lock grant revoke import export migrate backup truncate purge archive compare tune increase decrease extend merge ' +
+  'patch sync resync publish trigger retrigger schedule reschedule raise log set adjust point switch revert release handle resolve roll re-run re-start re-install re-deploy re-process reprocess regenerate generate ' +
+  'raise request obtain contact coordinate guide educate explain demonstrate clarify document navigate select choose click enter upload download copy move rename unblock whitelist blacklist onboard offboard ' +
+  'tighten loosen cleanup clean tweak align populate correct amend revalidate recompile compile build ' +
+  'ask access locate save observe diagnose troubleshoot ensure notify advise connect disconnect login logout navigate search query fetch retrieve extract load unload register unregister associate attach detach bind unbind ' +
+  'provision approve reject cancel reopen complete submit resubmit reindex recalculate recompute cleanse sanitize replicate failover optimize optimise rectify remediate mitigate highlight suggest recommend implement perform conduct inspect examine evaluate assess ' +
+  'find get give take make go do keep tell bring write read put wait follow note try use ping telnet map reach engage involve discuss co-ordinate coordinate prepare plan finalize finalise accept decline allow permit block mark flag tag label rename reassign transfer forward reply respond').split(/\s+/);
+const KB_IRREG = {ran:'run', reran:'rerun', 're-ran':'re-run', made:'make', found:'find', got:'get', gave:'give', took:'take', went:'go', did:'do', sent:'send', built:'build', rebuilt:'rebuild', wrote:'write', kept:'keep', told:'tell', began:'begin', brought:'bring', chose:'choose', ' rolled':'roll'};
+let KB_VERB_MAP = null;
+function kbVerbMap(){
+  if(KB_VERB_MAP) return KB_VERB_MAP;
+  const m = {};
+  KB_BASE_VERBS.forEach(b => {
+    const last = b.slice(-1), pre = b.slice(0, -1);
+    const forms = [b + 'ed', b + 'd', b + 'ing', b + 's', pre + 'ing', b + last + 'ed', b + last + 'ing'];
+    if(/[^aeiou]y$/.test(b)) forms.push(pre + 'ied', pre + 'ies');
+    forms.forEach(f => { if(!m[f]) m[f] = b; });
+    m[b] = b;
+  });
+  Object.keys(KB_IRREG).forEach(k => { m[k.trim()] = KB_IRREG[k]; });
+  KB_VERB_MAP = m; return m;
+}
+function kbCap(s){ s = String(s).trim(); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function kbEndPeriod(s){ s = String(s).trim().replace(/[\s,;:\-–]+$/, ''); return s && !/[.!?]$/.test(s) ? s + '.' : s; }
+function kbStripNoise(text){
+  let s = String(text).trim().replace(/^["\u201C\u201D]([\s\S]*)["\u201C\u201D]$/, '$1');   // text wrapped in quotes
+  s = s.replace(/\r\n?/g, '\n').replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/gi, ' ').replace(/\[external email\]/gi, '');
+  const NOISE = /^(hi|hello|dear|hey|thanks|thank you|thanks & regards|thanks and regards|regards|best regards|warm regards|kind regards|br|fyi|pfa|sent from|from:|to:|cc:|sent:|subject:|re:|fw:|fwd:)\b/i;
+  const CLOSING = /^(thanks|thank you|thanks & regards|thanks and regards|regards|best regards|warm regards|kind regards|br)\b/i;
+  const out = [];
+  const lines = s.split('\n').map(l => l.trim().replace(/^["\u201C\u201D]([\s\S]*)["\u201C\u201D]$/, '$1').trim());
+  for(let i = 0; i < lines.length; i++){
+    const l = lines[i];
+    if(!l) continue;
+    if(CLOSING.test(l) && l.length < 40) break;      // sign-off: drop it and the signature after it
+    if(NOISE.test(l)) continue;
+    out.push(l);
+  }
+  return out.join('\n');
+}
+function kbSplitSentences(s){
+  const parts = s.split(/(?<=[.!?])\s+(?=[A-Z(\[])/);
+  const out = [];
+  parts.forEach(p => {
+    if(out.length && /\b(e\.g|i\.e|vs|etc|approx|no|fig)\.$/i.test(out[out.length - 1])) out[out.length - 1] += ' ' + p;
+    else out.push(p);
+  });
+  return out;
+}
+function kbSplitSteps(text){
+  let s = kbStripNoise(text);
+  s = s.replace(/(^|\s)(?:step\s*)?(\d{1,2})[.):]\s*(?=[A-Za-z(\[`'"])/gi, '\n');          // inline numbering
+  s = s.replace(/(^|\n)\s*[-*•●▪◦>]+\s+/g, '\n');                                         // bullets
+  s = s.replace(/\s*(?:->|=>|→)\s*/g, '\n');                                              // arrows
+  s = s.replace(/;\s+/g, '\n');
+  s = s.replace(/,?\s+(?:and\s+)?then\s+/gi, '\n').replace(/,?\s+after\s+that,?\s+/gi, '\n');
+  s = s.replace(/\s+and\s+([A-Za-z-]+)/gi, (all, w) => kbVerbMap()[w.toLowerCase()] ? '\n' + w : all);
+  s = s.replace(/\s+and\s+(?=(?:the|a|an|all)\s+(?:(?!\band\b)[^.\n]){1,80}?\b(?:was|were)\s)/gi, '\n');   // "... and the X was Y"   // "checked X and restarted Y"
+  const steps = [];
+  s.split('\n').forEach(line => { line = line.trim(); if(line) kbSplitSentences(line).forEach(x => { x = x.trim(); if(x) steps.push(x); }); });
+  const seen = new Set();
+  return steps.filter(x => { const k = x.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); if(k.length < 3 || seen.has(k)) return false; seen.add(k); return true; });
+}
+function kbImperative(step){
+  let s = step.trim().replace(/^(?:also|and|then|next|finally|first|later|now|so|after that|subsequently|additionally)[,:]?\s+/i, '')
+    .replace(/^(?:i|we|engineer|support|support team|team|l1|l2|sme)\s+(?:have\s+|had\s+|has\s+|also\s+)?(?:been\s+)?/i, '')
+    .replace(/^(?:please|kindly)\s+/i, '')
+    .replace(/^(?:to|in order to)\s+[^,]{3,80},\s+/i, '');   // purpose clause ("To resolve the issue, ...")
+  const VM = kbVerbMap();
+  // findings are observations, not actions
+  const fm = s.match(/^(?:found|observed|noticed|identified|discovered|saw|determined|concluded)\s+that\s+(.+)$/i);
+  if(fm) return kbEndPeriod('Finding: ' + kbCap(fm[1]));
+  const m = s.match(/^([A-Za-z-]+)(.*)$/);
+  if(m && VM[m[1].toLowerCase()]){
+    return kbEndPeriod(kbCap(VM[m[1].toLowerCase()]) + m[2]);
+  }
+  // passive: "The X file was manually deployed to Y"  ->  "Deploy the X file to Y manually"
+  const pm = s.match(/^((?:the|a|an)\s+)?(.{2,90}?)\s+(?:was|were|has been|have been|got)\s+((?:(?:successfully|manually|then|also|again|finally|further|immediately|automatically|temporarily|permanently|properly)\s+)*)([A-Za-z-]+)\b(.*)$/i);
+  if(pm){
+    const base = VM[pm[4].toLowerCase()];
+    if(base && !/^(resolve|fix|complete|close|work|go)$/.test(base) && !/[,;]/.test(pm[2]) && !/\b(?:and|but|which|that|came|went)\b/i.test(pm[2]) && pm[2].split(/\s+/).length <= 10 && !/^\s+to be\b/i.test(pm[5])){
+      const adv = (pm[3].match(/\b(manually|automatically|temporarily|permanently|immediately|further)\b/gi) || []).join(' ').toLowerCase();
+      return kbEndPeriod(kbCap(base) + ' ' + (pm[1] || '').toLowerCase() + pm[2] + pm[5].replace(/[\s,;.!?]+$/, '') + (adv ? ' ' + adv : ''));
+    }
+  }
+  return kbEndPeriod(kbCap(s));
+}
+function kbEscRe(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function kbAnon(text, row){
+  let s = text;
+  const cn = row && row.customer_name ? String(row.customer_name).trim() : '';
+  if(cn.length >= 3 && cn.toLowerCase() !== 'unassigned') s = s.replace(new RegExp(kbEscRe(cn), 'gi'), 'the customer');
+  return s;
+}
+function kbContextLine(row){
+  const parts = [row.support_category, row.support_feature, row.support_subfeature].map(v => (v === null || v === undefined) ? '' : String(v).trim()).filter(v => v && !/^(unclassified|n\/?a|na|none|null)$/i.test(v));
+  const svc = String(row.service || '').toLowerCase();
+  const type = svc.indexOf('incident') !== -1 ? 'Incident' : (svc.indexOf('service request') !== -1 ? 'Service Request' : '');
+  const a = parts.join(' › ');
+  return [a, type].filter(Boolean).join(' · ');
+}
+function kbRecommendPS(row, userText){
+  const clean = kbAnon(kbStripNoise(userText), row).replace(/^\s*(?:(?:re|fw|fwd)\s*:\s*)+/i, '').replace(/^\s*(?:problem\s*statement|problem|issue|requirement)\s*[:\-–]\s*/i, '');
+  const sentences = kbSplitSentences(clean.replace(/\s*\n\s*/g, ' ').replace(/\s{2,}/g, ' ').trim()).map(x => x.trim()).filter(x => x.length > 1);
+  if(!sentences.length) return null;
+  const lines = ['Problem: ' + kbEndPeriod(kbCap(sentences[0]))];
+  if(sentences.length > 1) lines.push('Details: ' + sentences.slice(1).map(x => kbEndPeriod(kbCap(x))).join(' '));
+  const ctx = kbContextLine(row);
+  if(ctx) lines.push('Applies to: ' + ctx);
+  return lines.join('\n');
+}
+function kbRecommendRS(row, userText){
+  const steps = kbSplitSteps(kbAnon(userText, row)).map(kbImperative).filter(x => x.length > 2);
+  if(!steps.length) return null;
+  const lines = ['Resolution steps:'].concat(steps.map((x, i) => (i + 1) + '. ' + x));
+  const one = (v, max) => { const t = (v === null || v === undefined) ? '' : String(v).replace(/\s+/g, ' ').trim(); return (t && t.length <= max && !/^(na|n\/a|none|null|-)$/i.test(t)) ? t : ''; };
+  const rca = one(row.rca, 400), rtype = one(row.resolution_type, 60), rcode = one(row.resolution_code, 80);
+  if(rca) lines.push('Root cause (RCA): ' + kbEndPeriod(rca));
+  if(rtype || rcode) lines.push('Resolution type / code: ' + [rtype, rcode].filter(Boolean).join(' / '));
+  return lines.join('\n');
+}
+
+function kbWithFields(row){
+  if(!row || row.__kbf) return row;
+  const m = kbFieldMap(row);
+  const g = k => (k && row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') ? row[k] : null;
+  const psUser = g(m.ps_user), rsUser = g(m.rs_user);
+  let psRec = g(m.ps_rec), rsRec = g(m.rs_rec);
+  let psSrc = psRec !== null ? 'Uploaded file' : null, rsSrc = rsRec !== null ? 'Uploaded file' : null;
+  // Where the file carries no Recommended version for a ticket flagged Add to KB = Yes, a rule-based one is
+  // generated from the user-entered text. An uploaded Recommended value is never replaced.
+  const addYes = ['yes', 'true', '1', 'y'].indexOf(String(row.add_to_kb).trim().toLowerCase()) !== -1;
+  if(addYes){
+    if(psRec === null && psUser !== null){ const x = kbRecommendPS(row, String(psUser)); if(x){ psRec = x; psSrc = 'Auto-generated (rule-based)'; } }
+    if(rsRec === null && rsUser !== null){ const x = kbRecommendRS(row, String(rsUser)); if(x){ rsRec = x; rsSrc = 'Auto-generated (rule-based)'; } }
+  }
+  return Object.assign({}, row, {
+    kb_ps_user: psUser, kb_ps_rec: psRec, kb_rs_user: rsUser, kb_rs_rec: rsRec, kb_ps_rec_src: psSrc, kb_rs_rec_src: rsSrc,
+    kb_assessment: g(m.kb_assessment), kb_resolution_source: g(m.resolution_source), __kbf: true
+  });
+}
+
 // ================= Ticket detail: sectioned, RAG-coloured, data-only view =================
 // Shared by the Aging/Escalation/SLA/KB row-click popup (govDetailOverlay) and the ported
 // SapphireUNO ticket modal (ticketDetailModal). Shows a RAG summary strip first (status, severity,
@@ -12723,6 +12949,7 @@ function tkdTierText(t){
 }
 const TKD_OTHER_SKIP = /^(_|cda_|is_|tat_24x7$|tat_sla_cda$|aging_bucket$|creation_month$|res_month$|assign_month$|resolved_month$)/;
 function tkdRenderBody(row){
+  row = kbWithFields(row);
   const c = (typeof CDAPipeline!=='undefined' && CDAPipeline.cdaLookup) ? CDAPipeline.cdaLookup(row.ticket_id) : null;
   const val = k => row[k];
   const flag = k => { const b = tkdBool(row['_'+k]!==undefined ? row['_'+k] : row[k]); return b; };
@@ -12754,6 +12981,7 @@ function tkdRenderBody(row){
 
   // ---- sections ----
   const sections = []; const used = new Set(); const emptyList = [];
+  { const kbm = kbFieldMap(row); [kbm.ps_user,kbm.ps_rec,kbm.rs_user,kbm.rs_rec,kbm.kb_assessment,kbm.resolution_source].forEach(k=>{ if(k) used.add(k); }); }
   let cur = null;
   TKD_FIELDS.forEach(f=>{
     if(f.section){ cur = {title:f.section, items:[], rags:[]}; sections.push(cur); return; }
@@ -30514,22 +30742,204 @@ REFGOV.ExportWorkbook = exportWorkbook;
     return 'Other';
   }
 
+  /** Scope: only tickets in one of these three statuses are processed
+   *  by the Knowledge Base page - Resolved - Pending for Confirmation,
+   *  Closed, Customer Agreed. Matched on the status text with case,
+   *  spaces and punctuation ignored. */
+  const KB_STATUS_KEYS = ['closed', 'customeragreed', 'resolvedpendingforconfirmation', 'resolvedpendingconfirmation'];
+  function kbInScope(r){
+    return KB_STATUS_KEYS.indexOf(String(r.current_status || '').toLowerCase().replace(/[^a-z0-9]+/g, '')) !== -1;
+  }
+
+  // ---- small helpers over the stamped kb_* fields (see kbWithFields) ----
+  function kbBasis(r){ return boolish(r.was_kb_referred) ? textVal(r.kb_assessment) : textVal(r.kb_resolution_source); }
+  function kbHasRec(r){ return !!(textVal(r.kb_ps_rec) || textVal(r.kb_rs_rec)); }
+  function kbNorm(v){ return String(v).replace(/\s+/g, ' ').trim(); }
+  function kbDiffers(a, b){ const x = textVal(a), y = textVal(b); return !!(x && y && kbNorm(x) !== kbNorm(y)); }
+  function kbChanged(r){ return kbDiffers(r.kb_ps_user, r.kb_ps_rec) || kbDiffers(r.kb_rs_user, r.kb_rs_rec); }
+  function kbChangedLabel(a, b){ return (textVal(a) && textVal(b)) ? (kbDiffers(a, b) ? 'Yes' : 'No') : ''; }
+  function kbShort(v, n){ const s = textVal(v); if(!s) return ''; return s.length > n ? s.slice(0, n) + '…' : s; }
+  function kbTruncate(v, len){ const s = textVal(v); if(!s) return '—'; return s.length > len ? s.slice(0, len) + '…' : s; }
+  function kbServiceType(r){
+    const v = String(r.service || '').trim().toLowerCase();
+    if(v.indexOf('incident') !== -1) return 'INC';
+    if(v.indexOf('service request') !== -1 || v === 'sr' || v.indexOf(' sr ') !== -1) return 'SR';
+    return '—';
+  }
+  function kbSafe(s){ return String(s).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function kbGroup(rows, mapper, n){
+    const g = {};
+    rows.forEach(function(r){ const v = textVal(mapper(r)); if(v === null) return; (g[v] = g[v] || []).push(r); });
+    return Object.keys(g).map(function(k){ return { label:k, rows:g[k] }; })
+      .sort(function(a, b){ return b.rows.length - a.rows.length; }).slice(0, n || 10);
+  }
+
+  // ---- drill-down: modal shows a compact view, Excel export carries EVERY KB column ----
+  const KB_DRILL_COLS = [
+    { key:'ticket_id', label:'Ticket ID' }, { key:'customer_name', label:'Customer' }, { key:'assign_owner_name', label:'Engineer' },
+    { key:'current_status', label:'Status' }, { key:'support_category', label:'Category' },
+    { label:'KB Referred', get:function(r){ return boolish(r.was_kb_referred) ? 'Yes' : 'No'; } },
+    { label:'KB Assessment / Resolution Source', get:function(r){ return kbBasis(r) || ''; } },
+    { label:'Add to KB', get:function(r){ return boolish(r.add_to_kb) ? 'Yes' : 'No'; } },
+    { label:'Problem Statement – User Entered', get:function(r){ return kbShort(r.kb_ps_user, 90); } },
+    { label:'Problem Statement – Recommended', get:function(r){ return kbShort(r.kb_ps_rec, 90); } },
+    { label:'Resolution Steps – User Entered', get:function(r){ return kbShort(r.kb_rs_user, 90); } },
+    { label:'Resolution Steps – Recommended', get:function(r){ return kbShort(r.kb_rs_rec, 90); } },
+    { label:'Created', get:function(r){ return r._creation_date ? fmtDateShort(r._creation_date) : ''; } }
+  ];
+  const KB_FULL_HEADERS = ['Ticket ID', 'Title', 'Customer', 'Engineer', 'Current Status', 'Priority', 'Severity', 'Support Category', 'Service Type',
+    'Created', 'Resolved', 'Closed', 'Was KB Referred', 'KB Assessment', 'Resolution Source', 'Add to KB', 'KB Review / Publish Decision', 'KB Decision (Bucket)',
+    'Problem Statement – User Entered', 'Problem Statement – Recommended', 'Problem Statement Differs?', 'Problem Statement – Recommended Source',
+    'Resolution Steps – User Entered', 'Resolution Steps – Recommended', 'Resolution Steps Differs?', 'Resolution Steps – Recommended Source',
+    'Resolution Code', 'Resolution Type', 'RCA', 'Hold Days'];
+  const KB_DECISION_COL = 17;
+  function kbDateOut(d){ return d ? d.toISOString().slice(0, 10) : ''; }
+  function kbRaw(v){ return (v === null || v === undefined) ? '' : v; }
+  // User-entered text is exported exactly as uploaded (never trimmed or rewritten).
+  function kbFullRow(r){
+    const hd = REFGOV.HoldDays ? REFGOV.HoldDays(r) : null;
+    return [ r.ticket_id || '', kbRaw(r.title), r.customer_name || '', r.assign_owner_name || '', r.current_status || '', kbRaw(r.priority), kbRaw(r.severity),
+      r.support_category || '', kbServiceType(r), kbDateOut(r._creation_date), kbDateOut(r._resolved_date), kbDateOut(r._closed_date),
+      boolish(r.was_kb_referred) ? 'Yes' : 'No', kbRaw(r.kb_assessment), kbRaw(r.kb_resolution_source), boolish(r.add_to_kb) ? 'Yes' : 'No',
+      kbRaw(r.kb_review_publish_decision), kbDecisionBucket(r.kb_review_publish_decision) || 'Pending Review',
+      kbRaw(r.kb_ps_user), kbRaw(r.kb_ps_rec), kbChangedLabel(r.kb_ps_user, r.kb_ps_rec), kbRaw(r.kb_ps_rec_src),
+      kbRaw(r.kb_rs_user), kbRaw(r.kb_rs_rec), kbChangedLabel(r.kb_rs_user, r.kb_rs_rec), kbRaw(r.kb_rs_rec_src),
+      kbRaw(r.resolution_code), r.resolution_type || '', kbRaw(r.rca), hd === null ? '' : +hd.toFixed(1) ];
+  }
+  function kbFullColors(r){
+    const d = kbDecisionBucket(r.kb_review_publish_decision) || 'Pending Review';
+    const tone = d === 'Published' ? 'GREEN' : d === 'Rejected' ? 'RED' : d === 'Pending Review' ? 'AMBER' : 'GREY';
+    const out = []; for(let i = 0; i < KB_FULL_HEADERS.length; i++) out.push(i === KB_DECISION_COL ? tone : null);
+    return out;
+  }
+  function kbFullSheet(name, recs){
+    return { name:name, headers:KB_FULL_HEADERS, rows:recs.map(kbFullRow), cellColors:recs.map(kbFullColors) };
+  }
+  function kbOpenDrill(title, recs, fname){
+    if(!recs || !recs.length || !REFGOV.OpenDrillModal) return;
+    const fn = kbSafe(fname || title) || 'KB_Detail';
+    REFGOV.OpenDrillModal({ title:title, rows:recs, filenameBase:fn, columns:KB_DRILL_COLS });
+    DRILLDOWN_EXPORT_OVERRIDE = function(){
+      if(REFGOV.ExportWorkbook) REFGOV.ExportWorkbook([kbFullSheet('KB Detail', recs)], fn);
+    };
+  }
+  let kbDrillStore = {};
+  function kbKpi(icon, label, value, tone, sub, key, recs){
+    const clickable = !!(key && recs && recs.length);
+    if(clickable) kbDrillStore[key] = { title:label, rows:recs };
+    return '<div class="kpi-card' + (tone ? ' tone-' + tone : '') + (clickable ? ' clickable' : '') + '"' + (clickable ? ' data-kbdrill="' + key + '" title="Click for detail &amp; Excel export"' : '') + '>' +
+      '<div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div>' + (clickable ? '<i class="fa-solid fa-arrow-up-right-from-square kc-drill-icon"></i>' : '') + '</div>' +
+      '<div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div>' +
+      (sub ? '<div class="kc-sub">' + sub + '</div>' : '') + '</div>';
+  }
+  function kbPct(n, d){ return d ? fmtN(n / d * 100, 1) + '%' : ''; }
+
+  // ---- local filters (on top of the dashboard's global filters) ----
+  let kbFlt = { status:'', ref:'', add:'', basis:'', rec:'' };
+  let kbRowsNow = [];
+  function kbApplyLocal(rows){
+    return rows.filter(function(r){
+      if(kbFlt.status && (r.current_status || '') !== kbFlt.status) return false;
+      if(kbFlt.ref && (boolish(r.was_kb_referred) ? 'Yes' : 'No') !== kbFlt.ref) return false;
+      if(kbFlt.add && (boolish(r.add_to_kb) ? 'Yes' : 'No') !== kbFlt.add) return false;
+      if(kbFlt.basis && (kbBasis(r) || '') !== kbFlt.basis) return false;
+      if(kbFlt.rec === 'With' && !kbHasRec(r)) return false;
+      if(kbFlt.rec === 'Without' && kbHasRec(r)) return false;
+      return true;
+    });
+  }
+  function kbFillSelect(id, values, cur){
+    const el = document.getElementById(id); if(!el) return '';
+    el.innerHTML = '<option value="">All</option>' + values.map(function(v){ return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
+    el.value = values.indexOf(cur) !== -1 ? cur : '';
+    return el.value;
+  }
+  function kbBuildFilters(scoped){
+    const uniq = function(arr){ return Array.from(new Set(arr.filter(Boolean))).sort(); };
+    kbFlt.status = kbFillSelect('kbFltStatus', uniq(scoped.map(function(r){ return r.current_status; })), kbFlt.status);
+    kbFlt.basis = kbFillSelect('kbFltBasis', uniq(scoped.map(kbBasis)), kbFlt.basis);
+    ['kbFltRef', 'kbFltAdd', 'kbFltRec'].forEach(function(id){
+      const el = document.getElementById(id); if(el && !el._kbSet){ el._kbSet = true; }
+    });
+    const m = kbFieldMap(scoped[0] || {});
+    const note = document.getElementById('kbColsNote');
+    if(note){
+      const nm = function(k){ return k ? '<code>' + esc(k) + '</code>' : '<b style="color:var(--status-warn);">not found in file</b>'; };
+      note.innerHTML = 'Columns read from the uploaded file — Problem Statement: user entered ' + nm(m.ps_user) + ', recommended ' + nm(m.ps_rec) +
+        ' · Resolution Steps: user entered ' + nm(m.rs_user) + ', recommended ' + nm(m.rs_rec) +
+        ' · KB Assessment ' + nm(m.kb_assessment) + ' · Resolution Source ' + nm(m.resolution_source) +
+        '. Scope: <b>Resolved - Pending for Confirmation</b>, <b>Closed</b>, <b>Customer Agreed</b> only. For tickets with <b>Add to KB = Yes</b> whose Recommended cell is blank in the file, the dashboard writes a rule-based Recommended version (tagged <span class="pill pill-info">Auto</span>) from the user-entered text; Recommended values uploaded in the file are never replaced, and user-entered text is never changed.';
+    }
+  }
+
   function renderKbKpis(rows){
     const referred = rows.filter(function(r){ return boolish(r.was_kb_referred); });
-    const published = referred.filter(function(r){ return kbDecisionBucket(r.kb_review_publish_decision) === 'Published'; }).length;
+    const published = referred.filter(function(r){ return kbDecisionBucket(r.kb_review_publish_decision) === 'Published'; });
     const pending = referred.filter(function(r){
       const b = kbDecisionBucket(r.kb_review_publish_decision);
       return b === 'Pending Review' || b === null;
-    }).length;
-    const usagePct = rows.length ? (referred.length/rows.length*100) : null;
+    });
+    const usagePct = rows.length ? (referred.length / rows.length * 100) : null;
 
     document.getElementById('kbKpiGrid').innerHTML =
-      kpiCard('fa-book-bookmark', 'KB Referred', fmtN(referred.length), '', rows.length?fmtN(referred.length/rows.length*100,1)+'% of tickets':'') +
-      kpiCard('fa-circle-check', 'KB Published', fmtN(published), 'good', referred.length?fmtN(published/referred.length*100,1)+'% of referred':'') +
-      kpiCard('fa-hourglass-half', 'KB Pending', fmtN(pending), pending?'warn':'good', referred.length?fmtN(pending/referred.length*100,1)+'% of referred':'') +
-      kpiCard('fa-percent', 'KB Usage %', usagePct===null?'—':fmtN(usagePct,1)+'%', usagePct===null?'':(usagePct>=15?'good':'warn'));
-
+      kbKpi('fa-book-bookmark', 'KB Referred', fmtN(referred.length), '', kbPct(referred.length, rows.length) ? kbPct(referred.length, rows.length) + ' of tickets' : '', 'ref', referred) +
+      kbKpi('fa-circle-check', 'KB Published', fmtN(published.length), 'good', kbPct(published.length, referred.length) ? kbPct(published.length, referred.length) + ' of referred' : '', 'pub', published) +
+      kbKpi('fa-hourglass-half', 'KB Pending', fmtN(pending.length), pending.length ? 'warn' : 'good', kbPct(pending.length, referred.length) ? kbPct(pending.length, referred.length) + ' of referred' : '', 'pend', pending) +
+      kbKpi('fa-percent', 'KB Usage %', usagePct === null ? '—' : fmtN(usagePct, 1) + '%', usagePct === null ? '' : (usagePct >= 15 ? 'good' : 'warn'), 'KB-referred tickets ÷ all in-scope tickets', 'usage', referred);
     return referred;
+  }
+
+  /** Cards for the NotebookLM-oriented columns: Add to KB, KB not
+   *  referred, and the User Entered vs Recommended content coverage. */
+  function renderKbEnhKpis(rows){
+    const addYes = rows.filter(function(r){ return boolish(r.add_to_kb); });
+    const addNo = rows.filter(function(r){ return !boolish(r.add_to_kb); });
+    const notRef = rows.filter(function(r){ return !boolish(r.was_kb_referred); });
+    const psRec = rows.filter(function(r){ return !!textVal(r.kb_ps_rec); });
+    const rsRec = rows.filter(function(r){ return !!textVal(r.kb_rs_rec); });
+    const differs = rows.filter(kbChanged);
+    const awaiting = rows.filter(function(r){ return (textVal(r.kb_ps_user) && !textVal(r.kb_ps_rec)) || (textVal(r.kb_rs_user) && !textVal(r.kb_rs_rec)); });
+    document.getElementById('kbEnhKpiGrid').innerHTML = [
+      kbKpi('fa-circle-plus', 'Add to KB – Yes', fmtN(addYes.length), addYes.length ? 'warn' : 'good', kbPct(addYes.length, rows.length) ? kbPct(addYes.length, rows.length) + ' of tickets' : '', 'addyes', addYes),
+      kbKpi('fa-circle-minus', 'Add to KB – No', fmtN(addNo.length), '', kbPct(addNo.length, rows.length) ? kbPct(addNo.length, rows.length) + ' of tickets' : '', 'addno', addNo),
+      kbKpi('fa-book-open', 'KB Not Referred', fmtN(notRef.length), '', kbPct(notRef.length, rows.length) ? kbPct(notRef.length, rows.length) + ' of tickets' : '', 'notref', notRef),
+      kbKpi('fa-file-lines', 'Recommended Problem Statement', fmtN(psRec.length), 'info', fmtN(psRec.filter(function(r){ return (r.kb_ps_rec_src||'').indexOf('Auto') === 0; }).length) + ' auto-generated · rest from file', 'psrec', psRec),
+      kbKpi('fa-list-check', 'Recommended Resolution Steps', fmtN(rsRec.length), 'info', fmtN(rsRec.filter(function(r){ return (r.kb_rs_rec_src||'').indexOf('Auto') === 0; }).length) + ' auto-generated · rest from file', 'rsrec', rsRec),
+      kbKpi('fa-code-compare', 'Recommendation Differs', fmtN(differs.length), 'info', 'Recommended ≠ user entered', 'differs', differs),
+      kbKpi('fa-hourglass-start', 'Awaiting Recommendation', fmtN(awaiting.length), awaiting.length ? 'warn' : 'good', 'User entered, no recommended version yet', 'await', awaiting)
+    ].join('');
+    return { addYes: addYes, addNo: addNo };
+  }
+
+  function kbHover(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+  /** Generic clickable bar chart over [{label, rows}] groups. */
+  function kbRowsBarChart(canvasId, items, color, emptyMsg, horizontal, titlePrefix){
+    const c = chartColors();
+    destroyChart(canvasId);
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+    items = items.filter(function(i){ return i.rows.length; });
+    if(!items.length){ emptyCanvas(canvas, emptyMsg); return; }
+    clearEmptyCanvas(canvas);
+    const DL = window.ChartDataLabels;
+    charts[canvasId] = new Chart(canvas, {
+      type:'bar',
+      plugins: DL ? [DL] : [],
+      data:{ labels:items.map(function(i){ return i.label.length > 34 ? i.label.slice(0, 33) + '…' : i.label; }),
+        datasets:[{ data:items.map(function(i){ return i.rows.length; }), backgroundColor:color, borderRadius:5, maxBarThickness:26 }] },
+      options:{ indexAxis: horizontal ? 'y' : 'x', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ title:function(t){ return items[t[0].dataIndex].label; } } },
+          datalabels:{ anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{ weight:'700', size:10 }, formatter:function(v){ return v; } } },
+        scales: horizontal ?
+          { x:{ ticks:{ color:c.textMuted, precision:0 }, grid:{ color:c.gridLine }, beginAtZero:true }, y:{ ticks:{ color:c.textSecondary, font:{ size:10.5 } }, grid:{ display:false } } } :
+          { x:{ ticks:{ color:c.textMuted, font:{ size:10 } }, grid:{ display:false } }, y:{ ticks:{ color:c.textMuted, precision:0 }, grid:{ color:c.gridLine }, beginAtZero:true } },
+        onHover: kbHover,
+        onClick:function(evt, els){
+          if(!els.length) return;
+          const it = items[els[0].index];
+          kbOpenDrill(titlePrefix + ' — ' + it.label, it.rows, titlePrefix + '_' + it.label);
+        } }
+    });
   }
 
   function renderKbDecision(referred){
@@ -30555,40 +30965,47 @@ REFGOV.ExportWorkbook = exportWorkbook;
       options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
         plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } },
           datalabels: { display:function(ctx){ return ctx.dataset.data[ctx.dataIndex] > 0; }, color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, anchor:'center', align:'center', formatter:function(v){ return v; } } },
-        onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        onHover: kbHover,
         onClick:function(evt, elements){
-          if(!elements.length || !REFGOV.OpenDrillModal || !REFGOV.DrillCol) return;
+          if(!elements.length) return;
           const label = labels[elements[0].index];
-          const GD = REFGOV.DrillCol;
-          REFGOV.OpenDrillModal({ title:'KB Decision — ' + label, rows: bucketRows[label], filenameBase:'KB_Decision_'+label.replace(/\s+/g,'_'),
-            columns:[GD.id, GD.title, GD.customer, GD.engineer, GD.status, GD.category, GD.created] });
+          kbOpenDrill('KB Decision — ' + label, bucketRows[label], 'KB_Decision_' + label);
         }
       }
     });
   }
 
-  function renderCategoryBar(rows, field, canvasId, horizontal, color, label){
+  function renderKbAddDoughnut(rows){
     const c = chartColors();
-    destroyChart(canvasId);
-    const canvas = document.getElementById(canvasId);
-    const dist = topN(rows, field, 10);
-    if(!dist.length){ emptyCanvas(canvas, label || 'No data for this field'); return; }
+    destroyChart('chartKbAddToKb');
+    const canvas = document.getElementById('chartKbAddToKb');
+    if(!canvas) return;
+    if(!rows.length){ emptyCanvas(canvas, 'No tickets in range'); return; }
     clearEmptyCanvas(canvas);
-    const data = horizontal ? dist.slice().reverse() : dist;
-    const DLcb = window.ChartDataLabels;
-    charts[canvasId] = new Chart(canvas, {
-      type:'bar',
-      plugins: DLcb ? [DLcb] : [],
-      data:{ labels:data.map(function(d){return d.label;}), datasets:[{ data:data.map(function(d){return d.value;}), backgroundColor:color||c.accent, borderRadius:5, maxBarThickness:26 }] },
-      options:{
-        indexAxis: horizontal ? 'y' : 'x',
-        responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
-          datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10}, formatter:function(v){ return v; } } },
-        scales: horizontal ?
-          { x:{ ticks:{ color:c.textMuted }, grid:{ color:c.gridLine }, beginAtZero:true }, y:{ ticks:{ color:c.textSecondary, font:{size:10.5} }, grid:{ display:false } } } :
-          { x:{ ticks:{ color:c.textMuted, font:{size:10} }, grid:{ display:false } }, y:{ ticks:{ color:c.textMuted }, grid:{ color:c.gridLine }, beginAtZero:true } }
-      }
+    const yes = rows.filter(function(r){ return boolish(r.add_to_kb); });
+    const no = rows.filter(function(r){ return !boolish(r.add_to_kb); });
+    const groups = [['Add to KB – Yes', yes, c.warn], ['Add to KB – No', no, c.textMuted]].filter(function(g){ return g[1].length; });
+    const DL = window.ChartDataLabels;
+    charts.chartKbAddToKb = new Chart(canvas, {
+      type:'doughnut',
+      plugins: DL ? [DL] : [],
+      data:{ labels:groups.map(function(g){ return g[0]; }), datasets:[{ data:groups.map(function(g){ return g[1].length; }), backgroundColor:groups.map(function(g){ return g[2]; }), borderColor:c.surface, borderWidth:2 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'58%',
+        plugins:{ legend:{ position:'bottom', labels:{ color:c.textSecondary, boxWidth:10, padding:9, font:{size:10.5} } },
+          datalabels:{ color:'#fff', font:{weight:'700',size:10.5}, textStrokeColor:'rgba(0,0,0,0.45)', textStrokeWidth:3, formatter:function(v){ return v; } } },
+        onHover: kbHover,
+        onClick:function(evt, els){ if(!els.length) return; const g = groups[els[0].index]; kbOpenDrill(g[0], g[1], 'KB_' + g[0]); } }
     });
+  }
+
+  function renderKbContentChart(rows){
+    const items = [
+      { label:'Problem Statement – User Entered', rows:rows.filter(function(r){ return !!textVal(r.kb_ps_user); }) },
+      { label:'Problem Statement – Recommended', rows:rows.filter(function(r){ return !!textVal(r.kb_ps_rec); }) },
+      { label:'Resolution Steps – User Entered', rows:rows.filter(function(r){ return !!textVal(r.kb_rs_user); }) },
+      { label:'Resolution Steps – Recommended', rows:rows.filter(function(r){ return !!textVal(r.kb_rs_rec); }) }
+    ];
+    kbRowsBarChart('chartKbContent', items, chartColors().accent, 'No Problem Statement / Resolution Steps data in range', false, 'KB Content');
   }
 
   function renderKbReferralTrend(rows){
@@ -30599,9 +31016,10 @@ REFGOV.ExportWorkbook = exportWorkbook;
     if(!months.length){ emptyCanvas(canvas, 'No dated tickets in range'); return; }
     clearEmptyCanvas(canvas);
     const labels = months.map(function(m){ const p=m.split('-'); return new Date(+p[0],+p[1]-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'}); });
-    const series = months.map(function(m){
-      return rows.filter(function(r){ return r._month_key===m && boolish(r.was_kb_referred); }).length;
+    const byMonth = months.map(function(m){
+      return rows.filter(function(r){ return r._month_key===m && boolish(r.was_kb_referred); });
     });
+    const series = byMonth.map(function(a){ return a.length; });
     if(!series.some(function(v){ return v>0; })){ emptyCanvas(canvas, 'No KB-referred tickets in range'); return; }
     const DLkrt = window.ChartDataLabels;
     charts.chartKbReferralTrend = new Chart(canvas, {
@@ -30612,32 +31030,24 @@ REFGOV.ExportWorkbook = exportWorkbook;
       options:{ responsive:true, maintainAspectRatio:false,
         layout:{ padding:{ top:14 } },
         plugins:{ legend:{ display:false } },
-        scales:{ x:{ ticks:{ color:c.textMuted }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted, precision:0 }, grid:{ color:c.gridLine } } } }
+        scales:{ x:{ ticks:{ color:c.textMuted }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted, precision:0 }, grid:{ color:c.gridLine } } },
+        onHover: kbHover,
+        onClick:function(evt, els){
+          if(!els.length) return;
+          const i = els[0].index;
+          kbOpenDrill('KB Referred — ' + labels[i], byMonth[i], 'KB_Referred_' + labels[i]);
+        } }
     });
   }
 
   let kbRowsCache = [];
-  function kbTruncate(v, len){
-    const s = textVal(v);
-    if(!s) return '—';
-    return s.length > len ? s.slice(0, len) + '…' : s;
+  function kbTextCell(v, n){
+    return '<td title="' + esc(textVal(v) || '') + '">' + esc(kbTruncate(v, n)) + '</td>';
   }
-  function kbServiceType(r){
-    const v = String(r.service || '').trim().toLowerCase();
-    if(v.indexOf('incident') !== -1) return 'INC';
-    if(v.indexOf('service request') !== -1 || v === 'sr' || v.indexOf(' sr ') !== -1) return 'SR';
-    return '—';
-  }
-  /** This entire module is scoped to Closed / Resolved / Resolved -
-   *  Pending Confirmation tickets only - a ticket still actively being
-   *  worked hasn't produced a finished resolution yet, so it has
-   *  nothing meaningful to say about KB usage or documentation gaps.
-   *  Matched by status text rather than the _is_closed flag alone,
-   *  since "Resolved - Pending Confirmation" is deliberately included
-   *  even though the ticket may not be flagged fully closed yet. */
-  function kbInScope(r){
-    const s = String(r.current_status || '').trim().toLowerCase();
-    return s.indexOf('closed') !== -1 || s.indexOf('resolved') !== -1;
+  function kbRecCell(r, which, n){
+    const v = which === 'ps' ? r.kb_ps_rec : r.kb_rs_rec, src = which === 'ps' ? r.kb_ps_rec_src : r.kb_rs_rec_src;
+    const tag = (src && src.indexOf('Auto') === 0) ? '<span class="pill pill-info" title="Auto-generated (rule-based) from the user-entered text" style="margin-right:6px;">Auto</span>' : '';
+    return '<td title="' + esc(textVal(v) || '') + '">' + tag + esc(kbTruncate(String(v || '').replace(/\s*\n\s*/g, ' '), n)) + '</td>';
   }
   function renderKbTable(rows){
     const candidates = rows.filter(function(r){ return boolish(r.was_kb_referred) || boolish(r.add_to_kb); });
@@ -30656,27 +31066,25 @@ REFGOV.ExportWorkbook = exportWorkbook;
         '<td>' + esc(r.rca||'—') + '</td>' +
         '<td>' + esc(r.resolution_type||'—') + '</td>' +
         '<td>' + (boolish(r.was_kb_referred) ? '<span class="pill pill-info">Yes</span>' : '<span class="pill pill-bad">No</span>') + '</td>' +
+        '<td>' + esc(kbBasis(r) || '—') + '</td>' +
         '<td><span class="pill ' + tone + '">' + esc(decision) + '</span></td>' +
         '<td data-order="' + (r._creation_date ? r._creation_date.getTime() : 0) + '">' + fmtDateShort(r._creation_date) + '</td>' +
-        '<td title="' + esc(textVal(r.requirement_problem_statement)||'') + '">' + esc(kbTruncate(r.requirement_problem_statement, 60)) + '</td>' +
-        '<td title="' + esc(textVal(r.resolution_steps)||'') + '">' + esc(kbTruncate(r.resolution_steps, 60)) + '</td>' +
+        kbTextCell(r.kb_ps_user, 60) + kbRecCell(r, 'ps', 60) + kbTextCell(r.kb_rs_user, 60) + kbRecCell(r, 'rs', 60) +
         '<td>' + (boolish(r.add_to_kb) ? '<span class="pill pill-good">Yes</span>' : '<span class="pill pill-bad">No</span>') + '</td>' +
         '<td>' + esc(textVal(r.kb_review_publish_decision)||'—') + '</td>' +
         '</tr>';
     }).join(''));
-    $tbl.DataTable({ pageLength: (REFGOV.Settings && REFGOV.Settings.tablePageLength) || 10, order:[[7,'desc']], language:{ searchPlaceholder:'Search KB candidates…' } });
+    $tbl.DataTable({ pageLength: (REFGOV.Settings && REFGOV.Settings.tablePageLength) || 10, order:[[9,'desc']], language:{ searchPlaceholder:'Search KB candidates…' } });
     $tbl.find('tbody').off('click').on('click', 'tr', function(){
       const idx = +$(this).attr('data-ridx');
-      if(REFGOV.OpenTicketDetail) REFGOV.OpenTicketDetail(kbRowsCache[idx]);
+      if(REFGOV.OpenTicketDetail && kbRowsCache[idx]) REFGOV.OpenTicketDetail(kbRowsCache[idx]);
     });
   }
 
   /** Does KB usage actually correlate with faster resolution? Compares
    *  avg resolution days for closed tickets that were KB-referred vs
    *  not, using the same tat_days field the rest of this dashboard
-   *  already relies on for resolution time. This is the direct
-   *  "usage point of view" evidence - not just how often KB gets
-   *  used, but whether using it actually helps. */
+   *  already relies on for resolution time. */
   function renderKbImpact(rows){
     const c = chartColors();
     destroyChart('chartKbImpact');
@@ -30697,14 +31105,11 @@ REFGOV.ExportWorkbook = exportWorkbook;
       options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
         datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:12}, formatter:function(v){ return v===null?'':v+'d'; } } },
         scales:{ x:{ ticks:{ color:c.textMuted, font:{size:11} }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine }, title:{ display:true, text:'Avg days to resolve' } } },
-        onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+        onHover: kbHover,
         onClick:function(evt, elements){
-          if(!elements.length || !REFGOV.OpenDrillModal || !REFGOV.DrillCol) return;
+          if(!elements.length) return;
           const isReferred = elements[0].index === 0;
-          const GD = REFGOV.DrillCol;
-          REFGOV.OpenDrillModal({ title:(isReferred?'KB Referred':'Not KB Referred') + ' — Closed Tickets', rows: isReferred?referredRows:notReferredRows,
-            filenameBase:'KB_Impact_'+(isReferred?'Referred':'NotReferred'),
-            columns:[GD.id, GD.title, GD.customer, GD.engineer, GD.status, GD.category, GD.tat, GD.created] });
+          kbOpenDrill((isReferred?'KB Referred':'Not KB Referred') + ' — Closed Tickets', isReferred?referredRows:notReferredRows, 'KB_Impact_' + (isReferred?'Referred':'NotReferred'));
         }
       }
     });
@@ -30714,8 +31119,8 @@ REFGOV.ExportWorkbook = exportWorkbook;
   function kbGapCandidates(rows){
     return rows.filter(function(r){
       if(boolish(r.was_kb_referred) || boolish(r.add_to_kb)) return false; // already covered - not a gap
-      const problem = textVal(r.requirement_problem_statement);
-      const steps = textVal(r.resolution_steps);
+      const problem = textVal(r.kb_ps_user);
+      const steps = textVal(r.kb_rs_user);
       return !!(problem && problem.length >= KB_GAP_MIN_LEN && steps && steps.length >= KB_GAP_MIN_LEN);
     });
   }
@@ -30723,9 +31128,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
   /** The "what should we document next" recommendation list: tickets
    *  that already have a real problem statement and resolution steps
    *  written down, but were never referenced from KB or flagged to be
-   *  added - meaning the knowledge exists on the ticket but isn't
-   *  reusable yet. Grouped by category so the biggest, most recurring
-   *  gaps surface first rather than one-off tickets. */
+   *  added. Grouped by category so recurring gaps surface first. */
   function renderKbGap(rows){
     const c = chartColors();
     const gapRows = kbGapCandidates(rows);
@@ -30734,38 +31137,17 @@ REFGOV.ExportWorkbook = exportWorkbook;
     const byCategory = {};
     gapRows.forEach(function(r){ const cat = textVal(r.support_category) || 'Uncategorized'; (byCategory[cat] = byCategory[cat]||[]).push(r); });
     const topCat = Object.keys(byCategory).sort(function(a,b){ return byCategory[b].length - byCategory[a].length; })[0];
+    const closedCount = rows.filter(function(r){ return r._is_closed; }).length;
 
     document.getElementById('kbGapKpiGrid').innerHTML = [
-      kpiCard('fa-file-circle-question', 'Gap Tickets', fmtN(gapRows.length), gapRows.length?'warn':'good', 'Documented but never referenced or added to KB'),
-      kpiCard('fa-folder-open', 'Biggest Gap Category', topCat ? esc(topCat) : '—', null, topCat ? fmtN(byCategory[topCat].length) + ' undocumented-to-KB tickets' : 'No gap tickets in range'),
-      kpiCard('fa-percent', 'Share of All Resolved', rows.length?fmtPctKb(gapRows.length/rows.filter(function(r){return r._is_closed;}).length*100):'—', null, 'Of closed tickets in the current filter')
+      kbKpi('fa-file-circle-question', 'Gap Tickets', fmtN(gapRows.length), gapRows.length?'warn':'good', 'Documented but never referenced or added to KB', 'gap', gapRows),
+      kbKpi('fa-folder-open', 'Biggest Gap Category', topCat ? esc(topCat) : '—', null, topCat ? fmtN(byCategory[topCat].length) + ' undocumented-to-KB tickets' : 'No gap tickets in range', 'gapcat', topCat ? byCategory[topCat] : []),
+      kbKpi('fa-percent', 'Share of All Resolved', closedCount ? fmtPctKb(gapRows.length/closedCount*100) : '—', null, 'Of closed tickets in the current filter', 'gapshare', gapRows)
     ].join('');
 
-    destroyChart('chartKbGapCategory');
-    const canvas = document.getElementById('chartKbGapCategory');
-    const cats = Object.keys(byCategory).sort(function(a,b){ return byCategory[b].length - byCategory[a].length; }).slice(0, 15);
-    if(!cats.length){ emptyCanvas(canvas, 'No gap tickets in range — KB coverage looks complete'); }
-    else {
-      clearEmptyCanvas(canvas);
-      const DL = window.ChartDataLabels;
-      charts.chartKbGapCategory = new Chart(canvas, {
-        type:'bar',
-        plugins: DL ? [DL] : [],
-        data:{ labels:cats, datasets:[{ data:cats.map(function(cat){ return byCategory[cat].length; }), backgroundColor:c.warn, borderRadius:5, maxBarThickness:34 }] },
-        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false },
-          datalabels: { anchor:'end', align:'end', clip:false, color:c.textSecondary, font:{weight:'700',size:10.5}, formatter:function(v){ return v; } } },
-          scales:{ x:{ ticks:{ color:c.textMuted, font:{size:10} }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:c.textMuted }, grid:{ color:c.gridLine } } },
-          onHover:function(evt, elements){ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
-          onClick:function(evt, elements){
-            if(!elements.length || !REFGOV.OpenDrillModal || !REFGOV.DrillCol) return;
-            const cat = cats[elements[0].index];
-            const GD = REFGOV.DrillCol;
-            REFGOV.OpenDrillModal({ title:'KB Gap — ' + cat, rows: byCategory[cat], filenameBase:'KB_Gap_'+cat.replace(/\s+/g,'_'),
-              columns:[GD.id, GD.title, GD.customer, GD.engineer, GD.status, GD.category, GD.created] });
-          }
-        }
-      });
-    }
+    const cats = Object.keys(byCategory).sort(function(a,b){ return byCategory[b].length - byCategory[a].length; }).slice(0, 15)
+      .map(function(cat){ return { label:cat, rows:byCategory[cat] }; });
+    kbRowsBarChart('chartKbGapCategory', cats, c.warn, 'No gap tickets in range — KB coverage looks complete', false, 'KB Gap');
 
     const $tbl = $('#kbGapTable');
     if($.fn.DataTable.isDataTable($tbl)) $tbl.DataTable().destroy();
@@ -30775,15 +31157,14 @@ REFGOV.ExportWorkbook = exportWorkbook;
         '<td>' + esc(r.customer_name||'—') + '</td>' +
         '<td>' + esc(r.support_category||'—') + '</td>' +
         '<td>' + esc(kbServiceType(r)) + '</td>' +
-        '<td title="' + esc(textVal(r.requirement_problem_statement)||'') + '">' + esc(kbTruncate(r.requirement_problem_statement, 60)) + '</td>' +
-        '<td title="' + esc(textVal(r.resolution_steps)||'') + '">' + esc(kbTruncate(r.resolution_steps, 60)) + '</td>' +
-        '<td title="' + esc(textVal(r.rca)||'') + '">' + esc(kbTruncate(r.rca, 40)) + '</td>' +
+        kbTextCell(r.kb_ps_user, 60) + kbRecCell(r, 'ps', 60) + kbTextCell(r.kb_rs_user, 60) + kbRecCell(r, 'rs', 60) +
+        kbTextCell(r.rca, 40) +
         '<td>' + esc(r.resolution_type||'—') + '</td>' +
         '<td data-order="' + (r._creation_date ? r._creation_date.getTime() : 0) + '">' + fmtDateShort(r._creation_date) + '</td>' +
         '</tr>';
-    }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);">No gap tickets \u2014 every well-documented resolution is already in or flagged for KB</td></tr>');
+    }).join('') || '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);">No gap tickets — every well-documented resolution is already in or flagged for KB</td></tr>');
     if(gapRows.length){
-      $tbl.DataTable({ pageLength: (REFGOV.Settings && REFGOV.Settings.tablePageLength) || 10, order:[[8,'desc']], language:{ searchPlaceholder:'Search gap tickets…' } });
+      $tbl.DataTable({ pageLength: (REFGOV.Settings && REFGOV.Settings.tablePageLength) || 10, order:[[10,'desc']], language:{ searchPlaceholder:'Search gap tickets…' } });
     }
     $tbl.find('tbody').off('click').on('click', 'tr[data-ridx]', function(){
       const idx = +$(this).attr('data-ridx');
@@ -30791,18 +31172,9 @@ REFGOV.ExportWorkbook = exportWorkbook;
     });
   }
   function fmtPctKb(v){ return (v===null||v===undefined||isNaN(v)) ? '—' : v.toFixed(1)+'%'; }
-  const KB_GAP_EXPORT_HEADERS = ['Ticket ID','Customer','Category','Service Type','Problem Statement','Resolution Steps','RCA','Resolution Type','Created','Hold Days'];
   function exportKbGapToExcel(){
     if(!REFGOV.ExportWorkbook) return;
-    const rows = kbGapRowsCache.map(function(r){
-      const hd = REFGOV.HoldDays ? REFGOV.HoldDays(r) : null;
-      return [ r.ticket_id||'', r.customer_name||'', r.support_category||'', kbServiceType(r),
-        textVal(r.requirement_problem_statement)||'', textVal(r.resolution_steps)||'',
-        textVal(r.rca)||'', r.resolution_type||'',
-        r._creation_date ? r._creation_date.toISOString().slice(0,10) : '',
-        hd===null?'':+hd.toFixed(1) ];
-    });
-    REFGOV.ExportWorkbook([{ name:'KB Gap Candidates', headers:KB_GAP_EXPORT_HEADERS, rows:rows }], 'KB_Gap_Candidates');
+    REFGOV.ExportWorkbook([kbFullSheet('KB Gap Candidates', kbGapRowsCache)], 'KB_Gap_Candidates');
   }
 
   function renderKbModule(){
@@ -30811,15 +31183,25 @@ REFGOV.ExportWorkbook = exportWorkbook;
     document.getElementById('kbWrap').style.display = isLoaded ? 'block' : 'none';
     if(!isLoaded) return;
 
-    // This entire page is scoped to Closed / Resolved / Resolved -
-    // Pending Confirmation tickets only - applied once here so every
-    // KPI, chart, and table below is automatically in scope, rather
-    // than repeating the filter in each one.
-    const rows = (REFGOV.Data.filteredRows || []).filter(kbInScope);
+    // Scope: Resolved - Pending for Confirmation / Closed / Customer Agreed only.
+    // Applied once here so every KPI, chart, table and drill-down below is
+    // automatically in scope. kbWithFields() adds the normalised kb_* fields
+    // on a COPY of each row - the uploaded values are never overwritten.
+    const scoped = (REFGOV.Data.filteredRows || []).filter(kbInScope).map(kbWithFields);
+    kbBuildFilters(scoped);
+    const rows = kbApplyLocal(scoped);
+    kbRowsNow = rows;
+    kbDrillStore = {};
+
     const referred = renderKbKpis(rows);
+    renderKbEnhKpis(rows);
     renderKbDecision(referred);
-    renderCategoryBar(rows, 'rca', 'chartKbRca', true, chartColors().warn, 'No RCA data');
-    renderCategoryBar(referred, 'support_category', 'chartKbCategory', true, chartColors().accent, 'No KB-referred tickets in range');
+    kbRowsBarChart('chartKbRca', kbGroup(rows, function(r){ return r.rca; }, 10), chartColors().warn, 'No RCA data', true, 'RCA');
+    kbRowsBarChart('chartKbCategory', kbGroup(referred, function(r){ return r.support_category; }, 10), chartColors().accent, 'No KB-referred tickets in range', true, 'KB Referred by Category');
+    kbRowsBarChart('chartKbAssessment', kbGroup(referred, function(r){ return r.kb_assessment; }, 10), chartColors().good, 'No KB Assessment values (KB referred = Yes)', true, 'KB Assessment');
+    kbRowsBarChart('chartKbSource', kbGroup(rows.filter(function(r){ return !boolish(r.was_kb_referred); }), function(r){ return r.kb_resolution_source; }, 10), chartColors().info, 'No Resolution Source values (KB referred = No)', true, 'Resolution Source');
+    renderKbAddDoughnut(rows);
+    renderKbContentChart(rows);
     renderKbImpact(rows);
     renderKbReferralTrend(rows);
     renderKbGap(rows);
@@ -30831,32 +31213,37 @@ REFGOV.ExportWorkbook = exportWorkbook;
 
   function exportKbToExcel(){
     if(!REFGOV.ExportWorkbook) return;
-    const rows = (REFGOV.Data.filteredRows || []).filter(kbInScope);
+    const rows = kbRowsNow || [];
     const referred = rows.filter(function(r){ return boolish(r.was_kb_referred); });
     const published = referred.filter(function(r){ return kbDecisionBucket(r.kb_review_publish_decision) === 'Published'; }).length;
     const pending = referred.filter(function(r){ const b = kbDecisionBucket(r.kb_review_publish_decision); return b === 'Pending Review' || b === null; }).length;
     const usagePct = rows.length ? (referred.length/rows.length*100) : null;
+    const addYes = rows.filter(function(r){ return boolish(r.add_to_kb); }).length;
 
     const kpiSheet = { name:'KPI Summary', headers:['Metric','Value'],
-      rows:[ ['KB Referred', referred.length], ['KB Published', published], ['KB Pending', pending], ['KB Usage %', usagePct===null?null:+usagePct.toFixed(1)] ],
-      cellColors:[ [null,null],[null,null],[null,null],[null, usagePct===null?'GREY':usagePct>=15?'GREEN':'AMBER'] ] };
+      rows:[ ['In-scope tickets (Resolved - Pending for Confirmation / Closed / Customer Agreed)', rows.length],
+        ['KB Referred', referred.length], ['KB Published', published], ['KB Pending', pending], ['KB Usage %', usagePct===null?null:+usagePct.toFixed(1)],
+        ['Add to KB – Yes', addYes], ['Add to KB – No', rows.length - addYes],
+        ['KB Not Referred', rows.length - referred.length],
+        ['Recommended Problem Statement available', rows.filter(function(r){ return !!textVal(r.kb_ps_rec); }).length],
+        ['Recommended Resolution Steps available', rows.filter(function(r){ return !!textVal(r.kb_rs_rec); }).length],
+        ['Recommendation differs from user entry', rows.filter(kbChanged).length] ],
+      cellColors:[ [null,null],[null,null],[null,null],[null,null],[null, usagePct===null?'GREY':usagePct>=15?'GREEN':'AMBER'],[null,null],[null,null],[null,null],[null,null],[null,null],[null,null] ] };
 
     const decisionBuckets = { 'Published':[], 'Pending Review':[], 'Rejected':[], 'Not Required':[], 'Other':[] };
     referred.forEach(function(r){ const b = kbDecisionBucket(r.kb_review_publish_decision) || 'Pending Review'; (decisionBuckets[b]=decisionBuckets[b]||[]).push(r); });
     const decisionSheet = { name:'By Decision', headers:['Decision','Count'], rows: Object.keys(decisionBuckets).filter(function(k){ return decisionBuckets[k].length; }).map(function(k){ return [k, decisionBuckets[k].length]; }) };
 
-    function catSheet(field, name, srcRows){
-      const dist = topN(srcRows, field, 50);
-      return { name:name, headers:[name,'Count'], rows: dist.map(function(d){ return [d.label, d.value]; }) };
+    function groupSheet(name, recs, mapper){
+      return { name:name, headers:[name,'Count'], rows: kbGroup(recs, mapper, 50).map(function(d){ return [d.label, d.rows.length]; }) };
     }
-    const rcaSheet = catSheet('rca', 'By RCA', rows);
-    const categorySheet = catSheet('support_category', 'By Category (Referred)', referred);
-    const resTypeSheet = catSheet('resolution_type', 'By Resolution Type', rows);
+    const rcaSheet = groupSheet('By RCA', rows, function(r){ return r.rca; });
+    const categorySheet = groupSheet('By Category (Referred)', referred, function(r){ return r.support_category; });
+    const resTypeSheet = groupSheet('By Resolution Type', rows, function(r){ return r.resolution_type; });
+    const assessSheet = groupSheet('By KB Assessment', referred, function(r){ return r.kb_assessment; });
+    const sourceSheet = groupSheet('By Resolution Source', rows.filter(function(r){ return !boolish(r.was_kb_referred); }), function(r){ return r.kb_resolution_source; });
 
     const candidates = rows.filter(function(r){ return boolish(r.was_kb_referred) || boolish(r.add_to_kb); });
-    const ticketSheet = { name:'KB Candidates', headers:['Ticket ID','Customer','Category','Service Type','RCA','Resolution Type','KB Referred','Decision','Created','Problem Statement','Resolution Steps','Add to KB','KB Review / Publish Decision','Hold Days'],
-      rows: candidates.map(function(r){ const decision = kbDecisionBucket(r.kb_review_publish_decision) || 'Pending Review'; const hd = REFGOV.HoldDays ? REFGOV.HoldDays(r) : null; return [r.ticket_id||'', r.customer_name||'', r.support_category||'', kbServiceType(r), r.rca||'', r.resolution_type||'', boolish(r.was_kb_referred)?'Yes':'No', decision, r._creation_date?r._creation_date.toISOString().slice(0,10):'', textVal(r.requirement_problem_statement)||'', textVal(r.resolution_steps)||'', boolish(r.add_to_kb)?'Yes':'No', textVal(r.kb_review_publish_decision)||'', hd===null?null:+hd.toFixed(1)]; }),
-      cellColors: candidates.map(function(r){ const decision = kbDecisionBucket(r.kb_review_publish_decision) || 'Pending Review'; const tone = decision==='Published'?'GREEN':decision==='Rejected'?'RED':decision==='Pending Review'?'AMBER':'GREY'; return [null,null,null,null,null,null,null,tone,null,null,null,null,null,null]; }) };
 
     const closedRows = rows.filter(function(r){ return r._is_closed && toNum(r.tat_days) !== null; });
     const impactReferred = closedRows.filter(function(r){ return boolish(r.was_kb_referred); });
@@ -30866,14 +31253,33 @@ REFGOV.ExportWorkbook = exportWorkbook;
       rows: [['KB Referred', impactReferred.length, (function(){ const v = avgTatFor(impactReferred); return v===null?null:+v.toFixed(1); })()],
              ['Not KB Referred', impactNotReferred.length, (function(){ const v = avgTatFor(impactNotReferred); return v===null?null:+v.toFixed(1); })()]] };
 
-    const gapRows = kbGapCandidates(rows);
-    const gapSheet = { name:'KB Gap Candidates', headers:KB_GAP_EXPORT_HEADERS,
-      rows: gapRows.map(function(r){ const hd = REFGOV.HoldDays ? REFGOV.HoldDays(r) : null; return [r.ticket_id||'', r.customer_name||'', r.support_category||'', kbServiceType(r), textVal(r.requirement_problem_statement)||'', textVal(r.resolution_steps)||'', textVal(r.rca)||'', r.resolution_type||'', r._creation_date?r._creation_date.toISOString().slice(0,10):'', hd===null?null:+hd.toFixed(1)]; }) };
-
-    REFGOV.ExportWorkbook([kpiSheet, decisionSheet, rcaSheet, categorySheet, resTypeSheet, impactSheet, gapSheet, ticketSheet], 'Knowledge_Base');
+    REFGOV.ExportWorkbook([kpiSheet, decisionSheet, assessSheet, sourceSheet, rcaSheet, categorySheet, resTypeSheet, impactSheet,
+      kbFullSheet('KB Gap Candidates', kbGapCandidates(rows)), kbFullSheet('KB Candidates', candidates), kbFullSheet('All KB Tickets', rows)], 'Knowledge_Base');
   }
   const kbExportBtn = document.getElementById('kbExportBtn');
   if(kbExportBtn) kbExportBtn.addEventListener('click', exportKbToExcel);
+
+  // Cards: click -> drill-down with full-column Excel export (delegated; cards are re-rendered on every update).
+  const kbViewEl = document.getElementById('view-kb');
+  if(kbViewEl && !kbViewEl._kbWired){
+    kbViewEl._kbWired = true;
+    kbViewEl.addEventListener('click', function(e){
+      const card = e.target.closest && e.target.closest('[data-kbdrill]');
+      if(!card) return;
+      const ent = kbDrillStore[card.getAttribute('data-kbdrill')];
+      if(ent) kbOpenDrill(ent.title, ent.rows, 'KB_' + ent.title);
+    });
+    [['kbFltStatus','status'],['kbFltRef','ref'],['kbFltAdd','add'],['kbFltBasis','basis'],['kbFltRec','rec']].forEach(function(p){
+      const el = document.getElementById(p[0]);
+      if(el) el.addEventListener('change', function(){ kbFlt[p[1]] = el.value; renderKbModule(); });
+    });
+    const rst = document.getElementById('kbFltReset');
+    if(rst) rst.addEventListener('click', function(){
+      kbFlt = { status:'', ref:'', add:'', basis:'', rec:'' };
+      ['kbFltRef','kbFltAdd','kbFltRec'].forEach(function(id){ const el = document.getElementById(id); if(el) el.value = ''; });
+      renderKbModule();
+    });
+  }
 
   /* ================================================================
      ORCHESTRATION — all three sub-modules render/reset together
