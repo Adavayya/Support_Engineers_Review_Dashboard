@@ -7755,7 +7755,7 @@ function startDashboard(){
   // fresh on filter/period changes only while it stays enabled.
   PAGE_LOADED = {}; PAGE_STALE = {};
   PAGE_REGISTERED = {};
-  ['execsummary','dailyreview','overview','engineers','towercust','engcompliance','stagetime','complexitycal','delegoverview','delegtier','delegengineer','delegjourney','delegperf','sla','aging','escalation','notes'].forEach(function(v){ const n = document.getElementById('view-'+v); if(n) n.innerHTML = ''; });
+  ['execsummary','dailyreview','overview','engineers','towercust','engcompliance','stagetime','complexitycal','delegoverview','delegtier','delegengineer','delegjourney','delegperf','sla','aging','escalation','notes'].forEach(function(v){ const n = document.getElementById('view-'+v); if(n){ n.innerHTML = ''; delete n.dataset.built; } });
   PAGE_RENDERERS = {
     overview: function(){ renderOverview(); },
     engineers: function(){
