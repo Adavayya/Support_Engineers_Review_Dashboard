@@ -19,6 +19,7 @@
      is ever unreachable (e.g. offline), exactly like every other optional-library check
      already in this file. -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --bg:#faf8fc;
@@ -2270,6 +2271,19 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 .cr-chart-card{ border:1px solid #E2E4EC; border-radius:10px; padding:14px 16px; margin-bottom:16px; }
 .cr-chart-head{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em; color:#444; margin-bottom:10px; display:flex; align-items:center; gap:7px; }
 .cr-chart-card canvas{ max-height:190px; }
+.cr-charts-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:0; }
+.cr-chart-wrap{ position:relative; height:230px; }
+.cr-chart-wrap.tall{ height:260px; }
+.cr-chart-wrap canvas{ max-height:none !important; }
+#engineerReportModal .cr-kpi-card.warn{ border-color:var(--status-warn); background:rgba(245,158,11,0.06); }
+#engineerReportModal .cr-kpi-card.bad{ border-color:var(--status-bad); background:rgba(239,68,68,0.06); }
+#engineerReportModal .cr-kpi-card.good{ background:rgba(34,197,94,0.06); }
+#engineerReportModal .cr-kpi-card.good .cr-kpi-value{ color:var(--status-good); }
+#engineerReportModal .cr-kpi-card.warn .cr-kpi-value{ color:var(--status-warn); }
+#engineerReportModal .cr-kpi-card.bad .cr-kpi-value{ color:var(--status-bad); }
+#engineerReportModal .cr-kpi-card.warn .cr-kpi-sub{ color:var(--status-warn); font-weight:700; }
+#engineerReportModal .cr-kpi-card.bad .cr-kpi-sub{ color:var(--status-bad); font-weight:700; }
+.cr-section-title{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:#560a91; margin:4px 0 8px; }
 .cr-scorebar-wrap{ height:280px; }
 .cr-scorebar-wrap canvas{ max-height:280px !important; }
 .cr-open-status{ font-weight:800; font-size:11px; }
@@ -2280,7 +2294,7 @@ html[data-theme="dark"] .gov-modal .btn-close{ filter:invert(1) grayscale(1) bri
 
 @media (max-width: 900px){
   .cr-kpi-grid{ grid-template-columns:repeat(2,1fr); }
-  .cr-tables-row{ grid-template-columns:1fr; }
+  .cr-tables-row, .cr-charts-row{ grid-template-columns:1fr; }
 }
 
 /* Printing a report modal (Customer Report or Engineer Report) reuses
@@ -4233,6 +4247,38 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
           <div class="cr-chart-card">
             <div class="cr-chart-head"><i class="fa-solid fa-chart-simple"></i> Score Breakdown — Weighted Performance (% of each component's maximum)</div>
             <div class="cr-scorebar-wrap"><canvas id="chartErScore"></canvas></div>
+          </div>
+
+          <div class="cr-charts-row">
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-bullseye"></i> SLA &amp; Quality Rates (%)</div>
+              <div class="cr-chart-wrap"><canvas id="chartErSla"></canvas></div>
+            </div>
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-chart-pie"></i> Ticket Mix — Closed / Open × Incident / SR</div>
+              <div class="cr-chart-wrap"><canvas id="chartErMix"></canvas></div>
+            </div>
+          </div>
+
+          <div class="cr-charts-row">
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-hourglass-half"></i> Effort Hours by Tier</div>
+              <div class="cr-chart-wrap"><canvas id="chartErEffort"></canvas></div>
+            </div>
+            <div class="cr-chart-card">
+              <div class="cr-chart-head"><i class="fa-solid fa-people-arrows"></i> Delegation Time (≤ 2 Days vs &gt; 2 Days)</div>
+              <div class="cr-chart-wrap"><canvas id="chartErDeleg"></canvas></div>
+            </div>
+          </div>
+
+          <div class="cr-chart-card">
+            <div class="cr-chart-head"><i class="fa-solid fa-chart-line"></i> Monthly Trend — Logged vs Closed</div>
+            <div class="cr-chart-wrap tall"><canvas id="chartErTrend"></canvas></div>
+          </div>
+
+          <div class="cr-chart-card">
+            <div class="cr-chart-head"><i class="fa-solid fa-headset"></i> Service Compliance — Within Target vs Breached</div>
+            <div class="cr-chart-wrap tall"><canvas id="chartErSvc"></canvas></div>
           </div>
 
           <div class="cr-tables-row">
@@ -16334,11 +16380,6 @@ function openEngineerReport(name){
 function closeEngineerReport(){ document.getElementById('engReportOverlay').classList.remove('open'); }
 document.getElementById('engReportCloseBtn').addEventListener('click', closeEngineerReport);
 document.getElementById('engReportOverlay').addEventListener('click', (e)=>{ if(e.target.id==='engReportOverlay') closeEngineerReport(); });
-document.getElementById('erDownloadPdfBtn').addEventListener('click', ()=>{
-  document.body.classList.add('printing-engdash-report');
-  window.print();
-  setTimeout(()=>document.body.classList.remove('printing-engdash-report'), 400);
-});
 // Report button delegation — kept separate from the generic export/drilldown
 // delegation handler above (purely additive; that handler is untouched).
 document.body.addEventListener('click', (e)=>{
@@ -28179,19 +28220,41 @@ REFGOV.ExportWorkbook = exportWorkbook;
     }
     document.getElementById('erPeriod').textContent = periodText;
 
-    // ---- KPI cards ----
+    // ---- KPI cards — every KPI from the Engineer Table, colour-banded (green / amber / red)
+    // using the same thresholds the table's pills use, so the number itself is highlighted. ----
+    function tone(v, good, warn, inverse){
+      if(v===null || v===undefined || isNaN(v)) return '';
+      return inverse ? (v<=good?'good':v<=warn?'warn':'bad') : (v>=good?'good':v>=warn?'warn':'bad');
+    }
+    const pctTxt = function(v){ return (v===null||v===undefined||isNaN(v)) ? '—' : fmtN(v,1)+'%'; };
+    const daysTxt = function(v){ return (v===null||v===undefined) ? '—' : fmtN(v,1)+'d'; };
+    const rating10 = Math.max(0, Math.min(10, e.avgRating<=5 ? e.avgRating*2 : e.avgRating));
+    const totalEffort = e.l1Hours + e.l2Hours + e.smeHours;
+    const closureRate = e.total ? e.closed/e.total*100 : 0;
     const kpis = [
-      { label:'Total Assigned', value: fmtN(e.total), sub:'All tickets', good:false },
-      { label:'Total Closed', value: fmtN(e.closed), sub:'Resolved', good:false },
-      { label:'Total Open', value: fmtN(e.open), sub:'In progress', good:false },
-      { label:'Escalated', value: fmtN(e.escalated), sub: fmtN(e.escalationRate*100,1)+'% of assigned', good: e.escalationRate*100<=10 },
-      { label:'Reopened', value: fmtN(e.reopened), sub: fmtN(e.reopenRate*100,1)+'% reopen rate', good: e.reopenRate*100<=5 },
-      { label:'Avg Resolution', value: e.avgResolutionDays===null?'—':fmtN(e.avgResolutionDays,1)+'d', sub:'Closure time', good:false },
-      { label:'Avg Response', value: e.avgResponseDays===null?'—':fmtN(e.avgResponseDays,1)+'d', sub:'First response', good:false },
-      { label:'Overall Rating', value: fmtN(e.perfScore/10,1)+'/10', sub: e.perfLabel, good: e.perfBand==='green' }
+      { label:'Total Assigned', value: fmtN(e.total), sub: fmtN(e.assignedInc)+' INC · '+fmtN(e.assignedSr)+' SR', tone:'' },
+      { label:'Total Closed', value: fmtN(e.closed), sub: fmtN(closureRate,1)+'% closure rate', tone: tone(closureRate,70,50,false) },
+      { label:'Total Open', value: fmtN(e.open), sub: fmtN(e.openInc)+' INC · '+fmtN(e.openSr)+' SR', tone: e.open>0?'warn':'good' },
+      { label:'Escalated', value: fmtN(e.escalated), sub: fmtN(e.escalationRate*100,1)+'% of assigned', tone: tone(e.escalationRate*100,10,20,true) },
+      { label:'Reopened', value: fmtN(e.reopened), sub: fmtN(e.reopenRate*100,1)+'% reopen rate', tone: tone(e.reopenRate*100,5,10,true) },
+      { label:'Avg Resolution', value: daysTxt(e.avgResolutionDays), sub:'Closure time', tone:'' },
+      { label:'Avg Response', value: daysTxt(e.avgResponseDays), sub:'First response', tone:'' },
+      { label:'Performance Score', value: fmtN(e.perfScore)+'/100', sub: e.perfLabel, tone: e.perfBand==='green'?'good':e.perfBand==='amber'?'warn':'bad' },
+      { label:'1st Response SLA', value: pctTxt(e.frSlaPct), sub:'Target ≥ 90%', tone: tone(e.frSlaPct,90,75,false) },
+      { label:'Subsequent Resp. SLA', value: pctTxt(e.subSlaPct), sub:'Target ≥ 90%', tone: tone(e.subSlaPct,90,75,false) },
+      { label:'Resolution SLA', value: pctTxt(e.resSlaPct), sub:'Target ≥ 90%', tone: tone(e.resSlaPct,90,75,false) },
+      { label:'Overall SLA', value: pctTxt(e.slaPct), sub: fmtN(e.slaBreachCount)+' breach'+(e.slaBreachCount===1?'':'es'), tone: tone(e.slaPct,90,75,false) },
+      { label:'FCR %', value: pctTxt(e.fcrPct), sub: fmtN(e.totalFcr)+' first-contact fixes', tone: tone(e.fcrPct,50,35,false) },
+      { label:'KB Reference %', value: pctTxt(e.kbReferPct), sub: fmtN(e.totalKbRefer)+' tickets with KB', tone:'' },
+      { label:'Service Compliance', value: pctTxt(e.serviceCompliancePct), sub:'Open + closed service targets', tone: tone(e.serviceCompliancePct,90,75,false) },
+      { label:'Delegated > 2 Days', value: pctTxt(e.delegatedOver2Pct), sub: fmtN(e.delegatedOver2)+' ticket'+(e.delegatedOver2===1?'':'s'), tone: tone(e.delegatedOver2Pct,25,40,true) },
+      { label:'Avg Delegation Time', value: daysTxt(e.delegationAvgDays), sub:'Target ≤ 2 days', tone: e.delegationAvgDays===null?'':tone(e.delegationAvgDays,2,3,true) },
+      { label:'Total Effort Hours', value: fmtN(totalEffort,0)+'h', sub:'L1 '+fmtN(e.l1Hours,0)+' · L2 '+fmtN(e.l2Hours,0)+' · SME '+fmtN(e.smeHours,0), tone:'' },
+      { label:'Avg Rating', value: fmtN(rating10,1)+'/10', sub:'Customer rating', tone: tone(rating10,8,6,false) },
+      { label:'Complex Closed', value: fmtN(e.highComplexClosed), sub: fmtN(e.mediumComplexClosed)+' medium · '+fmtN(e.straightForwardClosed)+' straight-forward', tone:'' }
     ];
     document.getElementById('erKpiGrid').innerHTML = kpis.map(function(k){
-      return '<div class="cr-kpi-card' + (k.good?' good':'') + '"><div class="cr-kpi-label">' + k.label + '</div><div class="cr-kpi-value">' + k.value + '</div><div class="cr-kpi-sub">' + k.sub + '</div></div>';
+      return '<div class="cr-kpi-card' + (k.tone?' '+k.tone:'') + '"><div class="cr-kpi-label">' + k.label + '</div><div class="cr-kpi-value">' + k.value + '</div><div class="cr-kpi-sub">' + k.sub + '</div></div>';
     }).join('');
 
     // ---- Ticket Volume table ----
@@ -28285,11 +28348,11 @@ REFGOV.ExportWorkbook = exportWorkbook;
         categoryPercentage:0.85
       }]},
       options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
-        layout:{ padding:{ right: erDL ? 74 : 12 } },
+        layout:{ padding:{ right: erDL ? 104 : 12 } },
         plugins:{
           legend:{ display:false },
           datalabels: erDL ? {
-            anchor:'end', align:'right', clip:false, color:'#1A1A2E', font:{ weight:'700', size:11 },
+            display:true, anchor:'end', align:'right', clip:false, color:'#1A1A2E', font:{ weight:'700', size:11 },
             formatter:function(v, ctx){
               const d = scDefs[ctx.dataIndex];
               return fmtN(v,0) + '%  (' + fmtN(d.val,1) + '/' + d.max + ')';
@@ -28304,12 +28367,136 @@ REFGOV.ExportWorkbook = exportWorkbook;
       plugins: erDL ? [erDL] : []
     });
 
+    // ---- Additional charts — animation off so the canvases are final when the PDF is captured ----
+    const DLX = window.ChartDataLabels;
+    const toneColor = function(v, good, warn){ return v===null||isNaN(v) ? '#C9CCD6' : (v>=good ? ER_COLORS.green : v>=warn ? ER_COLORS.orange : ER_COLORS.red); };
+    const lbl = function(color, extra){ return Object.assign({ display:true, color:color, font:{ weight:'700', size:11 }, clip:false }, extra||{}); };
+    function mk(id, cfg){
+      destroyChart(id);
+      cfg.options = cfg.options || {};
+      cfg.options.animation = false; cfg.options.responsive = true; cfg.options.maintainAspectRatio = false;
+      cfg.plugins = DLX ? [DLX] : [];
+      charts[id] = new Chart(document.getElementById(id), cfg);
+    }
+    const noLabels = { datalabels:{ display:false } };
+
+    // SLA & quality rates — bars coloured by the same RAG thresholds as the KPI cards
+    const slaDefs = [
+      { l:'1st Response SLA', v:e.frSlaPct, g:90, w:75 }, { l:'Subsequent Resp. SLA', v:e.subSlaPct, g:90, w:75 },
+      { l:'Resolution SLA', v:e.resSlaPct, g:90, w:75 }, { l:'Overall SLA', v:e.slaPct, g:90, w:75 },
+      { l:'Service Compliance', v:e.serviceCompliancePct, g:90, w:75 }, { l:'FCR', v:e.fcrPct, g:50, w:35 },
+      { l:'KB Reference', v:e.kbReferPct, g:50, w:35 }
+    ];
+    mk('chartErSla', { type:'bar',
+      data:{ labels: slaDefs.map(function(d){ return d.l; }), datasets:[{ data: slaDefs.map(function(d){ return d.v===null||isNaN(d.v)?0:+d.v.toFixed(1); }),
+        backgroundColor: slaDefs.map(function(d){ return toneColor(d.v,d.g,d.w); }), borderRadius:4, barPercentage:0.7 }] },
+      options:{ indexAxis:'y', layout:{ padding:{ right:56 } },
+        plugins:{ legend:{ display:false }, datalabels: lbl('#1A1A2E', { anchor:'end', align:'right', formatter:function(v,c){ const d=slaDefs[c.dataIndex]; return d.v===null||isNaN(d.v)?'—':fmtN(v,1)+'%'; } }) },
+        scales:{ x:{ min:0, max:100, ticks:{ color:ER_COLORS.text, callback:function(v){ return v+'%'; } }, grid:{ color:ER_COLORS.grid } }, y:{ ticks:{ color:'#1A1A2E', font:{ size:11, weight:'600' } }, grid:{ display:false } } } } });
+
+    // Ticket mix — closed/open split by type
+    mk('chartErMix', { type:'doughnut',
+      data:{ labels:['Closed · Incident','Closed · SR','Open · Incident','Open · SR'],
+        datasets:[{ data:[e.closedInc, e.closedSr, e.openInc, e.openSr], backgroundColor:['#22C55E','#86EFAC','#F59E0B','#FCD34D'], borderWidth:2, borderColor:'#fff' }] },
+      options:{ cutout:'55%', plugins:{ legend:{ position:'right', labels:{ boxWidth:12, font:{ size:11 }, color:'#1A1A2E' } },
+        datalabels: lbl('#1A1A2E', { formatter:function(v){ return v>0 ? fmtN(v) : ''; } }) } } });
+
+    // Effort hours by tier
+    const effTotal = e.l1Hours + e.l2Hours + e.smeHours;
+    mk('chartErEffort', { type:'doughnut',
+      data:{ labels:['L1','L2','SME'], datasets:[{ data:[e.l1Hours, e.l2Hours, e.smeHours], backgroundColor:['#560a91','#8b3fd1','#C4A1E8'], borderWidth:2, borderColor:'#fff' }] },
+      options:{ cutout:'55%', plugins:{ legend:{ position:'right', labels:{ boxWidth:12, font:{ size:11 }, color:'#1A1A2E' } },
+        title:{ display:true, text: effTotal>0 ? 'Total '+fmtN(effTotal,0)+' hours' : 'No effort hours recorded', color:ER_COLORS.text, font:{ size:11, weight:'600' } },
+        datalabels: lbl('#fff', { formatter:function(v){ return v>0 ? fmtN(v,0)+'h' : ''; } }) } } });
+
+    // Delegation split
+    const delTotal = (e.delegatedOver2||0) + (e.delegatedUpto2||0);
+    mk('chartErDeleg', { type:'doughnut',
+      data:{ labels:['≤ 2 Days','> 2 Days'], datasets:[{ data:[e.delegatedUpto2||0, e.delegatedOver2||0], backgroundColor:[ER_COLORS.green, ER_COLORS.red], borderWidth:2, borderColor:'#fff' }] },
+      options:{ cutout:'55%', plugins:{ legend:{ position:'right', labels:{ boxWidth:12, font:{ size:11 }, color:'#1A1A2E' } },
+        title:{ display:true, text: delTotal>0 ? 'Avg delegation time '+(e.delegationAvgDays===null?'—':fmtN(e.delegationAvgDays,1)+' days') : 'No delegated tickets', color:ER_COLORS.text, font:{ size:11, weight:'600' } },
+        datalabels: lbl('#fff', { formatter:function(v){ return v>0 ? fmtN(v) : ''; } }) } } });
+
+    // Monthly trend — logged vs closed for this engineer's tickets in scope
+    const mkey = function(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+    const logged = {}, closedM = {};
+    e.rows.forEach(function(r){
+      if(r._creation_date instanceof Date && !isNaN(r._creation_date)){ const k = mkey(r._creation_date); logged[k] = (logged[k]||0)+1; }
+      if(r._is_closed && r._closed_date instanceof Date && !isNaN(r._closed_date)){ const k = mkey(r._closed_date); closedM[k] = (closedM[k]||0)+1; }
+    });
+    const mKeys = Array.from(new Set(Object.keys(logged).concat(Object.keys(closedM)))).sort();
+    const mLabel = function(k){ const p = k.split('-'); return new Date(+p[0], +p[1]-1, 1).toLocaleDateString('en-US',{ month:'short', year:'2-digit' }); };
+    mk('chartErTrend', { type:'bar',
+      data:{ labels: mKeys.map(mLabel), datasets:[
+        { label:'Logged', data: mKeys.map(function(k){ return logged[k]||0; }), backgroundColor:'#560a91', borderRadius:4, barPercentage:0.8 },
+        { label:'Closed', data: mKeys.map(function(k){ return closedM[k]||0; }), backgroundColor:ER_COLORS.green, borderRadius:4, barPercentage:0.8 } ] },
+      options:{ layout:{ padding:{ top:26 } },
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 }, color:'#1A1A2E' } },
+          datalabels: lbl('#1A1A2E', { anchor:'end', align:'top', formatter:function(v){ return v>0 ? v : ''; } }) },
+        scales:{ y:{ beginAtZero:true, ticks:{ color:ER_COLORS.text, precision:0 }, grid:{ color:ER_COLORS.grid } }, x:{ ticks:{ color:'#1A1A2E', font:{ size:11 } }, grid:{ display:false } } } } });
+
+    // Service compliance — within target vs breached, per segment
+    const svcDefs = [
+      { l:'Open · SR Std (≤3d)', w:e.openStdSrNV, b:e.openStdSrV, p:e.openStdSrPct }, { l:'Open · SR Non-Std (≤5d)', w:e.openNonStdSrNV, b:e.openNonStdSrV, p:e.openNonStdSrPct },
+      { l:'Open · INC (≤5d)', w:e.openIncNV, b:e.openIncV, p:e.openIncPct }, { l:'Closed · SR Std (≤3d)', w:e.closedStdSrNV, b:e.closedStdSrV, p:e.closedStdSrPct },
+      { l:'Closed · SR Non-Std (≤5d)', w:e.closedNonStdSrNV, b:e.closedNonStdSrV, p:e.closedNonStdSrPct }, { l:'Closed · INC (≤5d)', w:e.closedIncNV, b:e.closedIncV, p:e.closedIncPct }
+    ];
+    mk('chartErSvc', { type:'bar',
+      data:{ labels: svcDefs.map(function(d){ return d.l + (d.p===null?'':'  ·  '+fmtN(d.p,0)+'%'); }), datasets:[
+        { label:'Within Target', data: svcDefs.map(function(d){ return d.w||0; }), backgroundColor:ER_COLORS.green, borderRadius:3 },
+        { label:'Breached', data: svcDefs.map(function(d){ return d.b||0; }), backgroundColor:ER_COLORS.red, borderRadius:3 } ] },
+      options:{ indexAxis:'y',
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 }, color:'#1A1A2E' } },
+          datalabels: lbl('#fff', { formatter:function(v){ return v>0 ? v : ''; } }) },
+        scales:{ x:{ stacked:true, beginAtZero:true, ticks:{ color:ER_COLORS.text, precision:0 }, grid:{ color:ER_COLORS.grid } }, y:{ stacked:true, ticks:{ color:'#1A1A2E', font:{ size:11, weight:'600' } }, grid:{ display:false } } } } });
+
     new bootstrap.Modal(document.getElementById('engineerReportModal')).show();
   }
-  document.getElementById('erDownloadPdfBtn').addEventListener('click', function(){
-    document.body.classList.add('printing-report');
-    window.print();
-  });
+  // "Download as PDF" — builds a real A4 portrait PDF file: each section of the report sheet
+  // (header, KPI grid, every chart card, every table card) is captured as an image and laid out on
+  // A4 pages top-to-bottom, starting a new page whenever the next section would not fit, so no card
+  // is ever cut in half. If the PDF libraries could not be loaded (offline / blocked CDN) it falls
+  // back to the browser's print dialog, which is already styled for A4 portrait.
+  async function exportEngineerReportPdf(){
+    const btn = document.getElementById('erDownloadPdfBtn');
+    const sheet = document.getElementById('engReportSheet');
+    const jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if(!jsPDFCtor || typeof html2canvas !== 'function' || !sheet){
+      document.body.classList.add('printing-report');
+      window.print();
+      return;
+    }
+    const origHtml = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Preparing PDF…';
+    try{
+      const doc = new jsPDFCtor({ unit:'mm', format:'a4', orientation:'portrait' });
+      const PW = 210, PH = 297, M = 10, GAP = 3, CW = PW - 2*M, MAXH = PH - 2*M - 6;
+      const blocks = Array.from(sheet.children).filter(function(el){ return el.offsetHeight > 0; });
+      let y = M, first = true;
+      for(const el of blocks){
+        const cv = await html2canvas(el, { scale:2, backgroundColor:'#ffffff', useCORS:true, logging:false });
+        let w = CW, h = cv.height * CW / cv.width;
+        if(h > MAXH){ w = w * MAXH / h; h = MAXH; }
+        if(!first && y + h > PH - M - 6){ doc.addPage(); y = M; }
+        doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', M + (CW - w)/2, y, w, h);
+        y += h + GAP; first = false;
+      }
+      const pages = doc.getNumberOfPages();
+      for(let i=1;i<=pages;i++){
+        doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150);
+        doc.text('Page ' + i + ' of ' + pages, PW/2, PH - 6, { align:'center' });
+      }
+      const nm = (document.getElementById('erEngName').textContent || 'Engineer').replace(/[^a-z0-9]+/gi,'_');
+      doc.save('Engineer_Performance_Review_' + nm + '.pdf');
+    }catch(err){
+      console.error('PDF export failed, falling back to print:', err);
+      document.body.classList.add('printing-report');
+      window.print();
+    }finally{
+      btn.disabled = false; btn.innerHTML = origHtml;
+    }
+  }
+  document.getElementById('erDownloadPdfBtn').addEventListener('click', exportEngineerReportPdf);
   window.addEventListener('afterprint', function(){
     document.body.classList.remove('printing-report');
   });
