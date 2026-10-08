@@ -472,6 +472,12 @@
   .upload-or-divider::before,.upload-or-divider::after{content:"";flex:1;width:1px;background:var(--line);}
   .upload-or-divider span{background:none;border:none;width:auto;height:auto;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;}
   @media(max-width:900px){.upload-methods-row{flex-direction:column;}.upload-or-divider{flex-direction:row;width:auto;}.upload-or-divider::before,.upload-or-divider::after{width:auto;height:1px;}}
+  /* Rectangular intake: the 640px card squeezed the two panels into near-square boxes.
+     Widen the card so the drop zone and repository panel each read as a landscape rectangle. */
+  .upload-card{max-width:1040px;}
+  .upload-methods-row > .dropzone, .upload-methods-row > .repo-select-card{min-height:190px;}
+  .repo-select-row{max-width:none;}
+  @media(max-width:900px){.upload-methods-row > .dropzone, .upload-methods-row > .repo-select-card{min-height:0;}}
 
   .ingest-progress{border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:18px;}
   .progress-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;color:var(--ink-faint);}
