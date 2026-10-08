@@ -26703,10 +26703,15 @@ REFGOV.ExportWorkbook = exportWorkbook;
     const cDays = function(v){ return (v===null||v===undefined) ? '—' : fmtN(v,1)+'d'; };
     const cRating10 = Math.max(0, Math.min(10, c.avgRating<=5 ? c.avgRating*2 : c.avgRating));
     const cClosure = c.total ? c.closed/c.total*100 : 0;
+    // CSAT = the service_rating column (blank ratings are not surveys). Scale is 5, or 10 if any rating exceeds 5.
+    const csatVals = c.rows.map(function(r){ return toNum(r.service_rating); }).filter(function(v){ return v!==null && v>0; });
+    const csatScale = csatVals.some(function(v){ return v>5; }) ? 10 : 5;
+    const csat = { n: csatVals.length, scale: csatScale, avg: csatVals.length ? avg(csatVals) : null,
+      satPct: csatVals.length ? csatVals.filter(function(v){ return v >= csatScale*0.8; }).length / csatVals.length * 100 : null };
     const kpis = [
       // ---- existing four cards (unchanged) ----
       { label:'SLA Compliance', value: c.slaPct===null?'—':fmtN(c.slaPct,0)+'%', sub: slaLabel, good: c.slaPct!==null && c.slaPct>=90, tone: ctone(c.slaPct,90,75,false) },
-      { label:'CSAT Score', value:'N/A', sub:'0 Surveys', good:false },
+      { label:'CSAT Score', value: csat.n ? fmtN(csat.avg,1)+'/'+csat.scale : 'N/A', sub: csat.n ? fmtN(csat.n)+' survey'+(csat.n===1?'':'s')+' · '+fmtN(csat.satPct,0)+'% satisfied' : '0 Surveys', tone: csat.n ? ctone(csat.avg/csat.scale*100,80,60,false) : '' },
       { label:'Tickets Logged', value: fmtN(c.total), sub:'All Categories', good:false },
       { label:'Tickets Resolved', value: fmtN(c.closed), sub:'This Period', good:false },
       // ---- additional KPIs available from the uploaded data ----
