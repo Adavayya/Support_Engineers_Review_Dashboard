@@ -2967,7 +2967,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
       </div>
     </div>
 
-    <button id="generateBtn" class="generate-btn" disabled>Generate dashboard</button>
+    <button id="generateBtn" class="generate-btn" disabled style="display:none;">Generate dashboard</button>
     <div class="upload-status" id="uploadStatus"></div>
   </div>
 </div>
@@ -20117,8 +20117,10 @@ function markActiveStepErrored(){
   if(active){ active.classList.remove('step-active'); active.classList.add('step-error'); }
 }
 
-async function handleGenerate(){
-  const file = document.getElementById('file_call_dump').files[0];
+// file: the file to process (defaults to the input's current file). alreadyOpen: the progress
+// pop-up was already opened by the caller (repository load), so don't reset it.
+async function handleGenerate(fileArg, alreadyOpen){
+  const file = (fileArg instanceof File) ? fileArg : document.getElementById('file_call_dump').files[0];
   if(!file){
     setUploadStatus('Please choose the "Call Dump – Support Review Report" (.xlsx) file before generating.', true);
     return;
@@ -20127,7 +20129,7 @@ async function handleGenerate(){
   btn.disabled = true;
   hideErrorBanner();
   setUploadStatus('', false);
-  showProgressCard();
+  if(!alreadyOpen) showProgressCard();
   setProgressStep('stepRead', 'active', 'Reading file…');
   try{
     const callDumpRows = await readFileAsRows(file);
@@ -20204,14 +20206,19 @@ function initUploadScreen(){
     const file = input.files && input.files[0];
     if(file){
       if(dzTitle) dzTitle.textContent = file.name;
-      if(dzSub) dzSub.textContent = 'Ready to generate — click below, or choose a different file.';
+      if(dzSub) dzSub.textContent = 'File selected — or choose a different file.';
       if(genBtn) genBtn.disabled = false;
       hideErrorBanner();
       setUploadStatus('', false);
     }
   }
 
-  input.addEventListener('change', reflectChosenFile);
+  // Picking or dropping a file starts generation straight away (progress pop-up opens at once).
+  input.addEventListener('change', () => {
+    const f = input.files && input.files[0];
+    reflectChosenFile();
+    if(f){ handleGenerate(f); input.value = ''; }
+  });
 
   if(browseBtn){
     browseBtn.addEventListener('click', (e) => { e.stopPropagation(); input.click(); });
@@ -20235,8 +20242,11 @@ function initUploadScreen(){
     dropzone.classList.remove('dz-drag');
     const dropped = e.dataTransfer && e.dataTransfer.files;
     if(dropped && dropped.length){
-      input.files = dropped;
+      const f = dropped[0];
+      const dt = new DataTransfer(); dt.items.add(f); input.files = dt.files;
       reflectChosenFile();
+      handleGenerate(f);
+      input.value = '';
     }
   });
 
@@ -20263,9 +20273,15 @@ function initUploadScreen(){
       const path = repoSelect.value;
       if(!path) return;
       const filename = path.split('/').pop();
+      // Open the progress pop-up immediately; fetching the file is part of its "Reading file" step.
       repoLoadBtn.disabled = true; repoSelect.disabled = true;
-      repoLoadBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading…';
-      repoStatus.textContent = 'Fetching ' + filename + '…';
+      hideErrorBanner();
+      showProgressCard();
+      setProgressStep('stepRead', 'active', 'Fetching ' + filename + '…');
+      const restoreRepoControls = () => {
+        repoSelect.disabled = false; repoLoadBtn.disabled = !repoSelect.value;
+        repoLoadBtn.innerHTML = repoLoadBtnDefaultHTML;
+      };
       fetch(path)
         .then(res => {
           if(!res.ok) throw new Error('HTTP ' + res.status + ' — file not found in the repository at "' + path + '"');
@@ -20273,17 +20289,16 @@ function initUploadScreen(){
         })
         .then(blob => {
           const file = new File([blob], filename, {type: blob.type || 'application/octet-stream'});
-          repoLoadBtn.disabled = false; repoSelect.disabled = false;
-          repoLoadBtn.innerHTML = repoLoadBtnDefaultHTML;
+          restoreRepoControls();
           repoStatus.textContent = 'Select a file above, then click Load Selected File.';
-          const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
-          reflectChosenFile();
-          handleGenerate();
+          return handleGenerate(file, true);
         })
         .catch(err => {
-          repoLoadBtn.disabled = false; repoSelect.disabled = false;
-          repoLoadBtn.innerHTML = repoLoadBtnDefaultHTML;
-          repoStatus.textContent = 'Could not load "' + filename + '" — ' + (err.message || 'check the file exists in the repository') + '.';
+          restoreRepoControls();
+          markActiveStepErrored();
+          const msg = 'Could not load "' + filename + '" — ' + (err.message || 'check the file exists in the repository') + '.';
+          repoStatus.textContent = msg;
+          showErrorBanner('Could not load the repository file', msg);
         });
     });
   }
