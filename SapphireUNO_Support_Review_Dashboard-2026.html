@@ -20057,7 +20057,16 @@ function readFileAsRows(file){
       try{
         const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
         const ws = wb.Sheets[wb.SheetNames[0]];
-        resolve(XLSX.utils.sheet_to_json(ws, {defval:null}));
+        const rows = XLSX.utils.sheet_to_json(ws, {defval:null});
+        // SheetJS turns Excel serial dates into Dates with a few ms of float error (09:15:00 can arrive as
+        // 09:14:59.999 and display a minute early) — snap every date cell to the nearest second.
+        rows.forEach(function(r){
+          Object.keys(r).forEach(function(k){
+            const v = r[k];
+            if(v instanceof Date && !isNaN(v.getTime())) r[k] = new Date(Math.round(v.getTime() / 1000) * 1000);
+          });
+        });
+        resolve(rows);
       } catch(err){ reject(err); }
     };
     reader.onerror = () => reject(reader.error);
@@ -21143,18 +21152,26 @@ async function drExportWorkbook(sheets, filename){
     return elapsed > t.days ? 'Not Applicable' : 'Applicable';
   }
   function computeFrComplianceStatus(r){
+    // first_response_sla_breached reaches this module already converted to a true/false boolean by the
+    // upload pipeline (raw file value 1/0), so a plain "=== '1'" text test never matched and every
+    // ticket read Non-Violated. Accept the boolean as well as the raw 1/yes/breached spellings.
     const raw = r.first_response_sla_breached;
     if(raw === null || raw === undefined || String(raw).trim() === '') return '';
-    return String(raw).trim() === '1' ? 'Violated' : 'Non-Violated';
+    if(raw === true) return 'Violated';
+    if(raw === false) return r.first_response_sla_target_end_time ? 'Non-Violated' : ''; // false + no FR SLA at all => not applicable
+    const t = String(raw).trim().toLowerCase();
+    return (t === '1' || t === 'true' || t === 'yes' || t === 'y' || t === 'breached') ? 'Violated' : 'Non-Violated';
   }
   // First Response outcome for a ticket, from the platform's own fields: a ticket counts as responded
   // once first_response_sla_actual_end_time is populated (or the SLA status is "Met"). Used by the FR
   // Actual Response Time / FR Current Status columns, the FR Target End colouring and the FR summary card.
-  // The platform stamps first_response_sla_actual_end_time = the target time itself on tickets it marks
-  // Violated (the breach moment), so the real first-response time is the ticket's first-acknowledge time;
-  // the SLA actual-end field is only the fallback when no acknowledge time exists.
+  // Real first-response time: the platform's SLA actual-end. On some tickets it holds the target time itself
+  // (the moment the breach was stamped, not a response), so then the acknowledge time is used instead.
   function frActualResponse(r){
-    return drParseDate(r.first_acknowledge_time) || drParseDate(r.acknowledged_time) || drParseDate(r.first_response_sla_actual_end_time);
+    const sla = drParseDate(r.first_response_sla_actual_end_time);
+    const target = drParseDate(r.first_response_sla_target_end_time);
+    if(sla && !(target && sla.getTime() === target.getTime())) return sla;   // platform's own SLA clock stop
+    return drParseDate(r.first_acknowledge_time) || drParseDate(r.acknowledged_time) || sla;
   }
   function frIsResponded(r){
     return !!frActualResponse(r) || String(r.first_response_sla_status||'').trim().toLowerCase() === 'met';
