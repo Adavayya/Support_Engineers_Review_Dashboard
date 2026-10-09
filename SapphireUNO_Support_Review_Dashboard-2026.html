@@ -5871,6 +5871,16 @@ function deriveSapphireDelegation(rec, l2TargetDays, now){
   rec._d_level=level; rec._d_levelEngineer=levelEngineer; rec._d_delegationCount=delegationCount;
   rec._d_journey=journey; rec._d_pendingDays=pendingDays; rec._d_agingBucket=agingBucket;
   rec._d_slaStatus=slaStatus;
+  // Delegation SLA compliance rule shared by every delegation page and Engineer Performance: only FINISHED tier
+  // holds (delegated onward / resolved / handed to CPE) are scored, each against its own cutoff (touch.compliant).
+  // _d_hold* = 'Met' | 'Breached' for a finished hold, null when the tier was not held or is still running.
+  const holdOf = t => (t && t.concluded) ? (t.compliant ? 'Met' : 'Breached') : null;
+  rec._d_holdL1 = holdOf(tL1); rec._d_holdL2 = holdOf(tL2); rec._d_holdSme = holdOf(tSme);
+  const holds = [rec._d_holdL1, rec._d_holdL2, rec._d_holdSme].filter(Boolean);
+  rec._d_holdCount = holds.length;
+  rec._d_holdBreached = holds.filter(h=>h==='Breached').length;
+  // Holds still running that are already past their cutoff ("overdue now").
+  rec._d_runningOverdue = [tL1,tL2,tSme].filter(t=>t && !t.concluded && !t.compliant).length;
   return rec;
 }
 function deriveAllSapphireDelegation(records, l2TargetDays, now){
@@ -11070,9 +11080,14 @@ function renderDelegOverviewSection(rows, engineerAggs, now){
   distHtml += sappKpi('Direct L1 → SME', directSME.length, null, directSME, 'Direct L1 → SME');
   distHtml += '</div>';
 
-  const evaluated = rows.filter(r=>r._d_slaStatus!==null);
-  const breached = evaluated.filter(r=>r._d_slaStatus==='Breached');
-  const delegSlaPct = sappPct(evaluated.length-breached.length, evaluated.length);
+  // Delegation SLA % = finished tier holds (L1 + L2 + SME) that stayed within their cutoff, over all finished holds —
+  // the same rule as Engineer Performance's Delegation column. A breach is one hold over its cutoff.
+  const evaluated = rows.filter(r=>r._d_holdCount>0);
+  const breached = evaluated.filter(r=>r._d_holdBreached>0);
+  const totalHolds = evaluated.reduce((n,r)=>n+r._d_holdCount, 0);
+  const breachedHolds = evaluated.reduce((n,r)=>n+r._d_holdBreached, 0);
+  const delegSlaPct = totalHolds ? Math.round(1000*(totalHolds-breachedHolds)/totalHolds)/10 : null;
+  const overdueNow = rows.filter(r=>r._d_runningOverdue>0);
   const delegatedRows = rows.filter(r=>r._d_delegationCount>0);
   const avgDelegDays = sappAvg(delegatedRows.map(r=>r._d_l1Days));
   const avgOwnership = sappAvg(rows.map(r=>r.age_days));
@@ -11081,8 +11096,9 @@ function renderDelegOverviewSection(rows, engineerAggs, now){
 
   let slaHtml = '<div class="kpi-grid">';
   const slaTone = delegSlaPct===null?null:(delegSlaPct>=90?'good':delegSlaPct>=75?'warn':'bad');
-  slaHtml += sappKpi('Delegation SLA %', delegSlaPct===null?'N/A':delegSlaPct+'%', slaTone, evaluated, 'All SLA-Evaluated Tickets');
-  slaHtml += sappKpi('Delegation Breaches', breached.length, breached.length?'bad':null, breached, 'Delegation SLA Breaches');
+  slaHtml += sappKpi('Delegation SLA %', delegSlaPct===null?'N/A':`${delegSlaPct}%<span class="frac">${totalHolds-breachedHolds} of ${totalHolds} finished holds</span>`, slaTone, evaluated, 'Tickets with a finished tier hold');
+  slaHtml += sappKpi('Delegation Breaches', `${breachedHolds}<span class="frac">${breached.length} tickets</span>`, breachedHolds?'bad':null, breached, 'Delegation SLA Breaches (finished holds over cutoff)');
+  slaHtml += sappKpi('Overdue Now', overdueNow.length, overdueNow.length?'bad':'good', overdueNow, 'Still with a tier and already past its cutoff');
   slaHtml += sappKpiShell('Avg. Delegation Days', sappFmtD(avgDelegDays), null, null);
   slaHtml += sappKpiShell('Avg. Ownership Duration', sappFmtD(avgOwnership), null, null);
   slaHtml += oldest
@@ -11122,7 +11138,7 @@ function renderDelegOverviewSection(rows, engineerAggs, now){
   renderDelegTrendChart('chartDelegTrend', rows);
   renderSlaCompositionChart('chartDelegSlaComposition', rows);
 
-  lastDelegOverviewStats = {total, openL1, openL2, openSME, closedL1, closedL2, closedSME, toL2, toSMEviaL2, directSME, evaluated, breached, avgDelegDays, avgOwnership, oldest};
+  lastDelegOverviewStats = {total, openL1, openL2, openSME, closedL1, closedL2, closedSME, toL2, toSMEviaL2, directSME, evaluated, breached, totalHolds, breachedHolds, overdueNow, avgDelegDays, avgOwnership, oldest};
 }
 
 function flowStageBar(segments, totalForPct){
@@ -11273,26 +11289,33 @@ function renderDelegTrendChart(canvasId, rows){
   }})});
 }
 function renderSlaCompositionChart(canvasId, rows){
-  const states = ['Met','On Track','Near Breach','Breached'];
-  const colors = ['#1f9d63','#2f8fd6','#c98a10','#d0453f'];
-  const byState = states.map(s=>rows.filter(r=>r._d_slaStatus===s));
-  makeChart(canvasId, {type:'doughnut', data:{labels:states, datasets:[{data:byState.map(a=>a.length), backgroundColor:colors}]},
+  // One slice per tier hold: finished within / over cutoff, and holds still running (within / already over).
+  const states = ['Finished — within cutoff','Finished — breached','Running — within cutoff','Running — overdue'];
+  const colors = ['#1f9d63','#d0453f','#2f8fd6','#c98a10'];
+  const touchesOf = r => [r.cda_l1, r.cda_l2, r.cda_sme].filter(Boolean);
+  const byState = states.map((_,i)=>rows.filter(r=>touchesOf(r).some(t=>{
+    if(t.concluded) return i===0 ? t.compliant : (i===1 ? !t.compliant : false);
+    return i===2 ? t.compliant : (i===3 ? !t.compliant : false);
+  })));
+  const counts = states.map((_,i)=>rows.reduce((n,r)=>n+touchesOf(r).filter(t=>t.concluded ? (i===0 ? t.compliant : i===1 && !t.compliant) : (i===2 ? t.compliant : i===3 && !t.compliant)).length, 0));
+  makeChart(canvasId, {type:'doughnut', data:{labels:states, datasets:[{data:counts, backgroundColor:colors}]},
     options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{color:'#6f6a7c', boxWidth:12, font:{size:11}}}},
-      onClick:(evt, els)=>{ if(!els.length) return; const idx=els[0].index; const recs=byState[idx]; if(recs.length) openDrilldown(states[idx]+' — Delegation SLA', delegDrillRows(recs), SAPP_DELEG_DRILL_COLUMNS, 'SLA_'+states[idx].replace(/\s+/g,'_')); }
+      onClick:(evt, els)=>{ if(!els.length) return; const idx=els[0].index; const recs=byState[idx]; if(recs.length) openDrilldown(states[idx]+' — Delegation SLA holds', delegDrillRows(recs), SAPP_DELEG_DRILL_COLUMNS, 'SLA_'+states[idx].replace(/[^a-z0-9]+/gi,'_')); }
     }});
 }
 
 // ---------------- Section 2: L1 / L2 / SME Ownership tier dashboards ----------------
-function tierSlaEval(rows, stateKey){
-  const evald = rows.filter(r=>r[stateKey]!==null && r[stateKey]!==undefined);
-  const breached = evald.filter(r=>r[stateKey]==='Breached');
+// Finished holds only (the Engineer Performance rule): holdKey is '_d_holdL1' | '_d_holdL2' | '_d_holdSme'.
+function tierSlaEval(rows, holdKey){
+  const evald = rows.filter(r=>r[holdKey]!==null && r[holdKey]!==undefined);
+  const breached = evald.filter(r=>r[holdKey]==='Breached');
   return {evald, breached, pct: evald.length ? Math.round(1000*(evald.length-breached.length)/evald.length)/10 : null};
 }
 function buildTierL1(rows){
   const resolved = rows.filter(r=>r._d_level==='L1' && r.is_closed);
   const delegated = rows.filter(r=>r._d_delegationCount>0);
   const stillOpen = rows.filter(r=>r._d_level==='L1' && r.is_open);
-  const sla = tierSlaEval(rows, '_d_l1State');
+  const sla = tierSlaEval(rows, '_d_holdL1');
   const openPending = stillOpen.filter(r=>r._d_pendingDays!==null && r._d_pendingDays!==undefined);
   const oldest = openPending.slice().sort((a,b)=>b._d_pendingDays-a._d_pendingDays)[0] || null;
   return {pool: rows, assigned: rows, resolved, delegated, stillOpen, sla,
@@ -11303,7 +11326,7 @@ function buildTierL2(rows){
   const resolved = pool.filter(r=>r._d_level==='L2' && r.is_closed);
   const escalated = pool.filter(r=>!!r.assign_sme_time);
   const stillOpen = pool.filter(r=>r._d_level==='L2' && r.is_open);
-  const sla = tierSlaEval(pool, '_d_l2State');
+  const sla = tierSlaEval(pool, '_d_holdL2');
   const backlog = stillOpen.filter(r=>r._d_l2State==='Breached');
   const openPending = stillOpen.filter(r=>r._d_pendingDays!==null && r._d_pendingDays!==undefined);
   const oldest = openPending.slice().sort((a,b)=>b._d_pendingDays-a._d_pendingDays)[0] || null;
@@ -11315,9 +11338,12 @@ function buildTierSME(rows){
   const pool = rows.filter(r=>!!r.assign_sme_time);
   const resolved = pool.filter(r=>r._d_level==='SME' && r.is_closed);
   const stillOpen = pool.filter(r=>r._d_level==='SME' && r.is_open);
+  const sla = tierSlaEval(pool, '_d_holdSme');
+  // SME holds have a Delegation SLA cutoff like L2's, so the backlog is open SME tickets already past it.
+  const backlog = stillOpen.filter(r=>r._d_smeState==='Breached');
   const openPending = stillOpen.filter(r=>r._d_pendingDays!==null && r._d_pendingDays!==undefined);
   const oldest = openPending.slice().sort((a,b)=>b._d_pendingDays-a._d_pendingDays)[0] || null;
-  return {pool, resolved, stillOpen, backlog: stillOpen, avgAge: sappAvg(pool.map(r=>r._d_smeDays)), oldest};
+  return {pool, resolved, stillOpen, sla, backlog, avgAge: sappAvg(pool.map(r=>r._d_smeDays)), oldest};
 }
 
 function renderTierSections(rows){
@@ -11415,6 +11441,7 @@ function renderTierL2Kpis(t){
     sappKpiShell('Average Ownership', sappFmtD(t.avgOwnership), null, null),
     sappKpiShell('Average Resolution', sappFmtD(t.avgResolution), null, null),
     sappKpiShell('Average Escalation', sappFmtD(t.avgEscalation), null, null),
+    sappKpiShell('Delegation SLA %', t.sla.pct===null?'N/A':t.sla.pct+'%', t.sla.pct===null?null:(t.sla.pct>=90?'good':t.sla.pct>=75?'warn':'bad'), null),
     sappKpi('Backlog', t.backlog.length, t.backlog.length?'bad':'good', t.backlog, 'L2 Backlog (Open + SLA Breached)'),
     t.oldest ? sappKpi('Oldest (Aging)', `${Math.round(t.oldest._d_pendingDays)}d`, 'bad', [t.oldest], 'Oldest Open @ L2') : sappKpiShell('Oldest (Aging)', '—', null, null),
   ].join('');
@@ -11426,7 +11453,8 @@ function renderTierSMEKpis(t){
     sappKpi('Open', t.stillOpen.length, null, t.stillOpen, 'Still Open @ SME'),
     sappKpiShell('Average Age', sappFmtD(t.avgAge), null, null),
     t.oldest ? sappKpi('Oldest Ticket', `${Math.round(t.oldest._d_pendingDays)}d`, 'bad', [t.oldest], 'Oldest Open @ SME') : sappKpiShell('Oldest Ticket', '—', null, null),
-    sappKpi('Backlog', t.backlog.length, t.backlog.length?'warn':'good', t.backlog, 'SME Backlog (all open — no SLA target)'),
+    sappKpiShell('Delegation SLA %', t.sla.pct===null?'N/A':t.sla.pct+'%', t.sla.pct===null?null:(t.sla.pct>=90?'good':t.sla.pct>=75?'warn':'bad'), null),
+    sappKpi('Backlog', t.backlog.length, t.backlog.length?'bad':'good', t.backlog, 'SME Backlog (open + past the SME delegation cutoff)'),
   ].join('');
 }
 
@@ -11557,9 +11585,8 @@ function buildEngineerAggregates(rows){
     const backlog = currentOpen.filter(r=>r._d_slaStatus==='Breached');
     const ownershipDays = g.current.map(r=> r._d_level==='SME'?r._d_smeDays : r._d_level==='L2'?r._d_l2Days : r._d_l1Days).filter(v=>v!==null&&v!==undefined);
     const closedTat = closed.map(r=>r.tat_days_raw).filter(v=>v!==null&&v!==undefined);
-    const l1States = g.l1.map(r=>r._d_l1State).filter(Boolean);
-    const l2States = g.l2.map(r=>r._d_l2State).filter(Boolean);
-    const allStates = l1States.concat(l2States);
+    // Engineer Performance rule: this engineer's FINISHED holds at every tier they held (L1, L2, SME).
+    const allStates = g.l1.map(r=>r._d_holdL1).concat(g.l2.map(r=>r._d_holdL2), g.sme.map(r=>r._d_holdSme)).filter(Boolean);
     const metCount = allStates.filter(s=>s!=='Breached').length;
     const delegationSlaPct = allStates.length ? Math.round(1000*metCount/allStates.length)/10 : null;
     function pctBreach(field){
@@ -11575,7 +11602,7 @@ function buildEngineerAggregates(rows){
       closed: closed.length, delegated: delegatedByL1.length + delegatedByL2.length,
       currentOpen: currentOpen.length, currentOpenRecs: currentOpen, backlog: backlog.length, backlogRecs: backlog,
       avgOwnership: sappAvg(ownershipDays), avgResolution: sappAvg(closedTat),
-      delegationSlaPct, resSlaPct: pctBreach('resolution_sla_breached'), classSlaPct: pctBreach('class_sla_breached'),
+      delegationSlaPct, holdTotal: allStates.length, holdMet: metCount, resSlaPct: pctBreach('resolution_sla_breached'), classSlaPct: pctBreach('class_sla_breached'),
       frSlaPct: pctBreach('first_response_sla_breached'),
       oldest: oldest ? Math.round(oldest._d_pendingDays) : null,
       current: g.current,
@@ -11629,15 +11656,16 @@ function renderEngineerOwnershipSection(engineerAggs){
   const list = Object.values(engineerAggs);
   const highWorkload = list.slice().sort((a,b)=>b.receivedCount-a.receivedCount)[0];
   const mostBacklog = list.slice().sort((a,b)=>b.backlog-a.backlog)[0];
-  const slaVals = list.map(e=>e.delegationSlaPct).filter(v=>v!==null);
-  const avgSla = slaVals.length ? Math.round(10*sappAvg(slaVals))/10 : null;
+  // Pooled over every finished hold (each hold belongs to exactly one engineer) = the Engineer Performance rule overall.
+  const poolHolds = list.reduce((n,e)=>n+e.holdTotal, 0), poolMet = list.reduce((n,e)=>n+e.holdMet, 0);
+  const avgSla = poolHolds ? Math.round(1000*poolMet/poolHolds)/10 : null;
   const healthiest = list.filter(e=>e.healthScore!==undefined).slice().sort((a,b)=>b.healthScore-a.healthScore)[0];
 
   let kpiHtml = '<div class="kpi-grid">';
   kpiHtml += sappKpiShell('Engineers Tracked', list.length, null, null);
   kpiHtml += highWorkload ? sappKpiShell('Highest Workload', `<span style="font-size:16px;">${esc(highWorkload.name)}</span><span class="frac">${highWorkload.receivedCount} tickets</span>`, null, null) : '';
   kpiHtml += mostBacklog ? sappKpiShell('Most Backlog', `<span style="font-size:16px;">${esc(mostBacklog.name)}</span><span class="frac">${mostBacklog.backlog} tickets</span>`, mostBacklog.backlog>0?'bad':null, null) : '';
-  kpiHtml += sappKpiShell('Avg. Delegation SLA %', avgSla===null?'N/A':avgSla+'%', null, null);
+  kpiHtml += sappKpiShell('Delegation SLA %', avgSla===null?'N/A':avgSla+'%', avgSla===null?null:(avgSla>=90?'good':avgSla>=75?'warn':'bad'), null);
   kpiHtml += healthiest ? sappKpiShell('Healthiest Queue', `<span style="font-size:16px;">${esc(healthiest.name)}</span><span class="frac">score ${healthiest.healthScore}</span>`, null, null) : '';
   kpiHtml += '</div>';
 
@@ -11829,8 +11857,11 @@ function exportDelegOverviewToExcel(){
     ['Current SME Tickets', s.openSME.length], ['Closed in L1', s.closedL1.length], ['Closed in L2', s.closedL2.length],
     ['Closed in SME', s.closedSME.length], ['Delegated L1 -> L2', s.toL2.length], ['Delegated L2 -> SME', s.toSMEviaL2.length],
     ['Direct L1 -> SME', s.directSME.length],
-    ['Delegation SLA %', s.evaluated.length ? Math.round(1000*(s.evaluated.length-s.breached.length)/s.evaluated.length)/10+'%' : 'N/A'],
-    ['Delegation Breaches', s.breached.length],
+    ['Delegation SLA % (finished tier holds within cutoff)', s.totalHolds ? Math.round(1000*(s.totalHolds-s.breachedHolds)/s.totalHolds)/10+'%' : 'N/A'],
+    ['Finished tier holds', s.totalHolds],
+    ['Delegation Breaches (holds over cutoff)', s.breachedHolds],
+    ['Tickets with a breached hold', s.breached.length],
+    ['Overdue Now (running past cutoff)', s.overdueNow.length],
     ['Avg. Delegation Days', s.avgDelegDays===null?'N/A':s.avgDelegDays.toFixed(2)],
     ['Avg. Ownership Duration', s.avgOwnership===null?'N/A':s.avgOwnership.toFixed(2)],
     ['Oldest Pending Ticket', s.oldest ? `${s.oldest.ticket_id} (${Math.round(s.oldest._d_pendingDays)}d, ${s.oldest._d_level})` : 'N/A'],
@@ -14328,12 +14359,30 @@ function renderTlmKbTable(engRows){
 // resolutionImCompliance/resolutionSrStandardCompliance - TLM_RESOLUTION_BASED_IDX [3,4,6] in
 // the reference); every other row, including EDOC Shared, is response-based (creation-date
 // anchored), matching SLA_METRIC_FNS's own monthField convention exactly.
+// First Response and Resolution compliance follow the platform's own SLA flags (first_response_sla_breached /
+// resolution_sla_breached) — the same fields the Ticket Detail cards, Daily Review and Executive Summary use — instead
+// of the earlier master-table re-derivation. A ticket is evaluated when the platform gave it that SLA clock (a target
+// end time exists); resolution is evaluated on resolved tickets only (the metric is anchored to the resolved date).
+// Subsequent response (periodic miss count) and the two EDOC metrics have no platform flag and keep their own rules.
+function tlmPlatformSla(prefix, needsResolved, svcTest){
+  return function(row){
+    if(!svcTest(row)) return {applicable:false};
+    if(row.current_status==='Cancel' || row.current_status==='Duplicate') return {applicable:false};
+    if(!row[prefix+'_sla_target_end_time']) return {applicable:false};
+    if(needsResolved && !row.resolved_date) return {applicable:false};
+    return {applicable:true, compliant: row[prefix+'_sla_breached'] !== true};
+  };
+}
+const tlmFrIM = tlmPlatformSla('first_response', false, r=>r.service==='Incident Management');
+const tlmFrSR = tlmPlatformSla('first_response', false, r=>r.service==='Service Request');
+const tlmResIM = tlmPlatformSla('resolution', true, r=>r.service==='Incident Management');
+const tlmResSRStd = tlmPlatformSla('resolution', true, r=>r.service==='Service Request' && CDAPipeline.isSrStandard(r));
 const TLM_SLA_METRIC_ROWS = [
-  {key:'resp1_im', label:'1st Response SLA – IM', fn:CDAPipeline.resp1Compliance, filter:r=>r.service==='Incident Management', anchor:'creation'},
-  {key:'resp1_sr', label:'1st Response SLA – SR', fn:CDAPipeline.resp1Compliance, filter:r=>r.service==='Service Request', anchor:'creation'},
+  {key:'resp1_im', label:'1st Response SLA – IM', fn:tlmFrIM, filter:r=>r.service==='Incident Management', anchor:'creation'},
+  {key:'resp1_sr', label:'1st Response SLA – SR', fn:tlmFrSR, filter:r=>r.service==='Service Request', anchor:'creation'},
   {key:'subsequent_im', label:'Subsequent Response SLA (IM only)', fn:CDAPipeline.subsequentImCompliance, filter:null, anchor:'creation'},
-  {key:'resolution_im', label:'Resolution SLA – IM', fn:CDAPipeline.resolutionImCompliance, filter:null, anchor:'resolved'},
-  {key:'resolution_sr_standard', label:'Resolution SLA (3bd) – SR Standard', fn:CDAPipeline.resolutionSrStandardCompliance, filter:null, anchor:'resolved'},
+  {key:'resolution_im', label:'Resolution SLA – IM', fn:tlmResIM, filter:null, anchor:'resolved'},
+  {key:'resolution_sr_standard', label:'Resolution SLA (3bd) – SR Standard', fn:tlmResSRStd, filter:null, anchor:'resolved'},
   {key:'edoc_shared', label:'EDOC Shared in 3bd – SR Non-Standard', fn:CDAPipeline.edocSharedCompliance, filter:null, anchor:'creation'},
   {key:'resolution_meeting_edoc', label:'Resolution Met EDOC – SR Non-Standard', fn:CDAPipeline.resolutionMeetingEdocCompliance, filter:null, anchor:'resolved'},
 ];
@@ -24924,11 +24973,16 @@ function computeCda(rows){
         if(ack !== null) return ack;
         return toNumOrNull(r.tat_sla_minutes);
       };
+      // Platform Breached flag/status is the source of truth when the
+      // ticket carries a platform FR target; otherwise legacy fallback.
+      const hasPlat = function(r){ return !!r.first_response_sla_target_end_time && (typeof r.first_response_sla_breached==='boolean'); };
       const validFn = function(r){
+        if(hasPlat(r)) return ['Cancel','Duplicate'].indexOf(r.current_status)===-1;
         const thresh = CDA_RESP1_THRESHOLD_MIN[String(r.severity||'').trim()];
         return elapsedFor(r) !== null && thresh !== undefined;
       };
       const compliantFn = function(r){
+        if(hasPlat(r)) return r.first_response_sla_breached !== true;
         const thresh = CDA_RESP1_THRESHOLD_MIN[String(r.severity||'').trim()];
         const elapsed = elapsedFor(r);
         return elapsed !== null && elapsed <= thresh;
@@ -24984,13 +25038,16 @@ function computeCda(rows){
       // see if it eventually resolves on time; one still within its
       // budget is excluded, same as before, since it's genuinely
       // undetermined yet.
+      const hasPlat = function(r){ return !!r.resolution_sla_target_end_time && (typeof r.resolution_sla_breached==='boolean'); };
       const validFn = function(r){
+        if(hasPlat(r)) return r._is_closed || r.resolution_sla_breached === true;
         const thresh = thresholdFor(r);
         const elapsed = elapsedFor(r);
         if(thresh === undefined || elapsed === null) return false;
         return r._is_closed || elapsed > thresh;
       };
       const compliantFn = function(r){
+        if(hasPlat(r)) return r.resolution_sla_breached !== true;
         const elapsed = elapsedFor(r);
         const thresh = thresholdFor(r);
         return elapsed !== null && thresh !== undefined && elapsed <= thresh;
@@ -25003,12 +25060,15 @@ function computeCda(rows){
     months.forEach(function(m){
       const seg = pop4.filter(function(r){ return r._is_closed ? (r._cda_resolved_period === m) : (r._cda_period === m); });
       const elapsedFor = function(r){ return cdaMinutesField(r, 'tat_sla_minutes', 'tat_sla'); };
+      const hasPlat = function(r){ return !!r.resolution_sla_target_end_time && (typeof r.resolution_sla_breached==='boolean'); };
       const validFn = function(r){
+        if(hasPlat(r)) return r._is_closed || r.resolution_sla_breached === true;
         const elapsed = elapsedFor(r);
         if(elapsed === null) return false;
         return r._is_closed || elapsed > CDA_RESOLUTION_SR_STD_THRESHOLD_MIN;
       };
       const compliantFn = function(r){
+        if(hasPlat(r)) return r.resolution_sla_breached !== true;
         const elapsed = elapsedFor(r);
         return elapsed !== null && elapsed <= CDA_RESOLUTION_SR_STD_THRESHOLD_MIN;
       };
