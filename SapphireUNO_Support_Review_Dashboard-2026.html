@@ -22096,7 +22096,7 @@ async function drExportWorkbook(sheets, filename){
     const nonStdKey = isClosedScope ? 'srCloseNonStd' : 'srOpenNonStd';
     const incKey = isClosedScope ? 'incClose' : 'incOpen';
     const exportDateStr = fmtDMonYYYY(new Date());
-    return [
+    const cols = [
       { key:'exportDate', label:'Date', get:function(){ return exportDateStr; } },
       { key:'owner', label:'Owner', get:function(r){ return String(r.assign_owner_name||'').trim() || 'Unassigned'; } },
       // Action-by dates (open cases only — a closed ticket has nothing left to act on). Shown right
@@ -22153,6 +22153,12 @@ async function drExportWorkbook(sheets, filename){
       { key:'periodicSla', label:'Periodic SLA', get:function(r){ return (r.subsequent_response_miss_count===null||r.subsequent_response_miss_count===undefined) ? '' : String(r.subsequent_response_miss_count).trim(); } },
       { key:'creationTimeDisplay', label:'Creation Time', get:function(r){ return fmtDateTimeSpec(r.creation_time); } }
     ]).filter(function(c){ return !(c._closedOnly && !isClosedScope); });
+    // The nine SR / INC aging-compliance columns (<=N / >N / Compliance %) sit after Update Time, so the
+    // action columns (dates, status, delegation) come first.
+    const isAging = function(c){ return /^(srOpenStd|srCloseStd|srOpenNonStd|srCloseNonStd|incOpen|incClose)(Lte|Gt|CompliancePct)$/.test(c.key); };
+    const aging = cols.filter(isAging), rest = cols.filter(function(c){ return !isAging(c); });
+    const at = rest.findIndex(function(c){ return c.key === 'updateTimeDisplay'; });
+    return at === -1 ? rest.concat(aging) : rest.slice(0, at + 1).concat(aging, rest.slice(at + 1));
   }
 
   // ---------------------------------------------------------------
