@@ -21150,7 +21150,12 @@ async function drExportWorkbook(sheets, filename){
   // First Response outcome for a ticket, from the platform's own fields: a ticket counts as responded
   // once first_response_sla_actual_end_time is populated (or the SLA status is "Met"). Used by the FR
   // Actual Response Time / FR Current Status columns, the FR Target End colouring and the FR summary card.
-  function frActualResponse(r){ return drParseDate(r.first_response_sla_actual_end_time); }
+  // The platform stamps first_response_sla_actual_end_time = the target time itself on tickets it marks
+  // Violated (the breach moment), so the real first-response time is the ticket's first-acknowledge time;
+  // the SLA actual-end field is only the fallback when no acknowledge time exists.
+  function frActualResponse(r){
+    return drParseDate(r.first_acknowledge_time) || drParseDate(r.acknowledged_time) || drParseDate(r.first_response_sla_actual_end_time);
+  }
   function frIsResponded(r){
     return !!frActualResponse(r) || String(r.first_response_sla_status||'').trim().toLowerCase() === 'met';
   }
@@ -21158,14 +21163,17 @@ async function drExportWorkbook(sheets, filename){
     const abs = Math.abs(ms), mins = Math.round(abs/60000), d = Math.floor(mins/1440), h = Math.floor((mins%1440)/60), m = mins%60;
     return d > 0 ? d + 'd ' + h + 'h' : (h > 0 ? h + 'h ' + m + 'm' : m + 'm');
   }
-  // Plain-language current state of First Response for the ticket, plus its RAG colour.
+  // Plain-language current state of First Response for the ticket, plus its RAG colour. The outcome of an
+  // already-responded ticket always follows the platform's own FR Compliance Status (Violated / Non-Violated)
+  // so the two columns can never contradict each other; dates are only used to describe the gap.
   function computeFrCurrentStatus(r){
     const target = drParseDate(r.first_response_sla_target_end_time);
     const violated = computeFrComplianceStatus(r) === 'Violated';
     if(frIsResponded(r)){
       const act = frActualResponse(r);
-      const late = violated || (act && target && act > target);
-      return late ? { text:'Responded late', rag:'RED' } : { text:'Responded on time', rag:'GREEN' };
+      const afterTarget = !!(act && target && (act - target) > 60000); // >1 min, ignores second-level rounding
+      if(violated) return { text: 'Responded late' + (afterTarget ? ' by ' + fmtDueIn(act - target) : ''), rag:'RED' };
+      return { text: afterTarget ? 'Responded on time (per platform; response logged after target)' : 'Responded on time', rag:'GREEN' };
     }
     if(!target) return { text:'', rag:null };
     const now = new Date();
@@ -22012,7 +22020,7 @@ async function drExportWorkbook(sheets, filename){
         // Already responded => colour by the outcome (on time = green, late = red), not by the date alone.
         ragGet:function(r){ return frIsResponded(r) ? computeFrCurrentStatus(r).rag : slaTargetDateRag(drParseDate(r.first_response_sla_target_end_time)); } },
       { key:'frComplianceStatus', label:'FR Compliance Status', get:function(r){ return computeFrComplianceStatus(r); }, ragGet:function(r){ const s = computeFrComplianceStatus(r); return s==='Non-Violated'?'GREEN':s==='Violated'?'RED':null; } },
-      { key:'frActualResponse', label:'FR Actual Response Time', get:function(r){ return fmtDateTimeSpec(r.first_response_sla_actual_end_time); } },
+      { key:'frActualResponse', label:'FR Actual Response Time', get:function(r){ const d = frActualResponse(r); return d ? fmtDateTimeSpec(d) : ''; } },
       { key:'frCurrentStatus', label:'FR Current Status', get:function(r){ return computeFrCurrentStatus(r).text; }, ragGet:function(r){ return computeFrCurrentStatus(r).rag; } },
       { key:'resSlaTargetEnd', label:'Resolution SLA Target End', get:function(r){ return fmtDateTimeSpec(r.resolution_sla_target_end_time); }, ragGet:function(r){ return slaTargetDateRag(drParseDate(r.resolution_sla_target_end_time)); } }
     ]).concat([
