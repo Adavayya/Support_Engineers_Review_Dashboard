@@ -22359,6 +22359,32 @@ async function drExportWorkbook(sheets, filename){
       return '<div class="kpi-card dr-target-card' + (defs.length > 4 ? ' dr-target-wide' : '') + '"><div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div></div>' +
         '<div class="dr-target-row">' + cells + '</div><div class="kc-label">' + label + '</div></div>';
     }
+    // Delegation card — same layout as the target-end cards, built on the Delegation Due Date rule shown in the
+    // Delegation Eligible column: still-at-L1 tickets split into Overdue / Due Today / Upcoming, delegated tickets
+    // into On Time / Late. Each count opens its own ticket list (soonest due first).
+    function delegationCard(){
+      const defs = [
+        { k:'OVERDUE',  name:'Overdue',   tone:'bad',  test:function(t){ return t.indexOf('Overdue') === 0; },               title:'Delegation — Overdue at L1' },
+        { k:'TODAY',    name:'Due Today', tone:'warn', test:function(t){ return t.indexOf('Eligible — due today') === 0; },   title:'Delegation — Due Today' },
+        { k:'UPCOMING', name:'Upcoming',  tone:'good', test:function(t){ return t.indexOf('Eligible — due in') === 0; },      title:'Delegation — Upcoming' },
+        { k:'ONTIME',   name:'On Time',   tone:'done', test:function(t){ return t.indexOf('Delegated on time') === 0; },      title:'Delegation — Delegated On Time' },
+        { k:'LATE',     name:'Late',      tone:'late', test:function(t){ return t.indexOf('Delegated late') === 0; },         title:'Delegation — Delegated Late' }
+      ];
+      const buckets = {}; defs.forEach(function(d){ buckets[d.k] = []; });
+      rows.forEach(function(r){
+        const t = computeDelegationEligibleStatus(r).text;
+        for(let q = 0; q < defs.length; q++){ if(defs[q].test(t)){ buckets[defs[q].k].push(r); break; } }
+      });
+      const byDue = function(a, b){ return computeDelegationDue(a) - computeDelegationDue(b); };
+      const cells = defs.map(function(d){
+        const list = buckets[d.k].sort(byDue);
+        const idx = reg(d.title, list);
+        const click = list.length ? ' data-drsummary-idx="' + idx + '" title="Click to view these tickets & export" style="cursor:pointer;"' : '';
+        return '<div class="dr-target-cell tone-' + d.tone + '"' + click + '><div class="dr-target-num">' + drFmtN(list.length) + '</div><div class="dr-target-name">' + d.name + '</div></div>';
+      }).join('');
+      return '<div class="kpi-card dr-target-card dr-target-wide"><div class="kc-top"><div class="kc-icon"><i class="fa-solid fa-people-arrows"></i></div></div>' +
+        '<div class="dr-target-row">' + cells + '</div><div class="kc-label">Delegation Due Date</div></div>';
+    }
     const n = stats.n;
     document.getElementById('drSummaryKpi_'+scope).innerHTML =
       drillCard('fa-layer-group', scope==='open'?'Total Open Cases':'Total Closed Cases', drFmtN(n), rows, (scope==='open'?'All Open Cases':'All Closed Cases')) +
@@ -22370,7 +22396,8 @@ async function drExportWorkbook(sheets, filename){
       drillCard('fa-hourglass-half', 'Avg Aging (Days)', stats.avgAge===null?'—':drFmtN(stats.avgAge,1), rows, (scope==='open'?'All Open Cases':'All Closed Cases')) +
       drillCard('fa-gauge-high', 'Daily Review Compliance %', stats.compliancePct===null?'—':drFmtN(stats.compliancePct,1)+'%', rows, (scope==='open'?'All Open Cases':'All Closed Cases'), stats.compliancePct===null?'':(stats.compliancePct>=90?'good':stats.compliancePct>=75?'warn':'bad')) +
       (scope==='open' ? targetCard('fa-stopwatch', 'First Response SLA Target End', 'first_response_sla_target_end_time', 'First Response SLA Target', frIsResponded, function(r){ return computeFrComplianceStatus(r) === 'Violated'; }) +
-                        targetCard('fa-bullseye', 'Resolution SLA Target End', 'resolution_sla_target_end_time', 'Resolution SLA Target') : '');
+                        targetCard('fa-bullseye', 'Resolution SLA Target End', 'resolution_sla_target_end_time', 'Resolution SLA Target') +
+                        delegationCard() : '');
 
     function tableRow(label, count, pctOrNull, subsetRows, title){
       const idx = reg(title, subsetRows);
