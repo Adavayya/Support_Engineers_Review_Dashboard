@@ -13021,6 +13021,21 @@ function tkdBool(v){
   return null;
 }
 function tkdVerdict(v){ return v==='breached' ? ['bad','Breached'] : v==='met' ? ['good','Met'] : ['neutral','Not evaluated']; }
+// Compliance chips for First Response / Resolution SLA read the platform's own fields — the same
+// "<x> SLA Breached" flag and "<x> SLA Status" the SLA & TAT section lists below — so the top card can
+// never disagree with it. Order: breached flag = true => Breached; otherwise the status text (Met /
+// Breached / Pending); flag false with no status => Met; no platform fields at all => null (caller falls
+// back to the CDA engine's verdict).
+function tkdPlatformSlaVerdict(row, prefix){
+  const flagRaw = row['_'+prefix+'_sla_breached'] !== undefined ? row['_'+prefix+'_sla_breached'] : row[prefix+'_sla_breached'];
+  const flag = tkdBool(flagRaw);
+  const status = String(row[prefix+'_sla_status'] === null || row[prefix+'_sla_status'] === undefined ? '' : row[prefix+'_sla_status']).trim();
+  if(flag === true || /breach|miss|violat/i.test(status)) return ['bad','Breached'];
+  if(/pending|running|progress|open/i.test(status)) return ['neutral','Pending'];
+  if(/met|within|ok|compl/i.test(status)) return ['good','Met'];
+  if(flag === false) return ['good','Met'];
+  return null;
+}
 function tkdStateRag(st){ return st==='Breached' ? 'bad' : st==='Near Breach' ? 'warn' : (st==='Met'||st==='On Track') ? 'good' : 'neutral'; }
 function tkdSevRag(v){
   const s = String(v||'').toLowerCase();
@@ -13067,8 +13082,14 @@ function tkdRenderBody(row){
   const slaChips = [];
   const cb = flag('class_sla_breached');
   if(cb!==null) slaChips.push(['Classification SLA', cb ? 'bad' : 'good', cb ? 'Breached' : 'Met']);
-  [['First Response SLA', c&&c.fr, 'first_response_sla_breached'], ['Resolution SLA', c&&c.res, 'resolution_sla_breached'], ['Subsequent Resp. SLA', c&&c.sub, null]].forEach(x=>{
-    if(x[1]){ const v = tkdVerdict(x[1]); slaChips.push([x[0], v[0], v[1]]); }
+  [['First Response SLA', c&&c.fr, 'first_response'], ['Resolution SLA', c&&c.res, 'resolution'], ['Subsequent Resp. SLA', c&&c.sub, null]].forEach(x=>{
+    let pv = x[2] ? tkdPlatformSlaVerdict(row, x[2]) : null;      // platform flag/status wins (matches SLA & TAT section)
+    if(!x[2] && x[0].indexOf('Subsequent') === 0){                   // Subsequent response: Periodic SLA miss count > 0 = breached (same as the section)
+      const miss = Number(row.subsequent_response_miss_count);
+      if(row.subsequent_response_miss_count !== null && row.subsequent_response_miss_count !== undefined && row.subsequent_response_miss_count !== '' && !isNaN(miss)) pv = miss > 0 ? ['bad','Breached'] : ['good','Met'];
+    }
+    if(pv){ slaChips.push([x[0], pv[0], pv[1]]); }
+    else if(x[1]){ const v = tkdVerdict(x[1]); slaChips.push([x[0], v[0], v[1]]); }
     else slaChips.push([x[0], 'neutral', 'Not evaluated']);
   });
   if(c && c.edoc) { const v = tkdVerdict(c.edoc); slaChips.push(['EDOC SLA', v[0], v[1]]); }
