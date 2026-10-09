@@ -21208,19 +21208,33 @@ async function drExportWorkbook(sheets, filename){
     if(!l1 || !start || typeof CDAPipeline === 'undefined' || !CDAPipeline.delegationDueDate) return null;
     return CDAPipeline.delegationDueDate(start, l1.cutoff, l1.unit);
   }
-  // Delegation Eligible, worked out from the due date: while the ticket is still with L1 it is Eligible until the
-  // due date, then Overdue; once delegated it reads Delegated on time / late against that same due date.
+  // Delegation Eligible, worked out from the due date and aligned with Engineer Performance's Delegation column
+  // (which scores each tier hold with the platform's own business-time hold minutes vs the Delegation SLA cutoff,
+  // so pauses such as time waiting on the customer are excluded):
+  //  - L1 hold already finished (delegated onward, or resolved / handed to CPE at L1): on time / late = the same
+  //    compliant flag Engineer Performance uses for that hold, not a calendar comparison against the due date;
+  //  - still with L1: Overdue once the platform already shows the cutoff used up, or the due date has passed;
+  //    a ticket waiting on the customer past its nominal due date is "clock paused" (not an overdue) until the
+  //    customer replies; otherwise Eligible with the time left to the due date.
   function computeDelegationEligibleStatus(r){
-    const due = computeDelegationDue(r);
-    if(!due) return { text:'Not Applicable', rag:null };
+    const l1 = r.cda_l1, due = computeDelegationDue(r);
+    if(!l1 || !due) return { text:'Not Applicable', rag:null };
     const delegated = computeDelegationDate(r);
-    if(delegated){
-      return delegated <= due ? { text:'Delegated on time (' + fmtDateTimeSpec(delegated) + ')', rag:'GREEN' }
-                              : { text:'Delegated late (' + fmtDateTimeSpec(delegated) + ')', rag:'RED' };
+    if(l1.concluded){
+      if(l1.escalated || delegated){
+        const when = delegated ? ' (' + fmtDateTimeSpec(delegated) + ')' : '';
+        return l1.compliant ? { text:'Delegated on time' + when, rag:'GREEN' } : { text:'Delegated late' + when, rag:'RED' };
+      }
+      const how = l1.concluded_via === 'cpe' ? 'Handed to CPE/Apps' : 'Resolved at L1';
+      return l1.compliant ? { text: how + ' on time', rag:'GREEN' } : { text: how + ' late', rag:'RED' };
     }
-    if(r.cda_l1 && r.cda_l1.concluded) return { text:'Resolved at L1 — no delegation needed', rag:null };
     const now = new Date();
-    if(due < now) return { text:'Overdue by ' + fmtDueIn(now - due), rag:'RED' };
+    const paused = /waiting\s*on\s*customer/i.test(String(r.current_status || ''));
+    if(l1.compliant === false) return { text:'Overdue by ' + fmtDueIn(Math.max(0, now - due)), rag:'RED' };
+    if(due < now){
+      return paused ? { text:'Clock paused — waiting on customer', rag:null }
+                    : { text:'Overdue by ' + fmtDueIn(now - due), rag:'RED' };
+    }
     const sameDay = due.toDateString() === now.toDateString();
     return { text: sameDay ? 'Eligible — due today (in ' + fmtDueIn(due - now) + ')' : 'Eligible — due in ' + fmtDueIn(due - now), rag: sameDay ? 'AMBER' : 'GREEN' };
   }
@@ -21569,19 +21583,14 @@ async function drExportWorkbook(sheets, filename){
     //     "delayed" once its L1 delegation due date has passed; a ticket already delegated is on time / late by
     //     whether it left L1 before that due date. ---
     const withinWindowRows=[], delayedAtL1Rows=[], delegatedOnTimeRows=[], delegatedLateRows=[], delegatedUnknownTimingRows=[], delegationUnknownRows=[];
-    const nowForDeleg = new Date();
     rows.forEach(function(r, i){
-      const due = computeDelegationDue(r);
-      if(!due){ delegationUnknownRows.push(r); enriched[i].delegationDelayed = false; return; }
-      const delegated = computeDelegationDate(r);
-      if(delegated){
-        enriched[i].delegationDelayed = false;
-        (delegated <= due ? delegatedOnTimeRows : delegatedLateRows).push(r);
-      } else if(String(r.assign_to||'').trim() === 'L1' && due < nowForDeleg){
-        delayedAtL1Rows.push(r); enriched[i].delegationDelayed = true;
-      } else {
-        withinWindowRows.push(r); enriched[i].delegationDelayed = false;
-      }
+      const st = computeDelegationEligibleStatus(r).text;
+      enriched[i].delegationDelayed = false;
+      if(st === 'Not Applicable'){ delegationUnknownRows.push(r); return; }
+      if(st.indexOf('Overdue') === 0){ delayedAtL1Rows.push(r); enriched[i].delegationDelayed = true; }
+      else if(st.indexOf('Delegated on time') === 0) delegatedOnTimeRows.push(r);
+      else if(st.indexOf('Delegated late') === 0) delegatedLateRows.push(r);
+      else withinWindowRows.push(r);
     });
     s.delegation = { withinWindow:withinWindowRows.length, delayedAtL1:delayedAtL1Rows.length,
       delegatedOnTime:delegatedOnTimeRows.length, delegatedLate:delegatedLateRows.length,
@@ -22367,8 +22376,8 @@ async function drExportWorkbook(sheets, filename){
         { k:'OVERDUE',  name:'Overdue',   tone:'bad',  test:function(t){ return t.indexOf('Overdue') === 0; },               title:'Delegation — Overdue at L1' },
         { k:'TODAY',    name:'Due Today', tone:'warn', test:function(t){ return t.indexOf('Eligible — due today') === 0; },   title:'Delegation — Due Today' },
         { k:'UPCOMING', name:'Upcoming',  tone:'good', test:function(t){ return t.indexOf('Eligible — due in') === 0; },      title:'Delegation — Upcoming' },
-        { k:'ONTIME',   name:'On Time',   tone:'done', test:function(t){ return t.indexOf('Delegated on time') === 0; },      title:'Delegation — Delegated On Time' },
-        { k:'LATE',     name:'Late',      tone:'late', test:function(t){ return t.indexOf('Delegated late') === 0; },         title:'Delegation — Delegated Late' }
+        { k:'ONTIME',   name:'On Time',   tone:'done', test:function(t){ return t.indexOf('Delegated on time') === 0 || /^(Resolved at L1|Handed to CPE\/Apps) on time/.test(t); }, title:'Delegation — On Time (delegated or resolved at L1)' },
+        { k:'LATE',     name:'Late',      tone:'late', test:function(t){ return t.indexOf('Delegated late') === 0 || /^(Resolved at L1|Handed to CPE\/Apps) late/.test(t); },    title:'Delegation — Late (delegated or resolved at L1)' }
       ];
       const buckets = {}; defs.forEach(function(d){ buckets[d.k] = []; });
       rows.forEach(function(r){
