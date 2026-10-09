@@ -21906,6 +21906,15 @@ async function drExportWorkbook(sheets, filename){
   // past it (overdue). Kept consistent with Closure Compliance Status
   // (Within SLA=green/Breached=red) so a row's Target Date for Closure
   // cell never contradicts its own Closure Compliance Status cell.
+  // SLA target end-time rule used by the "First Response SLA Target End" / "Resolution SLA Target
+  // End" columns: RED once the target date has passed, AMBER when it falls today, GREEN while it is
+  // still in the future. Compared by calendar date (time of day ignored); blank/unparseable => no colour.
+  function slaTargetDateRag(d){
+    if(!d) return null;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return dOnly < today ? 'RED' : (dOnly.getTime() === today.getTime() ? 'AMBER' : 'GREEN');
+  }
   function futureDateRag(d){
     if(!d) return null;
     const today = new Date(); today.setHours(0,0,0,0);
@@ -21956,6 +21965,12 @@ async function drExportWorkbook(sheets, filename){
     return [
       { key:'exportDate', label:'Date', get:function(){ return exportDateStr; } },
       { key:'owner', label:'Owner', get:function(r){ return String(r.assign_owner_name||'').trim() || 'Unassigned'; } },
+      // Action-by dates (open cases only — a closed ticket has nothing left to act on). Shown right
+      // after Owner so the owner sees what is due; coloured by slaTargetDateRag().
+    ].concat(isClosedScope ? [] : [
+      { key:'frSlaTargetEnd', label:'First Response SLA Target End', get:function(r){ return fmtDateTimeSpec(r.first_response_sla_target_end_time); }, ragGet:function(r){ return slaTargetDateRag(drParseDate(r.first_response_sla_target_end_time)); } },
+      { key:'resSlaTargetEnd', label:'Resolution SLA Target End', get:function(r){ return fmtDateTimeSpec(r.resolution_sla_target_end_time); }, ragGet:function(r){ return slaTargetDateRag(drParseDate(r.resolution_sla_target_end_time)); } }
+    ]).concat([
       // external_id isn't always present in the upload — when it is,
       // it carries the same data as Ticket ID, so it's only used as a
       // fallback when the file's own Ticket ID column is blank/absent.
@@ -21979,7 +21994,7 @@ async function drExportWorkbook(sheets, filename){
       { key:'service', label:'Service', get:function(r){ return String(r.service||'').trim(); } },
       { key:'edocDisplay', label:'EDOC', get:function(r){ return String(r.edoc||'').trim(); }, ragGet:function(r){ return futureDateRag(drParseDate(r.edoc)); } },
       { key:'srService', label:'SR Service', get:function(r){ return String(r.sr_service||'').trim(); } },
-    ]
+    ])
     .concat(agingComplianceCols(stdKey, stdLabel, function(r){ return drIsSR(r) && !isNonStdSR(r); }, 3))
     .concat(agingComplianceCols(nonStdKey, nonStdLabel, function(r){ return drIsSR(r) && isNonStdSR(r); }, 5))
     .concat(agingComplianceCols(incKey, incLabel, drIsINC, 5))
@@ -22181,11 +22196,26 @@ async function drExportWorkbook(sheets, filename){
     function reg(title, subset){ const idx = lookup.length; lookup.push({ title:title, rows:subset }); return idx; }
     drSummaryDrillLookup[scope] = lookup;
 
-    function drillCard(icon, label, value, subsetRows, title, tone){
+    function drillCard(icon, label, value, subsetRows, title, tone, sub){
       const idx = reg(title, subsetRows);
       return '<div class="kpi-card' + (tone?' tone-'+tone:'') + (subsetRows.length?' clickable':'') + '"' + (subsetRows.length?' data-drsummary-idx="'+idx+'" title="Click for detail & export"':'') + '>' +
         '<div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div>' + (subsetRows.length?'<i class="fa-solid fa-arrow-up-right-from-square kc-drill-icon"></i>':'') + '</div>' +
-        '<div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div></div>';
+        '<div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div>' + (sub ? '<div class="kc-sub">' + sub + '</div>' : '') + '</div>';
+    }
+    // Open scope only: one card per SLA target end-time column. Value = tickets already past the
+    // target (red); sub-line = due today (amber) / still upcoming (green). Click lists the tickets
+    // that need action now (past + due today), soonest-first, with the RAG-coloured date columns.
+    function targetCard(icon, label, field, title){
+      const past = [], today = [];
+      let upcoming = 0;
+      rows.forEach(function(r){
+        const g = slaTargetDateRag(drParseDate(r[field]));
+        if(g === 'RED') past.push(r); else if(g === 'AMBER') today.push(r); else if(g === 'GREEN') upcoming++;
+      });
+      const byDate = function(a, b){ return drParseDate(a[field]) - drParseDate(b[field]); };
+      const action = past.concat(today).sort(byDate);
+      const tone = past.length ? 'bad' : (today.length ? 'warn' : 'good');
+      return drillCard(icon, label, drFmtN(past.length), action, title, tone, drFmtN(today.length) + ' due today · ' + drFmtN(upcoming) + ' upcoming');
     }
     const n = stats.n;
     document.getElementById('drSummaryKpi_'+scope).innerHTML =
@@ -22196,7 +22226,9 @@ async function drExportWorkbook(sheets, filename){
       drillCard('fa-people-arrows', 'Delegation Delayed', drFmtN(stats.delegation.delayedAtL1), stats.delegation.delayedAtL1Rows, 'Delegation Delayed at L1', stats.delegation.delayedAtL1?'bad':'good') +
       drillCard('fa-triangle-exclamation', 'Attention Required', drFmtN(stats.risk.attention), stats.risk.attentionRows, 'Tickets Requiring Attention', stats.risk.attention?'bad':'good') +
       drillCard('fa-hourglass-half', 'Avg Aging (Days)', stats.avgAge===null?'—':drFmtN(stats.avgAge,1), rows, (scope==='open'?'All Open Cases':'All Closed Cases')) +
-      drillCard('fa-gauge-high', 'Daily Review Compliance %', stats.compliancePct===null?'—':drFmtN(stats.compliancePct,1)+'%', rows, (scope==='open'?'All Open Cases':'All Closed Cases'), stats.compliancePct===null?'':(stats.compliancePct>=90?'good':stats.compliancePct>=75?'warn':'bad'));
+      drillCard('fa-gauge-high', 'Daily Review Compliance %', stats.compliancePct===null?'—':drFmtN(stats.compliancePct,1)+'%', rows, (scope==='open'?'All Open Cases':'All Closed Cases'), stats.compliancePct===null?'':(stats.compliancePct>=90?'good':stats.compliancePct>=75?'warn':'bad')) +
+      (scope==='open' ? targetCard('fa-stopwatch', 'First Response Target Passed', 'first_response_sla_target_end_time', 'First Response SLA Target — Passed / Due Today') +
+                        targetCard('fa-bullseye', 'Resolution Target Passed', 'resolution_sla_target_end_time', 'Resolution SLA Target — Passed / Due Today') : '');
 
     function tableRow(label, count, pctOrNull, subsetRows, title){
       const idx = reg(title, subsetRows);
