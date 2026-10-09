@@ -4543,6 +4543,32 @@ function businessDaysBetween(start, end, mondayToFriday){
 }
 
 const BUS_START_H = 9, BUS_END_H = 18;
+// When a tier's Delegation SLA cutoff runs out: start + cutoff of business time on the same calendar the
+// Delegation section uses (9am-6pm, Mon-Sat minus holidays; 1 business day = 9h; Hotsite cutoffs are hours).
+function delegationDueDate(start, cutoff, unit){
+  if(!start || cutoff===null || cutoff===undefined || isNaN(cutoff)) return null;
+  let remaining = Math.max(0, Math.round(unit==='hours' ? cutoff*60 : cutoff*(BUS_END_H-BUS_START_H)*60));
+  const isBD = d => isBusinessDay(new Date(d.getFullYear(), d.getMonth(), d.getDate()), false);
+  const align = ts => {
+    let t = new Date(ts);
+    for(let i=0;i<400;i++){
+      const ds = new Date(t); ds.setHours(BUS_START_H,0,0,0);
+      const de = new Date(t); de.setHours(BUS_END_H,0,0,0);
+      if(isBD(t)){ if(t < ds) return ds; if(t < de) return t; }
+      t = new Date(t.getFullYear(), t.getMonth(), t.getDate()+1, BUS_START_H, 0, 0, 0);
+    }
+    return t;
+  };
+  let cur = align(start);
+  for(let i=0;i<2000;i++){
+    const de = new Date(cur); de.setHours(BUS_END_H,0,0,0);
+    const avail = (de - cur) / 60000;
+    if(remaining <= avail) return new Date(cur.getTime() + remaining*60000);
+    remaining -= avail;
+    cur = align(new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()+1, BUS_START_H, 0, 0, 0));
+  }
+  return cur;
+}
 // Fractional business-hours duration (9am-6pm, Mon-Sat minus holidays), returned in
 // BUSINESS-DAY units (1.0 = one 9-hour business day) so it compares directly against
 // day-denominated cutoffs. If start is outside the business window, the clock begins
@@ -6530,7 +6556,7 @@ function buildExecutiveSummaryRows(rows, now, ownerTeamMap, customerTowerMap){
   return built.filter(r => !r.is_excluded);
 }
 
-return { cdaLookup, buildFullDataset, normYesNo, buildSapphireDelegationRecords, deriveAllSapphireDelegation, SAPP_AGING_BUCKET_LABELS, SAPP_L1_TARGET_DAYS, buildGovRows, buildCustomerDashRows, buildEngineerDashRows, buildStageTimeRows, buildComplexityCalRows, buildExecutiveSummaryRows, GOV_AGING_BUCKETS, GOV_AGED_BUCKETS, govKbDecisionBucket,
+return { delegationDueDate, cdaLookup, buildFullDataset, normYesNo, buildSapphireDelegationRecords, deriveAllSapphireDelegation, SAPP_AGING_BUCKET_LABELS, SAPP_L1_TARGET_DAYS, buildGovRows, buildCustomerDashRows, buildEngineerDashRows, buildStageTimeRows, buildComplexityCalRows, buildExecutiveSummaryRows, GOV_AGING_BUCKETS, GOV_AGED_BUCKETS, govKbDecisionBucket,
   resp1Compliance, resolutionImCompliance, resolutionSrStandardCompliance, edocSharedCompliance, fcrCompliance,
   // Additive exports (Team Level Metrics period-trend tables) - same pure, read-only functions
   // SLA_METRIC_FNS already uses internally; exposing them here doesn't change their behavior or
@@ -21108,10 +21134,16 @@ async function drExportWorkbook(sheets, filename){
     else return null; // formula only defines INC / SR (standard/nonstandard)
     return addBusinessDays(r._creation_date, n);
   }
-  function computeClosureComplianceStatus(r, targetDate){
-    if(!targetDate) return '';
-    const compareDate = (r._is_closed && r._resolved_date) ? r._resolved_date : new Date();
-    return compareDate > targetDate ? 'Breached' : 'Within SLA';
+  // Closure Compliance Status — follows the Resolution SLA Target End: Breached when the platform flags the
+  // resolution SLA breached, or the ticket is still unresolved past the target; Within SLA otherwise; blank
+  // when the ticket has no Resolution SLA target.
+  function computeClosureComplianceStatus(r){
+    const target = drParseDate(r.resolution_sla_target_end_time);
+    if(!target) return '';
+    if(r.resolution_sla_breached === true) return 'Breached';
+    const resolved = r._is_closed && (drParseDate(r.resolution_sla_actual_end_time) || drParseDate(r._resolved_date));
+    if(resolved) return 'Within SLA';              // platform says not breached, and it is resolved
+    return new Date() > target ? 'Breached' : 'Within SLA';
   }
   /** Delegation SLA targets, per Delegation_SLA_Reference.xlsx — this
    *  module's own day-granularity business-day convention
@@ -21161,27 +21193,38 @@ async function drExportWorkbook(sheets, filename){
   // ---- Delegation columns — follow the Delegation section (L1/L2/SME custody "touches": each tier's
   // business-time hold vs its own cutoff from the Delegation SLA table, r.cda_l1 / cda_l2 / cda_sme). ----
   function delegationTouches(r){ return [r.cda_l1, r.cda_l2, r.cda_sme].filter(Boolean); }
-  // Applicable = the Delegation section evaluates this ticket (it has a valid Delegation SLA cutoff for at
-  // least one tier). Not Applicable = it has no delegation cutoff there (e.g. other service types, cancelled /
-  // duplicate, or a ticket the section excludes), so no delegation SLA can be violated.
-  function computeDelegationEligible(r){
-    return delegationTouches(r).length ? 'Applicable' : 'Not Applicable';
-  }
-  // When the ticket was first delegated out of L1 (to L2, or straight to SME): the earliest of
-  // assign_l2_time / assign_sme_time. Empty when it has never left L1.
+  // When the ticket was first delegated out of L1 (to L2, or straight to SME): earliest of assign_l2_time /
+  // assign_sme_time. Null when it has never left L1.
   function computeDelegationDate(r){
     const l2 = drParseDate(r.assign_l2_time), sme = drParseDate(r.assign_sme_time);
     if(l2 && sme) return l2 < sme ? l2 : sme;
     return l2 || sme || null;
   }
-  // Violated = any tier touch breached its Delegation SLA cutoff (held longer than allowed — including a
-  // ticket still sitting at a tier past its cutoff); Non-Violated = every evaluated touch is within cutoff;
-  // empty = not evaluated by the Delegation section.
-  function computeDelegationCompliance(r){
-    const t = delegationTouches(r);
-    if(!t.length) return '';
-    return t.some(function(x){ return x.compliant === false; }) ? 'Violated' : 'Non-Violated';
+  // Delegation Due Date: the moment L1's Delegation SLA cutoff runs out — L1 start (assign_l1_time) plus the
+  // ticket's own L1 cutoff (Delegation SLA table: severity / service / SR type, Non-Std SR by EDOC), counted in
+  // business time on the Delegation section's calendar. The ticket should be delegated (or resolved) by then.
+  function computeDelegationDue(r){
+    const l1 = r.cda_l1, start = drParseDate(r.assign_l1_time);
+    if(!l1 || !start || typeof CDAPipeline === 'undefined' || !CDAPipeline.delegationDueDate) return null;
+    return CDAPipeline.delegationDueDate(start, l1.cutoff, l1.unit);
   }
+  // Delegation Eligible, worked out from the due date: while the ticket is still with L1 it is Eligible until the
+  // due date, then Overdue; once delegated it reads Delegated on time / late against that same due date.
+  function computeDelegationEligibleStatus(r){
+    const due = computeDelegationDue(r);
+    if(!due) return { text:'Not Applicable', rag:null };
+    const delegated = computeDelegationDate(r);
+    if(delegated){
+      return delegated <= due ? { text:'Delegated on time (' + fmtDateTimeSpec(delegated) + ')', rag:'GREEN' }
+                              : { text:'Delegated late (' + fmtDateTimeSpec(delegated) + ')', rag:'RED' };
+    }
+    if(r.cda_l1 && r.cda_l1.concluded) return { text:'Resolved at L1 — no delegation needed', rag:null };
+    const now = new Date();
+    if(due < now) return { text:'Overdue by ' + fmtDueIn(now - due), rag:'RED' };
+    const sameDay = due.toDateString() === now.toDateString();
+    return { text: sameDay ? 'Eligible — due today (in ' + fmtDueIn(due - now) + ')' : 'Eligible — due in ' + fmtDueIn(due - now), rag: sameDay ? 'AMBER' : 'GREEN' };
+  }
+  function computeDelegationEligible(r){ return computeDelegationEligibleStatus(r).text; }
   function computeFrComplianceStatus(r){
     // first_response_sla_breached reaches this module already converted to a true/false boolean by the
     // upload pipeline (raw file value 1/0), so a plain "=== '1'" text test never matched and every
@@ -21522,22 +21565,22 @@ async function drExportWorkbook(sheets, filename){
     s.tier = { l1:l1Rows.length, l2:l2Rows.length, sme:smeRows.length, other:tierOtherRows.length,
       l1Rows:l1Rows, l2Rows:l2Rows, smeRows:smeRows, otherRows:tierOtherRows };
 
-    // --- Delegation — follows the Delegation section: a ticket still at L1 is "delayed" when its L1 touch is
-    //     past the L1 cutoff; a ticket already delegated is on time / late by whether its L1 hold stayed
-    //     within that cutoff. Same touches as the Delegation Compliance column. ---
+    // --- Delegation — same Delegation Due Date rule as the Delegation Eligible column: a ticket still at L1 is
+    //     "delayed" once its L1 delegation due date has passed; a ticket already delegated is on time / late by
+    //     whether it left L1 before that due date. ---
     const withinWindowRows=[], delayedAtL1Rows=[], delegatedOnTimeRows=[], delegatedLateRows=[], delegatedUnknownTimingRows=[], delegationUnknownRows=[];
+    const nowForDeleg = new Date();
     rows.forEach(function(r, i){
-      const tier = String(r.assign_to||'').trim();
-      if(!delegationTouches(r).length){ delegationUnknownRows.push(r); enriched[i].delegationDelayed = false; return; }
-      const l1 = r.cda_l1;
-      if(tier === 'L1'){
-        if(!l1 || l1.compliant !== false){ withinWindowRows.push(r); enriched[i].delegationDelayed = false; }
-        else { delayedAtL1Rows.push(r); enriched[i].delegationDelayed = true; }
-      } else {
+      const due = computeDelegationDue(r);
+      if(!due){ delegationUnknownRows.push(r); enriched[i].delegationDelayed = false; return; }
+      const delegated = computeDelegationDate(r);
+      if(delegated){
         enriched[i].delegationDelayed = false;
-        if(!l1) delegatedUnknownTimingRows.push(r);
-        else if(l1.compliant !== false) delegatedOnTimeRows.push(r);
-        else delegatedLateRows.push(r);
+        (delegated <= due ? delegatedOnTimeRows : delegatedLateRows).push(r);
+      } else if(String(r.assign_to||'').trim() === 'L1' && due < nowForDeleg){
+        delayedAtL1Rows.push(r); enriched[i].delegationDelayed = true;
+      } else {
+        withinWindowRows.push(r); enriched[i].delegationDelayed = false;
       }
     });
     s.delegation = { withinWindow:withinWindowRows.length, delayedAtL1:delayedAtL1Rows.length,
@@ -21547,14 +21590,13 @@ async function drExportWorkbook(sheets, filename){
       withinWindowRows:withinWindowRows, delayedAtL1Rows:delayedAtL1Rows, delegatedOnTimeRows:delegatedOnTimeRows,
       delegatedLateRows:delegatedLateRows, delegatedUnknownTimingRows:delegatedUnknownTimingRows, unknownRows:delegationUnknownRows };
 
-    // --- Closure compliance (Target Date for Closure vs. today/close —
-    //     reuses computeTargetDateForClosure / computeClosureComplianceStatus) ---
+    // --- Closure compliance (Resolution SLA Target End — see computeClosureComplianceStatus) ---
     let closureApplicable=0, closureBreached=0;
     rows.forEach(function(r, i){
-      const target = computeTargetDateForClosure(r);
-      if(!target){ enriched[i].closureBreached = false; return; }
+      const st = computeClosureComplianceStatus(r);
+      if(!st){ enriched[i].closureBreached = false; return; }
       closureApplicable++;
-      const breached = computeClosureComplianceStatus(r, target) === 'Breached';
+      const breached = st === 'Breached';
       enriched[i].closureBreached = breached;
       if(breached) closureBreached++;
     });
@@ -22057,7 +22099,8 @@ async function drExportWorkbook(sheets, filename){
       { key:'frComplianceStatus', label:'FR Compliance Status', get:function(r){ return computeFrComplianceStatus(r); }, ragGet:function(r){ const s = computeFrComplianceStatus(r); return s==='Non-Violated'?'GREEN':s==='Violated'?'RED':null; } },
       { key:'frActualResponse', label:'FR Actual Response Time', get:function(r){ const d = frActualResponse(r); return d ? fmtDateTimeSpec(d) : ''; } },
       { key:'frCurrentStatus', label:'FR Current Status', get:function(r){ return computeFrCurrentStatus(r).text; }, ragGet:function(r){ return computeFrCurrentStatus(r).rag; } },
-      { key:'resSlaTargetEnd', label:'Resolution SLA Target End', get:function(r){ return fmtDateTimeSpec(r.resolution_sla_target_end_time); }, ragGet:function(r){ return slaTargetDateRag(drParseDate(r.resolution_sla_target_end_time)); } }
+      { key:'resSlaTargetEnd', label:'Resolution SLA Target End', get:function(r){ return fmtDateTimeSpec(r.resolution_sla_target_end_time); }, ragGet:function(r){ return slaTargetDateRag(drParseDate(r.resolution_sla_target_end_time)); } },
+      { key:'closureComplianceStatus', label:'Closure Compliance Status', get:function(r){ return computeClosureComplianceStatus(r); }, ragGet:function(r){ const c = computeClosureComplianceStatus(r); return c==='Within SLA'?'GREEN':c==='Breached'?'RED':null; } },
     ]).concat([
       // external_id isn't always present in the upload — when it is,
       // it carries the same data as Ticket ID, so it's only used as a
@@ -22087,13 +22130,9 @@ async function drExportWorkbook(sheets, filename){
     .concat(agingComplianceCols(nonStdKey, nonStdLabel, function(r){ return drIsSR(r) && isNonStdSR(r); }, 5))
     .concat(agingComplianceCols(incKey, incLabel, drIsINC, 5))
     .concat([
-      { key:'_targetDateForClosure', label:'Target Date for Closure', get:function(r){ const t = computeTargetDateForClosure(r); return t ? fmtDMY(t) : ''; }, ragGet:function(r){ return futureDateRag(computeTargetDateForClosure(r)); } },
-      { key:'_closureComplianceStatus', label:'Closure Compliance Status', get:function(r){ return computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); }, ragGet:function(r){ const s = computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); return s==='Within SLA'?'GREEN':s==='Breached'?'RED':null; } },
-      { key:'_delegationEligible', label:'Delegation Eligible', get:function(r){ return computeDelegationEligible(r); }, ragGet:function(r){ const s = computeDelegationEligible(r); return s==='Applicable'?'GREEN':null; } },  // Not Applicable is informational, not an alarm — left uncoloured
-      { key:'_delegationDate', label:'Delegation Date', get:function(r){ const d = computeDelegationDate(r); return d ? fmtDateTimeSpec(d) : 'Not delegated'; } },
-      { key:'_delegationCompliance', label:'Delegation Compliance', get:function(r){ return computeDelegationCompliance(r); }, ragGet:function(r){ const c = computeDelegationCompliance(r); return c==='Non-Violated'?'GREEN':c==='Violated'?'RED':null; } },
+      { key:'_delegationDue', label:'Delegation Due Date', get:function(r){ const d = computeDelegationDue(r); return d ? fmtDateTimeSpec(d) : ''; }, ragGet:function(r){ return computeDelegationEligibleStatus(r).rag; } },
+      { key:'_delegationEligible', label:'Delegation Eligible', get:function(r){ return computeDelegationEligible(r); }, ragGet:function(r){ return computeDelegationEligibleStatus(r).rag; } },
       { key:'frComplianceStatusLate', label:'FR Compliance Status', _closedOnly:true, get:function(r){ return computeFrComplianceStatus(r); }, ragGet:function(r){ const s = computeFrComplianceStatus(r); return s==='Non-Violated'?'GREEN':s==='Violated'?'RED':null; } },
-      { key:'frTargetDisplay', label:'FR Target Date/Time', get:function(r){ return String(r.first_response_sla_target_end_time||'').trim(); }, ragGet:function(r){ return futureDateRag(drParseDate(r.first_response_sla_target_end_time)); } },
       { key:'emailRespDueTodayYN', label:'Email Response Due Today', get:function(r){ return computeEmailResponseCompliance(r).dueToday ? 'Yes' : 'No'; }, ragGet:function(r){ return computeEmailResponseCompliance(r).dueToday ? 'RED' : 'GREEN'; } },
       { key:'emailRespMissedYN', label:'Email Response Missed', get:function(r){ return computeEmailResponseCompliance(r).missed ? 'Yes' : 'No'; }, ragGet:function(r){ return computeEmailResponseCompliance(r).missed ? 'RED' : 'GREEN'; } },
       { key:'emailFollowupMissedYN', label:'Email Follow-up Missed', get:function(r){ return computeEmailFollowupMissed(r) ? 'Yes' : 'No'; }, ragGet:function(r){ return computeEmailFollowupMissed(r) ? 'RED' : 'GREEN'; } },
