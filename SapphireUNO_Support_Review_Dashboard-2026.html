@@ -1384,6 +1384,15 @@
   .sapp-view .dr-summary-panel{ display:none; }
   .sapp-view .dr-summary-panel.active{ display:block; }
   .sapp-view tr.drsummary-row:hover{ background:var(--panel-2); }
+  .sapp-view .dr-target-card{ grid-column:span 2; }
+  .sapp-view .dr-target-row{ display:flex; gap:8px; margin:6px 0 8px; }
+  .sapp-view .dr-target-cell{ flex:1; text-align:center; border-radius:8px; padding:7px 4px; border:1px solid var(--line); }
+  .sapp-view .dr-target-cell[data-drsummary-idx]:hover{ filter:brightness(0.97); box-shadow:0 1px 4px rgba(0,0,0,0.12); }
+  .sapp-view .dr-target-num{ font-size:22px; font-weight:800; line-height:1.1; }
+  .sapp-view .dr-target-name{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
+  .sapp-view .dr-target-cell.tone-bad{ background:rgba(208,69,63,0.10); border-color:rgba(208,69,63,0.35); color:var(--bad); }
+  .sapp-view .dr-target-cell.tone-warn{ background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.40); color:#B45309; }
+  .sapp-view .dr-target-cell.tone-good{ background:rgba(34,197,94,0.10); border-color:rgba(34,197,94,0.35); color:var(--good); }
 
   /* Complete Proactive Open Case Dashboard — a large, separate command
      center nested at the bottom of Daily Review, collapsed by default. */
@@ -22202,20 +22211,29 @@ async function drExportWorkbook(sheets, filename){
         '<div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div>' + (subsetRows.length?'<i class="fa-solid fa-arrow-up-right-from-square kc-drill-icon"></i>':'') + '</div>' +
         '<div class="kc-value">' + value + '</div><div class="kc-label">' + label + '</div>' + (sub ? '<div class="kc-sub">' + sub + '</div>' : '') + '</div>';
     }
-    // Open scope only: one card per SLA target end-time column. Value = tickets already past the
-    // target (red); sub-line = due today (amber) / still upcoming (green). Click lists the tickets
-    // that need action now (past + due today), soonest-first, with the RAG-coloured date columns.
-    function targetCard(icon, label, field, title){
-      const past = [], today = [];
-      let upcoming = 0;
+    // Open scope only: one card per SLA target end-time column, showing all three buckets side by
+    // side — Passed (red), Due Today (amber) and Upcoming (green). Each bucket is clickable and opens
+    // its own ticket list (soonest target first) with the RAG-coloured date columns + Excel export.
+    function targetCard(icon, label, field, short){
+      const buckets = { RED:[], AMBER:[], GREEN:[] };
       rows.forEach(function(r){
         const g = slaTargetDateRag(drParseDate(r[field]));
-        if(g === 'RED') past.push(r); else if(g === 'AMBER') today.push(r); else if(g === 'GREEN') upcoming++;
+        if(g) buckets[g].push(r);
       });
       const byDate = function(a, b){ return drParseDate(a[field]) - drParseDate(b[field]); };
-      const action = past.concat(today).sort(byDate);
-      const tone = past.length ? 'bad' : (today.length ? 'warn' : 'good');
-      return drillCard(icon, label, drFmtN(past.length), action, title, tone, drFmtN(today.length) + ' due today · ' + drFmtN(upcoming) + ' upcoming');
+      const defs = [
+        { g:'RED',   name:'Passed',    tone:'bad',  title: short + ' — Passed' },
+        { g:'AMBER', name:'Due Today', tone:'warn', title: short + ' — Due Today' },
+        { g:'GREEN', name:'Upcoming',  tone:'good', title: short + ' — Upcoming' }
+      ];
+      const cells = defs.map(function(d){
+        const list = buckets[d.g].sort(byDate);
+        const idx = reg(d.title, list);
+        const click = list.length ? ' data-drsummary-idx="' + idx + '" title="Click to view these tickets & export" style="cursor:pointer;"' : '';
+        return '<div class="dr-target-cell tone-' + d.tone + '"' + click + '><div class="dr-target-num">' + drFmtN(list.length) + '</div><div class="dr-target-name">' + d.name + '</div></div>';
+      }).join('');
+      return '<div class="kpi-card dr-target-card"><div class="kc-top"><div class="kc-icon"><i class="fa-solid ' + icon + '"></i></div></div>' +
+        '<div class="dr-target-row">' + cells + '</div><div class="kc-label">' + label + '</div></div>';
     }
     const n = stats.n;
     document.getElementById('drSummaryKpi_'+scope).innerHTML =
@@ -22227,8 +22245,8 @@ async function drExportWorkbook(sheets, filename){
       drillCard('fa-triangle-exclamation', 'Attention Required', drFmtN(stats.risk.attention), stats.risk.attentionRows, 'Tickets Requiring Attention', stats.risk.attention?'bad':'good') +
       drillCard('fa-hourglass-half', 'Avg Aging (Days)', stats.avgAge===null?'—':drFmtN(stats.avgAge,1), rows, (scope==='open'?'All Open Cases':'All Closed Cases')) +
       drillCard('fa-gauge-high', 'Daily Review Compliance %', stats.compliancePct===null?'—':drFmtN(stats.compliancePct,1)+'%', rows, (scope==='open'?'All Open Cases':'All Closed Cases'), stats.compliancePct===null?'':(stats.compliancePct>=90?'good':stats.compliancePct>=75?'warn':'bad')) +
-      (scope==='open' ? targetCard('fa-stopwatch', 'First Response Target Passed', 'first_response_sla_target_end_time', 'First Response SLA Target — Passed / Due Today') +
-                        targetCard('fa-bullseye', 'Resolution Target Passed', 'resolution_sla_target_end_time', 'Resolution SLA Target — Passed / Due Today') : '');
+      (scope==='open' ? targetCard('fa-stopwatch', 'First Response SLA Target End', 'first_response_sla_target_end_time', 'First Response SLA Target') +
+                        targetCard('fa-bullseye', 'Resolution SLA Target End', 'resolution_sla_target_end_time', 'Resolution SLA Target') : '');
 
     function tableRow(label, count, pctOrNull, subsetRows, title){
       const idx = reg(title, subsetRows);
