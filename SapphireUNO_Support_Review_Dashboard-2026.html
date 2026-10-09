@@ -731,14 +731,17 @@
   .sapp-view .pill-bad{ background:rgba(240,85,90,0.12);color:var(--bad); }
   .sapp-view .pill-info{ background:rgba(79,163,247,0.12);color:var(--orange); }
 
-  /* Delegation pages: tables match Engineer Dashboard / Team Level Metrics (purple header, left text, centred numbers, RAG pills) */
-#view-delegoverview table,#view-delegtier table,#view-delegengineer table,#view-delegperf table,#view-delegjourney table{ width:100%; border-collapse:separate !important; border-spacing:0; }
-#view-delegoverview th,#view-delegtier th,#view-delegengineer th,#view-delegperf th,#view-delegjourney th{ background:var(--accent,var(--purple)) !important; color:#fff !important; font-size:10.5px !important; text-transform:uppercase; letter-spacing:0.05em; font-weight:700 !important; border:none !important; padding:7px 9px !important; white-space:nowrap; text-align:center; }
-#view-delegoverview th:first-child,#view-delegtier th:first-child,#view-delegengineer th:first-child,#view-delegperf th:first-child,#view-delegjourney th:first-child{ text-align:left; }
-#view-delegoverview td,#view-delegtier td,#view-delegengineer td,#view-delegperf td,#view-delegjourney td{ border:none !important; border-bottom:1px solid var(--line,#eee) !important; padding:6px 9px !important; font-size:12px !important; vertical-align:middle !important; }
-#view-delegoverview td.mono,#view-delegtier td.mono,#view-delegengineer td.mono,#view-delegperf td.mono,#view-delegjourney td.mono{ text-align:center; font-family:inherit; font-variant-numeric:tabular-nums; }
-#view-delegoverview tr:nth-child(even) td,#view-delegtier tr:nth-child(even) td,#view-delegengineer tr:nth-child(even) td,#view-delegperf tr:nth-child(even) td,#view-delegjourney tr:nth-child(even) td{ background:rgba(86,10,145,0.03); }
-#view-delegoverview tr.drillable:hover td,#view-delegtier tr.drillable:hover td,#view-delegengineer tr.drillable:hover td,#view-delegperf tr.drillable:hover td,#view-delegjourney tr.drillable:hover td{ background:rgba(86,10,145,0.09); }
+  /* Delegation / SLA / Aging / Escalation pages: tables match Engineer Dashboard / Team Level Metrics (purple header, left text, centred numbers, RAG pills) */
+#view-delegoverview table,#view-delegtier table,#view-delegengineer table,#view-delegperf table,#view-delegjourney table,#view-sla table,#view-aging table,#view-escalation table{ width:100%; border-collapse:separate !important; border-spacing:0; }
+#view-delegoverview th,#view-delegtier th,#view-delegengineer th,#view-delegperf th,#view-delegjourney th,#view-sla th,#view-aging th,#view-escalation th{ background:var(--accent,var(--purple)) !important; color:#fff !important; font-size:10.5px !important; text-transform:uppercase; letter-spacing:0.05em; font-weight:700 !important; border:none !important; padding:7px 9px !important; white-space:nowrap; text-align:center !important; }
+#view-delegoverview th:first-child,#view-delegtier th:first-child,#view-delegengineer th:first-child,#view-delegperf th:first-child,#view-delegjourney th:first-child,#view-sla th:first-child,#view-aging th:first-child,#view-escalation th:first-child{ text-align:left !important; }
+#view-delegoverview td,#view-delegtier td,#view-delegengineer td,#view-delegperf td,#view-delegjourney td,#view-sla td,#view-aging td,#view-escalation td{ border:none !important; border-bottom:1px solid var(--line,#eee) !important; padding:6px 9px !important; font-size:12px !important; vertical-align:middle !important; text-align:left !important; white-space:normal; }
+#view-delegoverview td.mono,#view-delegtier td.mono,#view-delegengineer td.mono,#view-delegperf td.mono,#view-delegjourney td.mono,#view-sla td.mono,#view-aging td.mono,#view-escalation td.mono,#view-delegoverview td:has(.pill),#view-delegtier td:has(.pill),#view-delegengineer td:has(.pill),#view-delegperf td:has(.pill),#view-delegjourney td:has(.pill),#view-sla td:has(.pill),#view-aging td:has(.pill),#view-escalation td:has(.pill){ text-align:center !important; font-family:inherit; font-variant-numeric:tabular-nums; }
+#view-delegoverview tr:nth-child(even) td,#view-delegtier tr:nth-child(even) td,#view-delegengineer tr:nth-child(even) td,#view-delegperf tr:nth-child(even) td,#view-delegjourney tr:nth-child(even) td,#view-sla tr:nth-child(even) td,#view-aging tr:nth-child(even) td,#view-escalation tr:nth-child(even) td{ background:rgba(86,10,145,0.03); }
+#view-delegoverview tr.drillable:hover td,#view-delegtier tr.drillable:hover td,#view-delegengineer tr.drillable:hover td,#view-delegperf tr.drillable:hover td,#view-delegjourney tr.drillable:hover td,#view-sla tr.drillable:hover td,#view-aging tr.drillable:hover td,#view-escalation tr.drillable:hover td{ background:rgba(86,10,145,0.09); }
+#view-delegoverview td:first-child,#view-delegtier td:first-child,#view-delegengineer td:first-child,#view-delegperf td:first-child,#view-delegjourney td:first-child,#view-sla td:first-child,#view-aging td:first-child,#view-escalation td:first-child{ white-space:nowrap !important; }
+  .sapp-view .pill{ white-space:nowrap; }
+  #view-escalation td.mono,#view-sla td.mono,#view-aging td.mono,#view-delegjourney td.mono{ white-space:nowrap !important; }
   .sapp-view .pill-grey{ background:rgba(140,140,150,0.15);color:#777; }
 
   .sapp-view .kpi-grid{ display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:18px; }
@@ -10988,6 +10991,7 @@ const SAPP_ENGINEER_DRILL_COLUMNS = [
 ];
 
 function sappTierSlaDisp(d, c, u){ if(d===null||d===undefined||c===null||c===undefined) return ''; const x = Math.round(d*100)/100; return x + ' / ' + c + (u==='hours'?'h':'d'); }
+function sappTierSlaPill(d,c,u){ const t=sappTierSlaDisp(d,c,u); if(!t) return '—'; const q=d/c; return `<span class="pill pill-${q<=0.75?'good':q<=1?'warn':'bad'}">${t}</span>`; }
 function sappCdaYN(cda, raw){ return cda==='breached' ? 'Yes' : cda==='met' ? 'No' : (cda===null||cda===undefined ? '' : ''); }
 function sappR2(v){ return (v===null||v===undefined||isNaN(v)) ? null : Math.round(v*100)/100; }
 function dDate(d){ if(!d) return ''; const x = d instanceof Date ? d : new Date(d); return isNaN(x.getTime()) ? '' : fmtDateObj(x); }   // local date + time (was UTC date-only)
@@ -11784,7 +11788,7 @@ function renderJourneyTable(rows){
       <td class="mono">${r._d_l1Days===null||r._d_l1Days===undefined?'—':r._d_l1Days.toFixed(1)}</td>
       <td class="mono">${r._d_l2Days===null||r._d_l2Days===undefined?'—':r._d_l2Days.toFixed(1)}</td>
       <td class="mono">${r._d_smeDays===null||r._d_smeDays===undefined?'—':r._d_smeDays.toFixed(1)}</td>
-      <td class="mono">${sappTierSlaDisp(r._d_l1Sla,r._d_l1Cut,r._d_l1Unit)||'—'}</td><td class="mono">${sappTierSlaDisp(r._d_l2Sla,r._d_l2Cut,r._d_l2Unit)||'—'}</td><td class="mono">${sappTierSlaDisp(r._d_smeSla,r._d_smeCut,r._d_smeUnit)||'—'}</td>
+      <td class="mono">${sappTierSlaPill(r._d_l1Sla,r._d_l1Cut,r._d_l1Unit)}</td><td class="mono">${sappTierSlaPill(r._d_l2Sla,r._d_l2Cut,r._d_l2Unit)}</td><td class="mono">${sappTierSlaPill(r._d_smeSla,r._d_smeCut,r._d_smeUnit)}</td>
       <td class="mono">${(r.cda_age_days!==null&&r.cda_age_days!==undefined)?r.cda_age_days.toFixed(1):(r.age_days===null||r.age_days===undefined?'—':r.age_days)}</td>
       <td class="mono">${r._d_delegationCount}</td><td class="mono">${sappSlaStatePill(r._d_slaStatus)}</td>
       <td class="mono">${r._d_pendingDays===null||r._d_pendingDays===undefined?'—':Math.round(r._d_pendingDays)}</td></tr>`;
@@ -13438,8 +13442,8 @@ function renderSlaBreachTable(rows){
   const breached = scope.filter(r=>SLA_DASHBOARD_METRICS.some(m=>sappSlaBreached(r,m)));
   const sorted = breached.slice().sort((a,b)=>(b.creation_time?+b.creation_time:0)-(a.creation_time?+a.creation_time:0));
   const CAP = 500;
-  const pill = ok => ok ? '<span class="pct-bad">Breach</span>' : '<span class="pct-good">Met</span>';
-  const pillC = (cda, raw) => cda==='breached' ? pill(true) : cda==='met' ? pill(false) : '<span class="dim">N/A</span>';
+  const pill = ok => ok ? '<span class="pill pill-bad">Breach</span>' : '<span class="pill pill-good">Met</span>';
+  const pillC = (cda, raw) => cda==='breached' ? pill(true) : cda==='met' ? pill(false) : '<span class="pill pill-grey">N/A</span>';
   let html = '<table id="slaBreachTable"><tr><th>Ticket ID</th><th>Customer</th><th>Engineer</th><th>Severity</th><th>Priority</th>' +
     '<th>Class. SLA</th><th>1st Resp. SLA</th><th>Resolution SLA</th><th>Subseq. Resp. SLA</th><th>Created</th></tr>';
   sorted.slice(0, CAP).forEach((r,idx)=>{
@@ -14830,7 +14834,7 @@ function renderAgingTable(open){
       <td>${esc(r.ticket_id||'')}</td><td>${esc(gTruncate(r.title,36))}</td><td>${esc(r.customer_name||'')}</td>
       <td>${esc(r.assign_owner_name||'')}</td><td>${esc(r.priority||'—')}</td><td>${esc(r.severity||'—')}</td>
       <td class="mono">${(r.age_days===null||r.age_days===undefined)?'—':r.age_days}</td>
-      <td class="mono ${bucketCls}">${esc(r.aging_bucket||'—')}</td>
+      <td class="mono"><span class="pill pill-${bucketCls==='pct-bad'?'bad':bucketCls==='pct-warn'?'warn':'good'}">${esc(r.aging_bucket||'—')}</span></td>
       <td class="mono">${gDate(r.creation_time)}</td></tr>`;
   });
   html += '</table>';
@@ -15017,6 +15021,7 @@ function buildEscSegToolbar(escRows){
   top6.forEach(t=>{ html += `<button class="seg-btn" data-esctype="${esc(t)}">${esc(t)}</button>`; });
   return html;
 }
+function sappTatPill(v){ if(v===null||v===undefined||isNaN(v)) return '—'; return `<span class="pill pill-${v<=3?'good':v<=7?'warn':'bad'}">${v}</span>`; }
 function renderEscTable(escRows){
   let filtered = escRows;
   if(govEscSegment !== 'all') filtered = escRows.filter(r=>r.escalation_type===govEscSegment);
@@ -15026,10 +15031,11 @@ function renderEscTable(escRows){
   filtered.slice(0, CAP).forEach((r,idx)=>{
     html += `<tr class="drillable" data-gov-esc-idx="${idx}" title="Click for ticket detail">
       <td>${esc(r.ticket_id||'')}</td><td>${esc(gTruncate(r.title,36))}</td><td>${esc(r.customer_name||'')}</td>
-      <td>${esc(r.assign_owner_name||'')}</td><td>${esc(r.escalation_type||'—')}</td>
+      <td>${esc(r.assign_owner_name||'')}</td><td><span class="pill pill-${/business/i.test(r.escalation_type||'')?'bad':/sales/i.test(r.escalation_type||'')?'warn':'info'}">${esc(r.escalation_type||'—')}</span></td>
       <td>${esc(gTruncate(r.reason_for_escalation,40)||'—')}</td>
-      <td>${esc(r.priority||'—')}</td><td>${esc(r.current_status||'')}</td>
-      <td class="mono">${gDate(r.creation_time)}</td><td class="mono">${r.cda_tat_24x7===null||r.cda_tat_24x7===undefined?'—':r.cda_tat_24x7}</td><td class="mono">${r.cda_tat_sla===null||r.cda_tat_sla===undefined?'—':r.cda_tat_sla}</td></tr>`;
+      <td><span class="pill pill-${/^p?1$|critical|hotsite/i.test(r.priority||'')?'bad':/^p?2$|high/i.test(r.priority||'')?'warn':'grey'}">${esc(r.priority||'—')}</span></td>
+      <td><span class="pill pill-${/closed|resolved|cancel|duplicate/i.test(r.current_status||'')?'good':/waiting|customer agreed|observation/i.test(r.current_status||'')?'warn':'info'}">${esc(r.current_status||'—')}</span></td>
+      <td class="mono">${gDate(r.creation_time)}</td><td class="mono">${r.cda_tat_24x7===null||r.cda_tat_24x7===undefined?'—':r.cda_tat_24x7}</td><td class="mono">${sappTatPill(r.cda_tat_sla)}</td></tr>`;
   });
   html += '</table>';
   if(filtered.length>CAP) html += `<div class="excl-note">Showing first ${CAP} of ${filtered.length} matching tickets (sorted by Created).</div>`;
@@ -15191,7 +15197,7 @@ function renderKbTable(candidates){
     html += `<tr class="drillable" data-gov-kb-idx="${idx}" title="Click for ticket detail">
       <td>${esc(r.ticket_id||'')}</td><td>${esc(r.customer_name||'')}</td><td>${esc(r.support_category||'')}</td>
       <td>${esc(gTruncate(r.rca,50)||'—')}</td><td>${esc(r.resolution_type||'—')}</td>
-      <td class="mono ${refCls}">${r.was_kb_referred?'Yes':'No'}</td><td class="mono ${decisionCls}">${esc(decisionLabel)}</td>
+      <td class="mono"><span class="pill pill-${refCls==='pct-good'?'good':'bad'}">${r.was_kb_referred?'Yes':'No'}</span></td><td class="mono"><span class="pill pill-${({'pct-good':'good','pct-bad':'bad','pct-warn':'warn'})[decisionCls]||'grey'}">${esc(decisionLabel)}</span></td>
       <td class="mono">${gDate(r.creation_time)}</td></tr>`;
   });
   html += '</table>';
