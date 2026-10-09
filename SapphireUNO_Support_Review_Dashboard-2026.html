@@ -13021,6 +13021,21 @@ function tkdBool(v){
   return null;
 }
 function tkdVerdict(v){ return v==='breached' ? ['bad','Breached'] : v==='met' ? ['good','Met'] : ['neutral','Not evaluated']; }
+// Compliance chips for First Response / Resolution SLA read the platform's own fields — the same
+// "<x> SLA Breached" flag and "<x> SLA Status" the SLA & TAT section lists below — so the top card can
+// never disagree with it. Order: breached flag = true => Breached; otherwise the status text (Met /
+// Breached / Pending); flag false with no status => Met; no platform fields at all => null (caller falls
+// back to the CDA engine's verdict).
+function tkdPlatformSlaVerdict(row, prefix){
+  const flagRaw = row['_'+prefix+'_sla_breached'] !== undefined ? row['_'+prefix+'_sla_breached'] : row[prefix+'_sla_breached'];
+  const flag = tkdBool(flagRaw);
+  const status = String(row[prefix+'_sla_status'] === null || row[prefix+'_sla_status'] === undefined ? '' : row[prefix+'_sla_status']).trim();
+  if(flag === true || /breach|miss|violat/i.test(status)) return ['bad','Breached'];
+  if(/pending|running|progress|open/i.test(status)) return ['neutral','Pending'];
+  if(/met|within|ok|compl/i.test(status)) return ['good','Met'];
+  if(flag === false) return ['good','Met'];
+  return null;
+}
 function tkdStateRag(st){ return st==='Breached' ? 'bad' : st==='Near Breach' ? 'warn' : (st==='Met'||st==='On Track') ? 'good' : 'neutral'; }
 function tkdSevRag(v){
   const s = String(v||'').toLowerCase();
@@ -13067,8 +13082,14 @@ function tkdRenderBody(row){
   const slaChips = [];
   const cb = flag('class_sla_breached');
   if(cb!==null) slaChips.push(['Classification SLA', cb ? 'bad' : 'good', cb ? 'Breached' : 'Met']);
-  [['First Response SLA', c&&c.fr, 'first_response_sla_breached'], ['Resolution SLA', c&&c.res, 'resolution_sla_breached'], ['Subsequent Resp. SLA', c&&c.sub, null]].forEach(x=>{
-    if(x[1]){ const v = tkdVerdict(x[1]); slaChips.push([x[0], v[0], v[1]]); }
+  [['First Response SLA', c&&c.fr, 'first_response'], ['Resolution SLA', c&&c.res, 'resolution'], ['Subsequent Resp. SLA', c&&c.sub, null]].forEach(x=>{
+    let pv = x[2] ? tkdPlatformSlaVerdict(row, x[2]) : null;      // platform flag/status wins (matches SLA & TAT section)
+    if(!x[2] && x[0].indexOf('Subsequent') === 0){                   // Subsequent response: Periodic SLA miss count > 0 = breached (same as the section)
+      const miss = Number(row.subsequent_response_miss_count);
+      if(row.subsequent_response_miss_count !== null && row.subsequent_response_miss_count !== undefined && row.subsequent_response_miss_count !== '' && !isNaN(miss)) pv = miss > 0 ? ['bad','Breached'] : ['good','Met'];
+    }
+    if(pv){ slaChips.push([x[0], pv[0], pv[1]]); }
+    else if(x[1]){ const v = tkdVerdict(x[1]); slaChips.push([x[0], v[0], v[1]]); }
     else slaChips.push([x[0], 'neutral', 'Not evaluated']);
   });
   if(c && c.edoc) { const v = tkdVerdict(c.edoc); slaChips.push(['EDOC SLA', v[0], v[1]]); }
@@ -21137,21 +21158,29 @@ async function drExportWorkbook(sheets, filename){
     if(sev === 'critical') return { days: 1 };
     return { days: 3 }; // Medium / Low
   }
+  // ---- Delegation columns — follow the Delegation section (L1/L2/SME custody "touches": each tier's
+  // business-time hold vs its own cutoff from the Delegation SLA table, r.cda_l1 / cda_l2 / cda_sme). ----
+  function delegationTouches(r){ return [r.cda_l1, r.cda_l2, r.cda_sme].filter(Boolean); }
+  // Applicable = the Delegation section evaluates this ticket (it has a valid Delegation SLA cutoff for at
+  // least one tier). Not Applicable = it has no delegation cutoff there (e.g. other service types, cancelled /
+  // duplicate, or a ticket the section excludes), so no delegation SLA can be violated.
   function computeDelegationEligible(r){
-    if(!r._creation_date) return '';
-    const platform = aePlatformOverride(r);
-    if(platform){
-      const target = aeEdocTargetDays(r, r._creation_date) || platform.defaultDays;
-      const elapsed = countBusinessDaysBetween(r._creation_date, new Date());
-      return elapsed > target ? 'Not Applicable' : 'Applicable';
-    }
-    const t = aeL1TargetDays(r);
-    if(t.hotsiteHours !== undefined){
-      const hours = (new Date() - r._creation_date) / 3600000;
-      return hours > t.hotsiteHours ? 'Not Applicable' : 'Applicable';
-    }
-    const elapsed = countBusinessDaysBetween(r._creation_date, new Date());
-    return elapsed > t.days ? 'Not Applicable' : 'Applicable';
+    return delegationTouches(r).length ? 'Applicable' : 'Not Applicable';
+  }
+  // When the ticket was first delegated out of L1 (to L2, or straight to SME): the earliest of
+  // assign_l2_time / assign_sme_time. Empty when it has never left L1.
+  function computeDelegationDate(r){
+    const l2 = drParseDate(r.assign_l2_time), sme = drParseDate(r.assign_sme_time);
+    if(l2 && sme) return l2 < sme ? l2 : sme;
+    return l2 || sme || null;
+  }
+  // Violated = any tier touch breached its Delegation SLA cutoff (held longer than allowed — including a
+  // ticket still sitting at a tier past its cutoff); Non-Violated = every evaluated touch is within cutoff;
+  // empty = not evaluated by the Delegation section.
+  function computeDelegationCompliance(r){
+    const t = delegationTouches(r);
+    if(!t.length) return '';
+    return t.some(function(x){ return x.compliant === false; }) ? 'Violated' : 'Non-Violated';
   }
   function computeFrComplianceStatus(r){
     // first_response_sla_breached reaches this module already converted to a true/false boolean by the
@@ -21493,35 +21522,22 @@ async function drExportWorkbook(sheets, filename){
     s.tier = { l1:l1Rows.length, l2:l2Rows.length, sme:smeRows.length, other:tierOtherRows.length,
       l1Rows:l1Rows, l2Rows:l2Rows, smeRows:smeRows, otherRows:tierOtherRows };
 
-    // --- Delegation — reuses the existing computeDelegationEligible
-    //     field (L1-should-delegate-within-2-business-days rule) plus
-    //     assign_to / assign_l2_time / assign_sme_time; no new rule ---
+    // --- Delegation — follows the Delegation section: a ticket still at L1 is "delayed" when its L1 touch is
+    //     past the L1 cutoff; a ticket already delegated is on time / late by whether its L1 hold stayed
+    //     within that cutoff. Same touches as the Delegation Compliance column. ---
     const withinWindowRows=[], delayedAtL1Rows=[], delegatedOnTimeRows=[], delegatedLateRows=[], delegatedUnknownTimingRows=[], delegationUnknownRows=[];
     rows.forEach(function(r, i){
-      const elig = computeDelegationEligible(r);
       const tier = String(r.assign_to||'').trim();
-      if(elig === ''){ delegationUnknownRows.push(r); enriched[i].delegationDelayed = false; return; }
+      if(!delegationTouches(r).length){ delegationUnknownRows.push(r); enriched[i].delegationDelayed = false; return; }
+      const l1 = r.cda_l1;
       if(tier === 'L1'){
-        if(elig === 'Applicable'){ withinWindowRows.push(r); enriched[i].delegationDelayed = false; }
+        if(!l1 || l1.compliant !== false){ withinWindowRows.push(r); enriched[i].delegationDelayed = false; }
         else { delayedAtL1Rows.push(r); enriched[i].delegationDelayed = true; }
       } else {
         enriched[i].delegationDelayed = false;
-        const delegTime = tier === 'SME' ? drParseDate(r.assign_sme_time) : drParseDate(r.assign_l2_time);
-        if(!delegTime || !r._creation_date) delegatedUnknownTimingRows.push(r);
-        else {
-          const platform = aePlatformOverride(r);
-          let onTime;
-          if(platform){
-            const target = aeEdocTargetDays(r, r._creation_date) || platform.defaultDays;
-            onTime = countBusinessDaysBetween(r._creation_date, delegTime) <= target;
-          } else {
-            const t = aeL1TargetDays(r);
-            onTime = (t.hotsiteHours !== undefined)
-              ? ((delegTime - r._creation_date) / 3600000) <= t.hotsiteHours
-              : countBusinessDaysBetween(r._creation_date, delegTime) <= t.days;
-          }
-          if(onTime) delegatedOnTimeRows.push(r); else delegatedLateRows.push(r);
-        }
+        if(!l1) delegatedUnknownTimingRows.push(r);
+        else if(l1.compliant !== false) delegatedOnTimeRows.push(r);
+        else delegatedLateRows.push(r);
       }
     });
     s.delegation = { withinWindow:withinWindowRows.length, delayedAtL1:delayedAtL1Rows.length,
@@ -22073,7 +22089,9 @@ async function drExportWorkbook(sheets, filename){
     .concat([
       { key:'_targetDateForClosure', label:'Target Date for Closure', get:function(r){ const t = computeTargetDateForClosure(r); return t ? fmtDMY(t) : ''; }, ragGet:function(r){ return futureDateRag(computeTargetDateForClosure(r)); } },
       { key:'_closureComplianceStatus', label:'Closure Compliance Status', get:function(r){ return computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); }, ragGet:function(r){ const s = computeClosureComplianceStatus(r, computeTargetDateForClosure(r)); return s==='Within SLA'?'GREEN':s==='Breached'?'RED':null; } },
-      { key:'_delegationEligible', label:'Delegation Eligible', get:function(r){ return computeDelegationEligible(r); }, ragGet:function(r){ const s = computeDelegationEligible(r); return s==='Applicable'?'GREEN':s==='Not Applicable'?'RED':null; } },
+      { key:'_delegationEligible', label:'Delegation Eligible', get:function(r){ return computeDelegationEligible(r); }, ragGet:function(r){ const s = computeDelegationEligible(r); return s==='Applicable'?'GREEN':null; } },  // Not Applicable is informational, not an alarm — left uncoloured
+      { key:'_delegationDate', label:'Delegation Date', get:function(r){ const d = computeDelegationDate(r); return d ? fmtDateTimeSpec(d) : 'Not delegated'; } },
+      { key:'_delegationCompliance', label:'Delegation Compliance', get:function(r){ return computeDelegationCompliance(r); }, ragGet:function(r){ const c = computeDelegationCompliance(r); return c==='Non-Violated'?'GREEN':c==='Violated'?'RED':null; } },
       { key:'frComplianceStatusLate', label:'FR Compliance Status', _closedOnly:true, get:function(r){ return computeFrComplianceStatus(r); }, ragGet:function(r){ const s = computeFrComplianceStatus(r); return s==='Non-Violated'?'GREEN':s==='Violated'?'RED':null; } },
       { key:'frTargetDisplay', label:'FR Target Date/Time', get:function(r){ return String(r.first_response_sla_target_end_time||'').trim(); }, ragGet:function(r){ return futureDateRag(drParseDate(r.first_response_sla_target_end_time)); } },
       { key:'emailRespDueTodayYN', label:'Email Response Due Today', get:function(r){ return computeEmailResponseCompliance(r).dueToday ? 'Yes' : 'No'; }, ragGet:function(r){ return computeEmailResponseCompliance(r).dueToday ? 'RED' : 'GREEN'; } },
