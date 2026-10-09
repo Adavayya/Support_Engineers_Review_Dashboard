@@ -731,6 +731,16 @@
   .sapp-view .pill-bad{ background:rgba(240,85,90,0.12);color:var(--bad); }
   .sapp-view .pill-info{ background:rgba(79,163,247,0.12);color:var(--orange); }
 
+  /* Delegation pages: tables match Engineer Dashboard / Team Level Metrics (purple header, left text, centred numbers, RAG pills) */
+#view-delegoverview table,#view-delegtier table,#view-delegengineer table,#view-delegperf table,#view-delegjourney table{ width:100%; border-collapse:separate !important; border-spacing:0; }
+#view-delegoverview th,#view-delegtier th,#view-delegengineer th,#view-delegperf th,#view-delegjourney th{ background:var(--accent,var(--purple)) !important; color:#fff !important; font-size:10.5px !important; text-transform:uppercase; letter-spacing:0.05em; font-weight:700 !important; border:none !important; padding:7px 9px !important; white-space:nowrap; text-align:center; }
+#view-delegoverview th:first-child,#view-delegtier th:first-child,#view-delegengineer th:first-child,#view-delegperf th:first-child,#view-delegjourney th:first-child{ text-align:left; }
+#view-delegoverview td,#view-delegtier td,#view-delegengineer td,#view-delegperf td,#view-delegjourney td{ border:none !important; border-bottom:1px solid var(--line,#eee) !important; padding:6px 9px !important; font-size:12px !important; vertical-align:middle !important; }
+#view-delegoverview td.mono,#view-delegtier td.mono,#view-delegengineer td.mono,#view-delegperf td.mono,#view-delegjourney td.mono{ text-align:center; font-family:inherit; font-variant-numeric:tabular-nums; }
+#view-delegoverview tr:nth-child(even) td,#view-delegtier tr:nth-child(even) td,#view-delegengineer tr:nth-child(even) td,#view-delegperf tr:nth-child(even) td,#view-delegjourney tr:nth-child(even) td{ background:rgba(86,10,145,0.03); }
+#view-delegoverview tr.drillable:hover td,#view-delegtier tr.drillable:hover td,#view-delegengineer tr.drillable:hover td,#view-delegperf tr.drillable:hover td,#view-delegjourney tr.drillable:hover td{ background:rgba(86,10,145,0.09); }
+  .sapp-view .pill-grey{ background:rgba(140,140,150,0.15);color:#777; }
+
   .sapp-view .kpi-grid{ display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:18px; }
   .sapp-view .kpi-card{
     background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 17px;position:relative;overflow:hidden;
@@ -10861,9 +10871,9 @@ function renderNotes(){
   const delegationComplianceNote = dc ? `
       <li><b>Delegation dwell time</b>, <b>Delegation SLA Compliance</b>, and <b>Currently overdue</b> (By Team/Engineer tab): these now filter by your Team/Engineer selection like everything else on this tab — attributed to whoever actually held that tier (<code>assign_to_l1/l2_engineer</code>, <code>assign_to_sme</code>), not the ticket's current owner, so selecting one engineer shows their own delegation record even if they were never the final "owner" of a ticket they touched early on. Compliance is checked against this cutoff table, using a business-day/business-hour duration computed fresh from timestamps — <b>not</b> the platform's own <code>l1_tat_sla</code>/<code>l2_tat_sla</code>/<code>sme_tat_sla</code> fields, which were checked against real sample records and found unreliable (68% populated even in fully-rolled-out months, and containing negative values not explained by the known Apr/May data-capture gap):
         <ul style="margin-top:6px;">
-          <li><b>L1</b> — Incident Mgmt: Hotsite 1 business hour · Critical 1 business day · Medium/Low 2 business days. Service Request Standard: 1 business day. Service Request Non-Standard: <b>the committed EDOC date if one was given, else 1 business day.</b> End condition: resolve or delegate.</li>
-          <li><b>L2</b> — Incident Mgmt: Hotsite 2 business hours · Critical 1 business day · Medium/Low 2 business days. Service Request Standard: 2 business days. Service Request Non-Standard: EDOC date if given, else 2 business days. End condition: resolve, delegate, <b>or bring in CPE</b>.</li>
-          <li><b>SME</b> — same intervals as L2 (Hotsite 2 business hours · Critical 1 business day · Medium/Low 2 business days · Service Request Standard 2 business days · Non-Standard: EDOC or 2 business days). End condition: resolve, delegate, <b>or bring in CPE/Apps</b>.</li>
+          <li><b>L1</b> — Incident Mgmt: Hotsite 1 business hour · Critical 1 business day · Medium/Low 3 business days. Service Request Standard: 1 business day. Service Request Non-Standard: <b>the committed EDOC date if one was given, else 1 business day.</b> End condition: resolve or delegate.</li>
+          <li><b>L2</b> — Incident Mgmt: Hotsite 2 business hours · Critical 1 business day · Medium/Low 3 business days. Service Request Standard: 2 business days. Service Request Non-Standard: EDOC date if given, else 2 business days. End condition: resolve, delegate, <b>or bring in CPE</b>.</li>
+          <li><b>SME</b> — same intervals as L2 (Hotsite 2 business hours · Critical 1 business day · Medium/Low 3 business days · Service Request Standard 2 business days · Non-Standard: EDOC or 2 business days). End condition: resolve, delegate, <b>or bring in CPE/Apps</b>.</li>
           <li><b>Upgrade/Migration</b> (4th category) — Platform team Service Requests tagged <code>support_feature</code> = "Patch Upgrade" or "Migration". Unlike the three tiers above, the clock starts at <b>ticket creation</b> (not a tier assignment), is tracked by owner rather than tier-history, and <b>only actual resolution stops it</b> — reassignment does not. Cutoff: the committed EDOC date if given, else 15 business days (Patch Upgrade) or 5 business days (Migration).</li>
         </ul>
         This table was refined against a reference document (Delegation_SLA_Reference.xlsx). Three changes from the original build: (1) L2 and SME previously used a single flat cutoff (5 and 7 business days) regardless of severity — replaced with the same severity-tiered structure L1 already used. (2) Service Request Non-Standard now uses the committed EDOC date as its deadline when one exists, same mechanism as the "Resolution Meeting EDOC" metric elsewhere. (3) <b>L2 and SME's clock can now also stop when CPE (or CPE/Apps for SME) is brought in</b> — detected via <code>internal_reference_id</code> being populated, timed via <code>internal_reference_id_first_populated_time</code>. Whichever of escalation, CPE-involvement, or resolution happens <i>first</i> is what actually concluded custody — the Delegation drill-down's "Concluded Via" column shows which one applied to each ticket. A data-quality note: <code>internal_reference_id_first_populated_time</code> is itself populated for far more tickets than <code>internal_reference_id</code> is (roughly 5,300 vs 240) — likely a general "field first touched" system timestamp rather than something CPE-specific — so this trigger is only applied where <code>internal_reference_id</code> is actually populated, not merely wherever the timestamp exists. Two consequences of the severity-tiering: L2/SME tickets with a blank or mismatched severity now also get excluded for "no valid cutoff row" (same rule L1 already had), and a small number of Non-Standard SR touches can show an unusual cutoff value (e.g. "4 business days") — the EDOC-derived deadline working as intended, not a data error.
@@ -11492,10 +11502,15 @@ function renderSingleEngineerChart(canvasId, rows, engineerFn, label){
       if(recs.length) openDrilldown(`${label} — ${top10[idx][0]}`, delegDrillRows(recs), SAPP_DELEG_DRILL_COLUMNS, label.replace(/\s+/g,'_')+'_'+top10[idx][0].replace(/[^a-z0-9]+/gi,'_'));
     }})});
 }
+// RAG helpers shared by the delegation pages (same thresholds as Team Level Metrics / Engineer Dashboard)
+function sappPctTone(v){ return v===null||v===undefined ? 'grey' : v>=90 ? 'good' : v>=75 ? 'warn' : 'bad'; }
+function sappPctPillCell(v, suffix){ return v===null||v===undefined ? '<td class="mono"><span class="pill pill-grey">N/A</span></td>' : `<td class="mono"><span class="pill pill-${sappPctTone(v)}">${v}${suffix===undefined?'%':suffix}</span></td>`; }
+function sappSlaStatePill(st){ const t = st==='Breached'?'bad':st==='Near Breach'?'warn':st?'good':'grey'; return `<span class="pill pill-${t}">${esc(st||'—')}</span>`; }
+const SAPP_AGING_RAG = ['#35c97d','#35c97d','#f0a93e','#f0a93e','#f0555a','#f0555a'];
 function renderAgingBarChart(canvasId, openRows, color){
   const buckets = CDAPipeline.SAPP_AGING_BUCKET_LABELS;
   const byBucket = buckets.map(b=>openRows.filter(r=>r._d_agingBucket===b));
-  makeChart(canvasId, {type:'bar', data:{labels:buckets, datasets:[{label:'Open tickets', data:byBucket.map(a=>a.length), backgroundColor:color}]},
+  makeChart(canvasId, {type:'bar', data:{labels:buckets, datasets:[{label:'Open tickets', data:byBucket.map(a=>a.length), backgroundColor:SAPP_AGING_RAG}]},
     options: Object.assign(sappLineOpts(), {onClick:(evt, els)=>{
       if(!els.length) return; const idx=els[0].index; const recs=byBucket[idx];
       if(recs.length) openDrilldown(`Aging — ${buckets[idx]}`, delegDrillRows(recs), SAPP_DELEG_DRILL_COLUMNS, 'Aging_'+buckets[idx].replace(/[^a-z0-9]+/gi,'_'));
@@ -11673,11 +11688,11 @@ function renderEngineerOwnershipSection(engineerAggs){
   let tableRows = '';
   sortedList.forEach(e=>{
     const id = e.receivedCount ? registerDrilldown(`Engineer Ownership — ${e.name}`, delegDrillRows(e.received), SAPP_ENGINEER_DRILL_COLUMNS, 'Engineer_'+e.name.replace(/[^a-z0-9]+/gi,'_')) : null;
-    const pctCell = (v) => v===null ? '<td class="mono dim">N/A</td>' : `<td class="mono ${v>=90?'pct-good':v>=75?'pct-warn':'pct-bad'}">${v}%</td>`;
+    const pctCell = sappPctPillCell;
     tableRows += `<tr${id?` class="drillable" data-drill-id="${id}" title="Click to view underlying tickets"`:''}>
       <td>${esc(e.name)}</td><td class="mono">${e.assigned}</td><td class="mono">${e.closed}</td>
       <td class="mono">${e.delegated}</td><td class="mono">${e.receivedCount}</td><td class="mono">${e.currentOpen}</td>
-      <td class="mono ${e.backlog>0?'pct-bad':''}">${e.backlog}</td><td class="mono">${e.oldest===null?'—':e.oldest}</td>
+      <td class="mono">${e.backlog>0?`<span class="pill pill-bad">${e.backlog}</span>`:'<span class="pill pill-good">0</span>'}</td><td class="mono">${e.oldest===null?'—':e.oldest}</td>
       <td class="mono">${e.avgOwnership===null?'—':e.avgOwnership.toFixed(1)}</td><td class="mono">${e.avgResolution===null?'—':e.avgResolution.toFixed(1)}</td>
       ${pctCell(e.delegationSlaPct)}${pctCell(e.resSlaPct)}${pctCell(e.classSlaPct)}${pctCell(e.frSlaPct)}
       <td class="mono"><span class="score-badge tone-${e.healthBand||'warn'}">${e.healthScore!==undefined?e.healthScore:'—'}</span><span class="score-label">${e.healthLabel||''}</span></td>
@@ -11763,7 +11778,6 @@ function renderJourneyTable(rows){
   let html = '<table><tr><th>Ticket ID</th><th>Customer</th><th>Current Owner</th><th>Level</th><th>Status</th>' +
     '<th title="24/7 calendar days held at tier">L1 (24/7 d)</th><th>L2 (24/7 d)</th><th>SME (24/7 d)</th><th title="Business-time duration / cutoff per the Delegation SLA table">L1 SLA TAT</th><th>L2 SLA TAT</th><th>SME SLA TAT</th><th>Total Age (d)</th><th>Delegations</th><th>Delegation SLA</th><th>Pending Since (d)</th></tr>';
   filtered.slice(0, CAP).forEach((r,idx)=>{
-    const slaCls = r._d_slaStatus==='Breached'?'pct-bad':r._d_slaStatus==='Near Breach'?'pct-warn':r._d_slaStatus?'pct-good':'dim';
     html += `<tr class="drillable" data-journey-idx="${idx}" title="Click for delegation timeline">
       <td>${esc(r.ticket_id||'')}</td><td>${esc(r.customer_name||'')}</td><td>${esc(r._d_levelEngineer||'')}</td>
       <td>${esc(r._d_level)}</td><td>${esc(r.current_status||'')}</td>
@@ -11772,7 +11786,7 @@ function renderJourneyTable(rows){
       <td class="mono">${r._d_smeDays===null||r._d_smeDays===undefined?'—':r._d_smeDays.toFixed(1)}</td>
       <td class="mono">${sappTierSlaDisp(r._d_l1Sla,r._d_l1Cut,r._d_l1Unit)||'—'}</td><td class="mono">${sappTierSlaDisp(r._d_l2Sla,r._d_l2Cut,r._d_l2Unit)||'—'}</td><td class="mono">${sappTierSlaDisp(r._d_smeSla,r._d_smeCut,r._d_smeUnit)||'—'}</td>
       <td class="mono">${(r.cda_age_days!==null&&r.cda_age_days!==undefined)?r.cda_age_days.toFixed(1):(r.age_days===null||r.age_days===undefined?'—':r.age_days)}</td>
-      <td class="mono">${r._d_delegationCount}</td><td class="mono ${slaCls}">${r._d_slaStatus||'—'}</td>
+      <td class="mono">${r._d_delegationCount}</td><td class="mono">${sappSlaStatePill(r._d_slaStatus)}</td>
       <td class="mono">${r._d_pendingDays===null||r._d_pendingDays===undefined?'—':Math.round(r._d_pendingDays)}</td></tr>`;
   });
   html += '</table>';
@@ -12372,13 +12386,14 @@ function dpFilterBarHtml(){
 }
 
 // ---------------- Table renderers ----------------
-function dpRagPill(rag){ const cls = rag==='Green'?'pct-good':rag==='Amber'?'pct-warn':rag==='Red'?'pct-bad':'dim'; return `<span class="mono ${cls}">${esc(rag)}</span>`; }
+function dpRagPill(rag){ const t = rag==='Green'?'good':rag==='Amber'?'warn':rag==='Red'?'bad':'grey'; return `<span class="pill pill-${t}">${esc(rag)}</span>`; }
+function dpPctPill(rag, txt){ const t = rag==='Green'?'good':rag==='Amber'?'warn':rag==='Red'?'bad':'grey'; return `<span class="pill pill-${t}">${txt}</span>`; }
 function dpRenderKpiTable(o){
   const rows = [
     ['Total Delegated', o.total, '100%'],
     ['Within Target (Green)', o.green, (dpPctOfTotal(o.green,o.total)===null?'0.0':dpPctOfTotal(o.green,o.total).toFixed(1))+'%'],
     ['Amber', o.amber, (dpPctOfTotal(o.amber,o.total)===null?'0.0':dpPctOfTotal(o.amber,o.total).toFixed(1))+'%'],
-    ['Breached &gt;2 Days (Red)', o.red, (dpPctOfTotal(o.red,o.total)===null?'0.0':dpPctOfTotal(o.red,o.total).toFixed(1))+'%'],
+    ['Breached (Red)', o.red, (dpPctOfTotal(o.red,o.total)===null?'0.0':dpPctOfTotal(o.red,o.total).toFixed(1))+'%'],
     ['Data Not Available (Grey)', o.grey, (dpPctOfTotal(o.grey,o.total)===null?'0.0':dpPctOfTotal(o.grey,o.total).toFixed(1))+'%'],
     ['Delegation Compliance %', o.compliancePct===null?'Data Not Available':o.compliancePct.toFixed(1)+'%', '—'],
     ['Average Delegation TAT', o.avgTat===null?'Data Not Available':o.avgTat.toFixed(1)+'d', '—'],
@@ -12391,7 +12406,7 @@ function dpRenderKpiTable(o){
 }
 function dpRenderTatBucketTable(rows){
   let html = '<table id="dpTatBucketTable"><tr><th>TAT Bucket</th><th>Tickets</th><th>%</th></tr>';
-  rows.forEach(r=>{ html += `<tr><td>${dpRagPill(r.rag)} ${esc(r.label)}</td><td class="mono">${r.count}</td><td class="mono">${r.pct===null?'—':r.pct.toFixed(1)+'%'}</td></tr>`; });
+  rows.forEach(r=>{ html += `<tr><td>${dpRagPill(r.rag)} <span style="margin-left:4px;">${esc(r.label)}</span></td><td class="mono">${r.count}</td><td class="mono">${r.pct===null?'—':r.pct.toFixed(1)+'%'}</td></tr>`; });
   html += '</table>';
   return html;
 }
@@ -12403,7 +12418,7 @@ function dpRenderGroupTable(tableId, nameLabel, rows, showPctOfTotal, showAmber,
     html += `<tr><td>${esc(r.name)}</td><td class="mono">${r.total}</td>` +
       (showPctOfTotal?`<td class="mono">${r.pctOfTotal===null?'—':r.pctOfTotal.toFixed(1)+'%'}</td>`:'') +
       `<td class="mono">${r.within}</td>` + (showAmber?`<td class="mono">${r.amber}</td>`:'') +
-      `<td class="mono">${r.breached}</td><td class="mono">${dpRagPill(r.rag)} ${r.compliancePct===null?'—':r.compliancePct.toFixed(1)+'%'}</td>` +
+      `<td class="mono">${r.breached}</td><td class="mono">${dpPctPill(r.rag, r.compliancePct===null?'—':r.compliancePct.toFixed(1)+'%')}</td>` +
       `<td class="mono">${r.avgTat===null?'—':r.avgTat.toFixed(2)+'d'}</td>` +
       (showMax?`<td class="mono">${r.maxTat===null?'—':r.maxTat.toFixed(2)+'d'}</td>`:'') +
       (showFlag?`<td class="mono">${r.measurable<3?'Insufficient Sample (&lt;3)':''}</td>`:'') + '</tr>';
@@ -12421,7 +12436,7 @@ function dpRenderDetailTable(touches){
       `<td>${esc(t.customer_name||'')}</td><td>${esc(t.current_status||'')}</td><td>${esc(t.l1_engineer||'')}</td>` +
       `<td>${esc(t.delegated_to||'')}</td><td>${esc(t.delegation_type||'')}</td><td class="mono">${dDate(t.created_time)}</td>` +
       `<td class="mono">${dDate(t.start_time)}</td><td class="mono">${dpFmtTat(t)}</td><td class="mono">${dpStaleTargetDisp(t)}</td>` +
-      `<td class="mono">${dpRagPill(t.rag)} ${esc(t.status)}</td><td class="mono">${t.delay===null?'—':t.delay.toFixed(2)+'d'}</td></tr>`;
+      `<td class="mono">${dpPctPill(t.rag, esc(t.status))}</td><td class="mono">${t.delay===null?'—':t.delay.toFixed(2)+'d'}</td></tr>`;
   });
   html += '</table>';
   if(touches.length>CAP) html += `<div class="excl-note">Showing first ${CAP} of ${touches.length} matching delegation touches (full set included in the Excel export).</div>`;
@@ -12434,7 +12449,7 @@ function dpRenderWatchlistTable(watchlist){
     html += `<tr class="drillable" data-dp-watch-idx="${idx}"><td>${esc(t.ticket_id||'')}</td><td>${esc(t.ticket_type||'')}</td>` +
       `<td>${esc(t.customer_name||'')}</td><td>${esc(t.current_status||'')}</td><td>${esc(t.l1_engineer||'')}</td>` +
       `<td>${esc(t.delegated_to||'')}</td><td>${esc(t.delegation_type||'')}</td><td class="mono">${dpFmtTat(t)}</td>` +
-      `<td class="mono">${dpStaleTargetDisp(t)}</td><td class="mono pct-bad">${t.delay===null?'—':t.delay.toFixed(2)+'d'}</td></tr>`;
+      `<td class="mono">${dpStaleTargetDisp(t)}</td><td class="mono"><span class="pill pill-bad">${t.delay===null?'—':t.delay.toFixed(2)+'d'}</span></td></tr>`;
   });
   return html + '</table>';
 }
@@ -12442,7 +12457,7 @@ function dpRenderTrendTable(rows){
   let html = '<table id="dpTrendTable"><tr><th>Period</th><th>Delegated Tickets</th><th>Within Target</th><th>Amber</th><th>Breached</th><th>Compliance %</th><th>Avg TAT</th></tr>';
   rows.forEach(r=>{
     html += `<tr><td>${esc(r.label)}</td><td class="mono">${r.total}</td><td class="mono">${r.within}</td><td class="mono">${r.amber}</td>` +
-      `<td class="mono">${r.breached}</td><td class="mono">${dpRagPill(r.rag)} ${r.compliancePct===null?'—':r.compliancePct.toFixed(1)+'%'}</td>` +
+      `<td class="mono">${r.breached}</td><td class="mono">${dpPctPill(r.rag, r.compliancePct===null?'—':r.compliancePct.toFixed(1)+'%')}</td>` +
       `<td class="mono">${r.avgTat===null?'—':r.avgTat.toFixed(2)+'d'}</td></tr>`;
   });
   return html + '</table>';
