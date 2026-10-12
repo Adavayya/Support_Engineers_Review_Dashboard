@@ -2762,6 +2762,22 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
   body.printing-report .gov-print-report.show .cr-chart-card, body.printing-report .gov-print-report.show .cr-table-card, body.printing-report .gov-print-report.show .cr-kpi-grid{ break-inside:avoid; }
 }
 
+  /* ---- L1 Self-Service tab (v6b) ---- */
+  .ss-cell{text-align:center;line-height:1.25;min-width:64px;}
+  .ss-cell .n{display:block;font-weight:600;font-family:var(--mono);}
+  .ss-cell .p{display:block;font-size:10.5px;color:var(--ink-dim);font-family:var(--mono);}
+  .ss-l1col{border-left:2px solid var(--purple-soft);border-right:2px solid var(--purple-soft);}
+  .ss-total-row td{font-weight:600;border-top:2px solid var(--line);}
+  .ss-controls{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 16px;padding:12px 16px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;}
+  .ss-note{font-size:11.5px;color:var(--ink-faint);margin-top:8px;}
+  .ss-h3{margin:0 0 6px;font-size:12.5px;font-weight:600;color:var(--ink-dim);}
+  .ss-kpi .sub{font-size:12px;color:var(--ink-dim);margin-top:5px;font-family:var(--mono);}
+  .ss-kpi[data-drill-id]{cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+  .ss-kpi[data-drill-id]:hover{border-color:var(--purple-soft);box-shadow:0 2px 10px rgba(86,10,145,0.14);}
+  td.ss-left{text-align:left;font-family:var(--sans);}
+  /* four filters live in the top bar on this tab, so its dropdowns are a little narrower than on the other tabs */
+  #tabFilters_selfservice{gap:12px;}
+  #tabFilters_selfservice .msdrop-btn{min-width:80px;}
 </style>
 </head>
 <body>
@@ -2851,6 +2867,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
       </div>
       <div class="nav-section-body" id="navSectionBody-knowledge">
         <a class="nav-item" data-view="kb" title="Knowledge Base"><i class="fa-solid fa-book"></i><span class="nav-label">Knowledge Base</span></a>
+        <a class="nav-item" data-view="selfservice" title="Self-Service"><i class="fa-solid fa-user-check"></i><span class="nav-label">Self-Service</span></a>
         <a class="nav-item" data-view="notes" title="Notes"><i class="fa-solid fa-note-sticky"></i><span class="nav-label">Notes</span></a>
       </div>
     </div>
@@ -2993,7 +3010,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             <!-- Add your Excel file names from the MSPData folder below.
                  Each option's value is the file's path relative to this
                  HTML file, and must be committed to the same repo. -->
-            <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
+            <option value="MSPData/CallDump_11Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
 
             <!-- Add more <option> entries here, following the same
                  MSPData/filename.xlsx pattern, e.g.:
@@ -3076,6 +3093,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
     <button data-view="escalation">Escalation Analysis</button>
     <button data-view="aging">Aging Analysis</button>
     <button data-view="kb">Knowledge Base</button>
+    <button data-view="selfservice">Self-Service</button>
     <button data-view="notes">Notes</button>
     <button data-view="settings">Settings</button>
   </nav>
@@ -3083,6 +3101,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
     <div class="filterbar-tabfilters" id="tabFilters_engineers" style="display:none;"></div>
     <div class="filterbar-tabfilters" id="tabFilters_towercust" style="display:none;"></div>
     <div class="filterbar-tabfilters" id="tabFilters_engcompliance" style="display:none;"></div>
+    <div class="filterbar-tabfilters" id="tabFilters_selfservice" style="display:none;"></div>
   </div>
   <div class="time-filter-inline" title="Applies to every tab except the current Open-calls count, which is always live.">
     <label>Time period</label>
@@ -4013,6 +4032,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
           </div>
         </div>
   </section>
+  <section class="view" id="view-selfservice"></section>
   <section class="view" id="view-notes"></section>
   <section class="view sapp-view" id="view-settings"></section>
 </main>
@@ -5457,6 +5477,53 @@ function buildDimensionsBundle(clean, MONTHS, ownerTeamMap){
 // ---------------------------------------------------------------------------
 // Top-level assembly
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Self-Service module records (L1 Self-Service Opportunity tab). One flat record per Incident /
+// Service Request call (Duplicates dropped), carrying the outcome of the call as of the data
+// snapshot, who resolved it, whether L2/SME was involved, effort, resolution code, complexity and
+// the five KB fields. Built from the same `clean` population as ticket_volume_records so the
+// Global Filter can narrow it by ticket id exactly like the other original tabs.
+// ---------------------------------------------------------------------------
+function buildSelfServiceRecords(clean, ownerTeamMap){
+  ownerTeamMap = ownerTeamMap || {};
+  const normKey = k => String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const keys = new Set(); clean.forEach(r => { for(const k in r) keys.add(k); });
+  const pick = (exact, re) => { let hit = null, loose = null; keys.forEach(k => { const n = normKey(k); if(n === exact){ if(!hit) hit = k; } else if(!loose && re.test(n) && !/recommend|optimi[sz]|suggest/.test(n)) loose = k; }); return hit || loose; };
+  const kAssess = pick('kbassessment', /kbassessment/), kSource = pick('resolutionsource', /resolutionsource/), kDecision = pick('kbreviewpublishdecision', /kbreviewpublishdecision/);
+  const txt = v => { if(v === null || v === undefined) return null; const s = String(v).trim(); return (s === '' || /^(na|n\/a|none|null|-)$/i.test(s)) ? null : s; };
+  const kbm = (typeof kbDetectFieldMap === 'function') ? kbDetectFieldMap(Array.from(keys)) : {};   // same column detection the Knowledge Base page uses
+  const raw = v => (v === null || v === undefined || String(v).trim() === '') ? null : v;   // free text kept exactly as uploaded
+  const CX = {'straight forward':'Straight Forward','straightforward':'Straight Forward','medium complex':'Medium Complex','high complex':'High Complex'};
+  const out = [];
+  clean.forEach(r => {
+    const cat = statusCategoryOf(r.current_status);
+    if(cat === 'Duplicate') return;
+    const outcome = cat === 'Closed' ? 'resolved' : (cat === 'Open' ? 'open' : 'closed_other');
+    const ownerTeam = ownerTeamMap[r.owner] || 'No Team';
+    const eff = r.total_effort_spent_hrs;
+    const cx = txt(r.complexity_level);
+    out.push({
+      ticket_id: r.external_id, external_id: r.external_id, customer_name: r.customer_name || null,
+      creation_month: r.creation_month, resolved_month: r.resolved_month || null,
+      current_status: r.current_status, outcome,
+      team: outcome === 'resolved' ? ownerTeam : null, owner_team: ownerTeam, owner: r.owner || null,
+      service: r.service, severity: r.severity || null,
+      complexity_level: cx ? (CX[cx.toLowerCase()] || cx) : null,
+      feature: r.support_feature || null, subfeature: r.support_subfeature || null, support_category: r.support_category || null,
+      problem_statement: kbm.ps_user ? raw(r[kbm.ps_user]) : null, resolution_steps: kbm.rs_user ? raw(r[kbm.rs_user]) : null,
+      resolution_code: txt(r.resolution_code),
+      effort_hrs: (eff === null || eff === undefined || isNaN(eff)) ? null : eff,
+      escalated: !!(r.assign_to_l2_engineer || r.assign_l2_time || r.assign_to_sme || r.assign_sme_time),
+      reopened: !!r.reopen_time,
+      kb_referred: sappBoolish(r.was_kb_referred), add_to_kb: sappBoolish(r.add_to_kb),
+      kb_assessment: kAssess ? txt(r[kAssess]) : null, resolution_source: kSource ? txt(r[kSource]) : null,
+      kb_decision: kDecision ? txt(r[kDecision]) : null,
+    });
+  });
+  return out;
+}
+
 function buildFullDataset(callDumpRows, ownerTeamMap, customerTowerMap, now){
   ownerTeamMap = ownerTeamMap || {};
   customerTowerMap = customerTowerMap || {};
@@ -5511,6 +5578,7 @@ function buildFullDataset(callDumpRows, ownerTeamMap, customerTowerMap, now){
   // ticket/customer records
   const ticket_volume_records = buildTicketVolumeRecords(clean, ownerTeamMap, now);
   const customer_ticket_records = buildCustomerTicketRecords(clean, now);
+  const selfservice_records = buildSelfServiceRecords(clean, ownerTeamMap);
 
   // SapphireUNO "Delegation & Ownership" module port - its own population (no service-type
   // filter, unlike `clean` above) and its own record shape; see buildSapphireDelegationRecords.
@@ -5585,7 +5653,7 @@ function buildFullDataset(callDumpRows, ownerTeamMap, customerTowerMap, now){
 
   const data = {
     meta, dimensions,
-    ticket_volume_records, customer_ticket_records,
+    ticket_volume_records, customer_ticket_records, selfservice_records,
     escalation,
     delegation_compliance: delegationCompliance,
     delegation_touches: delegationTouches,
@@ -7733,7 +7801,7 @@ const SAPP_PAGE_CATALOG = [
     {v:'sla', l:'SLA Dashboard', g:'gov', icon:'fa-gauge-high'}, {v:'escalation', l:'Escalation Analysis', g:'gov', icon:'fa-triangle-exclamation'},
     {v:'aging', l:'Aging Analysis', g:'gov', icon:'fa-hourglass-half'}]},
   {section:'Knowledge', pages:[
-    {v:'kb', l:'Knowledge Base', g:'refgov', icon:'fa-book'}, {v:'notes', l:'Notes', g:'notes', icon:'fa-note-sticky'}]},
+    {v:'kb', l:'Knowledge Base', g:'refgov', icon:'fa-book'}, {v:'selfservice', l:'Self-Service', g:'selfservice', icon:'fa-user-check'}, {v:'notes', l:'Notes', g:'notes', icon:'fa-note-sticky'}]},
 ];
 const SAPP_DEFAULT_PAGES = ['execsummary','dailyreview'];
 const SAPP_PAGE_STORE_KEY = 'sapp_enabled_pages_v1';
@@ -7747,6 +7815,13 @@ function sappLoadEnabledPages(){
   try{ const raw = localStorage.getItem(SAPP_PAGE_STORE_KEY); if(raw) arr = JSON.parse(raw); }catch(e){}
   if(!Array.isArray(arr)) arr = SAPP_DEFAULT_PAGES.slice();
   SAPP_ENABLED_PAGES = new Set(arr.filter(v=>SAPP_ALL_OPTIONAL_VIEWS.includes(v)));
+  // One-time: Self-Service sits right after Knowledge Base, so anyone who already has Knowledge Base enabled gets it too.
+  try{
+    if(!localStorage.getItem('sapp_selfservice_seeded_v1')){
+      if(SAPP_ENABLED_PAGES.has('kb')){ SAPP_ENABLED_PAGES.add('selfservice'); sappSaveEnabledPages(); }
+      localStorage.setItem('sapp_selfservice_seeded_v1','1');
+    }
+  }catch(e){}
   return SAPP_ENABLED_PAGES;
 }
 function sappSaveEnabledPages(){
@@ -7863,6 +7938,7 @@ function startDashboard(){
   DATA.__sapp_pristine_original_tabs = {
     ticket_volume_records: DATA.ticket_volume_records,
     customer_ticket_records: DATA.customer_ticket_records,
+    selfservice_records: DATA.selfservice_records,
     delegation_touches: DATA.delegation_touches,
     sla_attributed: DATA.sla_attributed,
     // dimensions drives Overview's KPIs/charts/tables (dimensions.overall['All']) and the
@@ -7884,7 +7960,7 @@ function startDashboard(){
   // fresh on filter/period changes only while it stays enabled.
   PAGE_LOADED = {}; PAGE_STALE = {};
   PAGE_REGISTERED = {};
-  ['execsummary','dailyreview','overview','engineers','towercust','engcompliance','stagetime','complexitycal','delegoverview','delegtier','delegengineer','delegjourney','delegperf','sla','aging','escalation','notes'].forEach(function(v){ const n = document.getElementById('view-'+v); if(n){ n.innerHTML = ''; delete n.dataset.built; } });
+  ['execsummary','dailyreview','overview','engineers','towercust','engcompliance','stagetime','complexitycal','delegoverview','delegtier','delegengineer','delegjourney','delegperf','sla','aging','escalation','selfservice','notes'].forEach(function(v){ const n = document.getElementById('view-'+v); if(n){ n.innerHTML = ''; delete n.dataset.built; } });
   PAGE_RENDERERS = {
     overview: function(){ renderOverview(); },
     engineers: function(){
@@ -7927,6 +8003,7 @@ function startDashboard(){
 
     },
     engcompliance: function(){ renderEngineerComplianceTab(); },
+    selfservice: function(){ if(DATA.selfservice_records) renderSelfServiceTab(); },
     delegation: function(){ if(DATA.sapphire_delegation_records) renderDelegationModule(); },
     gov: function(){ if(DATA.gov_rows) renderGovModule(); },
     stagetime: function(){ if(DATA.stagetime_rows) renderStageTimeBreakdown(); },
@@ -7944,7 +8021,7 @@ function startDashboard(){
   };
   // Groups whose own render() registers its own reactive callbacks (cascading tabs) are rendered
   // exactly once; every other group is re-rendered through one guarded callback.
-  PAGE_SELF_REACTIVE = new Set(['engineers','towercust','engcompliance']);
+  PAGE_SELF_REACTIVE = new Set(['engineers','towercust','engcompliance','selfservice']);
   sappApplySettingsToNav();
   Object.keys(PAGE_RENDERERS).forEach(function(g){ if(sappGroupEnabled(g)) sappEnsureGroup(g); });
   sappRenderSettingsPage();
@@ -9208,7 +9285,7 @@ const SAPP_SECTION_LABELS = {
   delegoverview:'Delegation Overview', delegtier:'L1 / L2 / SME Ownership', delegengineer:'Engineer Ownership',
   delegperf:'Delegation Performance', delegjourney:'Ticket Journey & Aging',
   sla:'SLA Dashboard', escalation:'Escalation Analysis', aging:'Aging Analysis',
-  kb:'Knowledge Base', notes:'Notes', dailyreview:'Daily Review', settings:'Settings',
+  kb:'Knowledge Base', selfservice:'Self-Service', notes:'Notes', dailyreview:'Daily Review', settings:'Settings',
 };
 function sappPresetLabel(key){ const p = SAPP_TIMESCALE_PRESETS.find(x=>x.key===key); return p ? p.label : key; }
 function sappFmtFilterValues(vals, max){
@@ -9393,6 +9470,7 @@ function sappApplyGlobalFilterToOriginalTabs(now){
     // SapphireUNO sections, so the 5 original tabs are guaranteed unchanged.
     DATA.ticket_volume_records = pristine.ticket_volume_records;
     DATA.customer_ticket_records = pristine.customer_ticket_records;
+    DATA.selfservice_records = pristine.selfservice_records;
     DATA.delegation_touches = pristine.delegation_touches;
     DATA.sla_attributed = pristine.sla_attributed;
     DATA.dimensions = pristine.dimensions;
@@ -9403,6 +9481,7 @@ function sappApplyGlobalFilterToOriginalTabs(now){
   const allowedIds = new Set(sappApplyGlobalFilters(DATA.gov_rows, now).map(r => r.ticket_id));
   DATA.ticket_volume_records = pristine.ticket_volume_records.filter(r => allowedIds.has(r.external_id));
   DATA.customer_ticket_records = pristine.customer_ticket_records.filter(r => allowedIds.has(r.external_id));
+  if(pristine.selfservice_records) DATA.selfservice_records = pristine.selfservice_records.filter(r => allowedIds.has(r.external_id));
   DATA.delegation_touches = pristine.delegation_touches
     ? pristine.delegation_touches.filter(t => allowedIds.has(t.external_id)) : pristine.delegation_touches;
   if(pristine.sla_attributed){
@@ -10623,6 +10702,951 @@ function renderPerformanceTable(tableId, engineers, towers, customers, selectedC
   document.getElementById(tableId).innerHTML = rowData.length ? rows : '<tr><td class="empty">No data for the current filters.</td></tr>';
 }
 
+/* ===== Self-Service tab (ported from Call Dump Analytics) ===== */
+// =====================================================================================
+// L1 SELF-SERVICE TAB (v6b)
+// =====================================================================================
+// Purpose: help decide which calls handled by L1 a customer could have solved on their own.
+// Every panel works on the COHORT of calls LOGGED in the selected Time period, each with its
+// status as of now - so "calls logged in July" means exactly that, and the most recent periods
+// look incomplete simply because many of their calls are still open.
+
+const SS_TEAM_ORDER = ['L1 - ITOM', 'L1 - ITSM', 'L2 - ITOM', 'L2 - ITSM', 'SME - ITOM', 'SME - ITSM', 'PLATFORM', 'No Team'];
+const SS_OPEN = 'Still open';
+const SS_OTHER = 'Cancelled / Deferred';
+const SS_COLORS = {
+  'L1 - ITOM': '#8b3fd1', 'L1 - ITSM': '#560a91', 'L2 - ITOM': '#f08a5d', 'L2 - ITSM': '#e2571f',
+  'SME - ITOM': '#6cc59b', 'SME - ITSM': '#1f9d63', 'PLATFORM': '#2f8fd6', 'No Team': '#9e9aa8',
+  'Still open': '#c98a10', 'Cancelled / Deferred': '#d9cfe6',
+};
+// Closed by L1 but without a real solution being given - never counted as a self-service candidate.
+const SS_NO_REAL_FIX = new Set(['Resolved with 3 Strike without Resolution', 'Cancel / Denied']);
+// Resolution types that are "customer-doable by nature": a how-to / clarification, a pointer to a
+// help link, or a basic configuration change. Adjustable on the tab.
+const SS_DEFAULT_RES_TYPES = ['Demo / Clarification', 'SOP - Help link / Community link', 'Configuration - Basic'];
+const SS_NOT_RECORDED = '(not recorded)';
+const SS_DRILL_COLUMNS = [
+  {key: 'external_id', label: 'External ID'}, {key: 'customer_name', label: 'Customer'},
+  {key: 'logged_in', label: 'Logged in'}, {key: 'feature', label: 'Support feature'},
+  {key: 'subfeature', label: 'Sub-feature'}, {key: 'resolution_code', label: 'Resolution type'},
+  {key: 'complexity_level', label: 'Complexity'}, {key: 'effort_hrs', label: 'Effort (hrs)'},
+  {key: 'service', label: 'Service'}, {key: 'severity', label: 'Severity'},
+  {key: 'team', label: 'Resolved by (team)'}, {key: 'owner', label: 'Owner'},
+  {key: 'escalated', label: 'L2/SME involved'}, {key: 'kb_referred', label: 'KB referred'},
+  {key: 'add_to_kb', label: 'Flagged add to KB'}, {key: 'kb_decision', label: 'KB review decision'},
+  {key: 'kb_assessment', label: 'KB assessment'}, {key: 'resolution_source', label: 'Resolution source'},
+  {key: 'current_status', label: 'Status'},
+];
+
+function ssIsL1(team){ return !!team && team.indexOf('L1') === 0; }
+function ssSegmentOf(r){ return r.outcome === 'resolved' ? (r.team || 'No Team') : (r.outcome === 'open' ? SS_OPEN : SS_OTHER); }
+function ssRc(r){ return r.resolution_code || SS_NOT_RECORDED; }
+function ssPct(n, d){ return d > 0 ? round1(100 * n / d) : 0; }
+function ssGroupBy(arr, keyFn){
+  const g = {};
+  arr.forEach(r => { const k = keyFn(r); (g[k] = g[k] || []).push(r); });
+  return g;
+}
+function ssAvgEffort(recs){
+  const v = recs.filter(r => r.effort_hrs !== null && r.effort_hrs !== undefined).map(r => r.effort_hrs);
+  return v.length ? round1(v.reduce((a, b) => a + b, 0) / v.length) : null;
+}
+function ssSumEffort(recs){ return round1(recs.reduce((a, r) => a + (r.effort_hrs || 0), 0)); }
+// Teams in the preferred display order (L1, L2, SME, Platform, No Team), then anything unexpected.
+function ssTeams(){
+  const seen = new Set(DATA.selfservice_records.filter(r => r.outcome === 'resolved').map(r => r.team || 'No Team'));
+  const extra = [...seen].filter(t => !SS_TEAM_ORDER.includes(t)).sort();
+  return SS_TEAM_ORDER.filter(t => t !== 'No Team' || seen.has(t)).concat(extra);
+}
+
+// Calls logged in the selected Time period that also pass the tab's filters. Team and Engineer select
+// calls by who CURRENTLY OWNS them - for a resolved call that is the person (and team) who resolved it.
+// teams / engineers / towers / customers are arrays, or null when that filter is not narrowed.
+function ssFilterRecords(f){
+  const months = new Set(SELECTED_MONTHS);
+  const svc = (f.services && f.services.length) ? new Set(f.services) : null;
+  const tm = f.teams ? new Set(f.teams) : null;
+  const en = f.engineers ? new Set(f.engineers) : null;
+  const out = DATA.selfservice_records.filter(r =>
+    months.has(r.creation_month) && (!svc || svc.has(r.service)) && (!tm || tm.has(r.owner_team)) && (!en || en.has(r.owner || 'Unassigned')) &&
+    matchesSlice(r.customer_name || 'Unassigned', f.towers, f.customers));
+  out.forEach(r => { if(r.logged_in === undefined) r.logged_in = MONTH_LABEL_MAP[r.creation_month] || r.creation_month; });   // display field for the drill-down / export
+  return out;
+}
+
+// Knowledge readiness of a call, in priority order:
+//   ready   - the engineer referred a KB article while resolving it (so an article already exists)
+//   publish - no article was referred, but the engineer flagged the resolution "add to KB"
+//   none    - neither signal
+function ssKbClass(r){
+  if(r.kb_referred === true) return 'ready';
+  if(r.add_to_kb === true) return 'publish';
+  return 'none';
+}
+const SS_KB_LABELS = {
+  ready: 'KB article exists (engineer referred it)',
+  publish: 'Publish a KB article first (flagged "add to KB")',
+  none: 'No KB signal',
+};
+const SS_KB_COLORS = {ready: '#1f9d63', publish: '#c98a10', none: '#cfc7dc'};
+
+// The funnel: each step keeps only the calls that also satisfy the next criterion.
+// p = {resTypes:Set, complexity:Set, maxEffort:number|null}
+function ssFunnel(recs, p){
+  const resolved = recs.filter(r => r.outcome === 'resolved');
+  const l1 = resolved.filter(r => ssIsL1(r.team));
+  const noEsc = l1.filter(r => !r.escalated);
+  const realFix = noEsc.filter(r => !SS_NO_REAL_FIX.has(r.resolution_code));
+  const byType = realFix.filter(r => p.resTypes.has(ssRc(r)));
+  const byCx = byType.filter(r => p.complexity.has(r.complexity_level));
+  const cand = byCx.filter(r => p.maxEffort === null || (r.effort_hrs !== null && r.effort_hrs <= p.maxEffort));
+  const effortLabel = p.maxEffort === null ? 'any effort' : 'effort \u2264 ' + p.maxEffort + ' hr';
+  return {
+    l1, noEsc, cand,
+    steps: [
+      {short: 'Calls logged', label: 'Calls logged', records: recs},
+      {short: 'Resolved (any team)', label: 'Resolved (any team)', records: resolved},
+      {short: 'Resolved by L1', label: 'Resolved by an L1 team', records: l1},
+      {short: 'No L2/SME involvement', label: '\u2026 with no L2 / SME involvement', records: noEsc},
+      {short: 'Real fix recorded', label: '\u2026 with a real fix recorded (not "3 Strike without Resolution" / "Cancel / Denied")', records: realFix},
+      {short: 'Self-serviceable type', label: '\u2026 resolved by a self-serviceable resolution type', records: byType},
+      {short: 'Complexity matches', label: '\u2026 with the selected complexity', records: byCx},
+      {short: 'Candidates', label: '\u2026 within the effort limit (' + effortLabel + ') = SELF-SERVICE CANDIDATES', records: cand},
+    ],
+  };
+}
+
+// ---- drill-down plumbing: every number on this tab opens the calls behind it ----
+// A percentage opens the calls in its numerator; an average or a total opens the calls it was computed from.
+// Identical sets of calls share one registered drill-down, so a count and its percentage never drift apart.
+let SS_DRILL_CACHE = new WeakMap();
+let SS_DRILL_IDS = [];
+// Drill-downs are re-registered on every refresh; drop the previous ones so the shared registry does not grow.
+function ssResetDrills(){ SS_DRILL_IDS.forEach(id => { delete DRILLDOWN_REGISTRY[id]; }); SS_DRILL_IDS = []; SS_DRILL_CACHE = new WeakMap(); }
+function ssDrillId(title, recs, filename){
+  if(!recs || !recs.length) return null;
+  let id = SS_DRILL_CACHE.get(recs);
+  if(!id){
+    const fn = String(filename || title).replace(/[^A-Za-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 90) || 'SelfService';
+    id = registerDrilldown(title, recs, SS_DRILL_COLUMNS, fn);
+    SS_DRILL_CACHE.set(recs, id); SS_DRILL_IDS.push(id);
+  }
+  return id;
+}
+// Any numeric table cell. text defaults to the number of calls.
+function ssCountCell(title, recs, filename, text, cls){
+  const id = ssDrillId(title, recs, filename);
+  const c = 'mono' + (cls ? ' ' + cls : '');
+  const t = text === undefined ? recs.length.toLocaleString() : text;
+  return id ? `<td class="${c} drillable" data-drill-id="${id}" title="Click to see these ${recs.length.toLocaleString()} calls">${t}</td>` : `<td class="${c}">${t}</td>`;
+}
+// Count over percentage, with a faint purple tint proportional to the percentage.
+function ssPctCell(title, recs, denom, filename, extraCls){
+  const p = ssPct(recs.length, denom);
+  const tint = 'background:rgba(86,10,145,' + Math.min(0.32, p / 100 * 0.5).toFixed(3) + ');';
+  const inner = `<span class="n">${recs.length.toLocaleString()}</span><span class="p">${p.toFixed(1)}%</span>`;
+  const id = ssDrillId(title, recs, filename);
+  if(!id) return `<td class="ss-cell ${extraCls || ''}">${inner}</td>`;
+  return `<td class="ss-cell drillable ${extraCls || ''}" style="${tint}" data-drill-id="${id}" title="Click to see these ${recs.length.toLocaleString()} calls">${inner}</td>`;
+}
+// Clicking a bar / slice in a chart opens the same drill-down as the matching table cell.
+function ssChartClick(fn){
+  return (evt, _els, chart) => {
+    const hit = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, true);
+    if(hit.length) fn(hit[0].datasetIndex, hit[0].index);
+  };
+}
+function ssChartHover(evt, _els, chart){
+  const hit = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, false);
+  if(evt.native && evt.native.target) evt.native.target.style.cursor = hit.length ? 'pointer' : 'default';
+}
+function ssOpenDrill(title, recs, filename){
+  const id = ssDrillId(title, recs, filename);
+  if(id) triggerDrilldown(id);
+}
+
+function ssRenderKpis(recs, f){
+  const period = periodLabel();
+  const logged = recs.length, l1 = f.l1.length, cand = f.cand.length;
+  const im = recs.filter(r => r.service === 'Incident Management').length;
+  const sr = recs.filter(r => r.service === 'Service Request').length;
+  const readyRecs = f.cand.filter(r => ssKbClass(r) === 'ready');
+  const hrs = ssSumEffort(f.cand);
+  const card = (label, value, sub, recs2, title, fn) => {
+    const id = ssDrillId(title, recs2, fn);
+    return `<div class="kpi ss-kpi"${id ? ` data-drill-id="${id}" title="Click to see these ${recs2.length.toLocaleString()} calls"` : ''}><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
+  };
+  document.getElementById('ss_kpis').innerHTML = `<div class="row" style="margin-bottom:0;">` +
+    card('Calls logged \u2014 ' + esc(period), logged.toLocaleString(), `IM ${im.toLocaleString()} / SR ${sr.toLocaleString()}`, recs, 'Calls logged', 'SelfService_Logged') +
+    card('Resolved by L1', l1.toLocaleString(), `${ssPct(l1, logged)}% of logged`, f.l1, 'Resolved by an L1 team', 'SelfService_ResolvedByL1') +
+    card('Self-service candidates', cand.toLocaleString(), `${ssPct(cand, l1)}% of L1-resolved`, f.cand, 'Self-service candidates', 'SelfService_Candidates') +
+    card('L1 effort spent on them', hrs.toFixed(1) + ' hrs', `avg ${cand ? (hrs / cand).toFixed(1) : '0.0'} hrs per call`, f.cand, 'Self-service candidates (L1 effort)', 'SelfService_Candidates') +
+    card('Candidates with a KB article', readyRecs.length.toLocaleString(), `${ssPct(readyRecs.length, cand)}% of candidates`, readyRecs, 'Candidates with a KB article', 'SelfService_Candidates_KBExists') +
+  `</div>`;
+}
+
+// ---- Panel 1: where did the calls logged in each period end up? ----
+function ssRenderCohort(recs){
+  const teams = ssTeams();
+  const allSegs = teams.concat([SS_OPEN, SS_OTHER]);
+  const months = SELECTED_MONTHS;
+  const coh = {};
+  months.forEach(m => { coh[m] = {all: [], seg: Object.fromEntries(allSegs.map(s => [s, []]))}; });
+  recs.forEach(r => { const b = coh[r.creation_month]; if(!b) return; b.all.push(r); b.seg[ssSegmentOf(r)].push(r); });
+  const noTeamN = months.reduce((a, m) => a + (coh[m].seg['No Team'] ? coh[m].seg['No Team'].length : 0), 0);
+  const segs = allSegs.filter(s => s !== 'No Team' || noTeamN > 0);   // hide an empty "No Team" column
+
+  const datasets = segs.map(s => {
+    const counts = months.map(m => coh[m].seg[s].length);
+    return {
+      label: s, counts, backgroundColor: SS_COLORS[s] || '#9e9aa8', borderWidth: 0,
+      data: months.map((m, i) => ssPct(counts[i], coh[m].all.length)),
+      datalabels: {display: ctx => ctx.dataset.data[ctx.dataIndex] >= 6, color: s === SS_OTHER ? '#4b3b66' : '#fff',
+                   font: {size: 10, weight: '600'}, formatter: v => Math.round(v) + '%'},
+    };
+  });
+  makeChart('ss_c_cohort', {type: 'bar',
+    data: {labels: months.map(m => [MONTH_LABEL_MAP[m], coh[m].all.length.toLocaleString() + ' logged']), datasets},
+    options: baseLineOpts({
+      onClick: ssChartClick((di, i) => { const m = months[i], s = segs[di]; ssOpenDrill(`${MONTH_LABEL_MAP[m]} \u2014 ${s}`, coh[m].seg[s], `SelfService_Cohort_${m}_${s}`); }),
+      onHover: ssChartHover,
+      scales: {
+        x: {stacked: true, ticks: {color: '#6f6a7c', font: {size: 11}}, grid: {display: false}},
+        y: {stacked: true, min: 0, max: 100, ticks: {color: '#a29cb0', callback: v => v + '%'}, grid: {color: '#f3eff9'}},
+      },
+      plugins: {
+        legend: {position: 'bottom', labels: {color: '#6f6a7c', boxWidth: 12, font: {size: 11}}},
+        tooltip: {backgroundColor: '#2b2733', borderColor: '#e7e1f0', borderWidth: 1, titleColor: '#fff', bodyColor: '#fff',
+                  filter: item => item.dataset.counts[item.dataIndex] > 0,
+                  callbacks: {label: c => `${c.dataset.label}: ${c.dataset.counts[c.dataIndex].toLocaleString()} calls (${c.dataset.data[c.dataIndex]}%)`}},
+      },
+    })});
+
+  // Table: count over % for every team, per logged period, plus an L1 subtotal and a total row.
+  const lastL1 = segs.map(ssIsL1).lastIndexOf(true);
+  const cols = [];
+  segs.forEach((s, i) => {
+    cols.push({name: s, get: b => b.seg[s], cls: ''});
+    if(i === lastL1) cols.push({name: 'L1 total', get: b => segs.filter(ssIsL1).flatMap(t => b.seg[t]), cls: 'ss-l1col'});
+  });
+  const total = {all: [], seg: Object.fromEntries(allSegs.map(s => [s, []]))};
+  months.forEach(m => { total.all = total.all.concat(coh[m].all); allSegs.forEach(s => { total.seg[s] = total.seg[s].concat(coh[m].seg[s]); }); });
+
+  let head = '<tr><th>Logged in</th><th>Calls logged</th>' + cols.map(c => `<th class="${c.cls}" style="text-align:center;${c.name === SS_OTHER ? 'white-space:normal;min-width:120px;line-height:1.25;' : ''}">${esc(c.name)}</th>`).join('') + '</tr>';
+  let rows = '';
+  months.concat(['__total__']).forEach(m => {
+    const b = m === '__total__' ? total : coh[m];
+    const label = m === '__total__' ? 'All selected periods' : MONTH_LABEL_MAP[m];
+    const fn = m === '__total__' ? 'All' : m;
+    rows += `<tr${m === '__total__' ? ' class="ss-total-row"' : ''}><td>${esc(label)}</td>${ssCountCell(`${label} \u2014 calls logged`, b.all, `SelfService_Cohort_${fn}_Logged`)}` +
+      cols.map(c => ssPctCell(`${label} \u2014 ${c.name}`, c.get(b), b.all.length, `SelfService_Cohort_${fn}_${c.name}`, c.cls)).join('') + '</tr>';
+  });
+  document.getElementById('ss_cohort_table').innerHTML = head + rows;
+}
+
+// ---- Panel 2: the funnel from logged calls to self-service candidates ----
+function ssRenderFunnel(f){
+  const n0 = f.steps[0].records.length;
+  makeChart('ss_c_funnel', {type: 'bar',
+    data: {labels: f.steps.map(s => s.short), datasets: [{
+      data: f.steps.map(s => s.records.length), borderWidth: 0,
+      backgroundColor: f.steps.map((s, i) => i === f.steps.length - 1 ? '#e2571f' : '#560a91'),
+      datalabels: {display: true, color: '#2b2733', anchor: 'end', align: 'end', font: {size: 11, weight: '600'}, formatter: v => v.toLocaleString()},
+    }]},
+    options: baseLineOpts({
+      indexAxis: 'y', layout: {padding: {right: 54, top: 4}},
+      interaction: {mode: 'nearest', intersect: true},
+      onClick: ssChartClick((di, i) => ssOpenDrill(f.steps[i].label, f.steps[i].records, 'SelfService_Funnel_' + (i + 1))),
+      onHover: ssChartHover,
+      plugins: {legend: {display: false},
+                tooltip: {backgroundColor: '#2b2733', titleColor: '#fff', bodyColor: '#fff',
+                          callbacks: {label: c => `${c.parsed.x.toLocaleString()} calls (${ssPct(c.parsed.x, n0)}% of logged)`}}},
+      scales: {x: {beginAtZero: true, ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}},
+               y: {ticks: {color: '#2b2733', font: {size: 11}}, grid: {display: false}}},
+    })});
+
+  let rows = '<tr><th style="text-align:left;">Step</th><th>Calls</th><th>% of logged</th><th>% of previous step</th></tr>';
+  f.steps.forEach((s, i) => {
+    const n = s.records.length, prev = i ? f.steps[i - 1].records.length : n;
+    const last = i === f.steps.length - 1, fn = 'SelfService_Funnel_' + (i + 1);
+    rows += `<tr${last ? ' class="ss-total-row"' : ''}><td style="text-align:left;white-space:normal;min-width:230px;">${esc(s.label)}</td>` +
+      ssCountCell(s.label, s.records, fn) +
+      ssCountCell(s.label, s.records, fn, ssPct(n, n0).toFixed(1) + '%') +
+      (i ? ssCountCell(s.label, s.records, fn, ssPct(n, prev).toFixed(1) + '%') : '<td class="mono">\u2014</td>') + '</tr>';
+  });
+  document.getElementById('ss_funnel_table').innerHTML = rows;
+}
+
+// ---- Panel 3: candidate volume by logged period ----
+function ssRenderTrend(recs, p){
+  const months = SELECTED_MONTHS;
+  const pool = [], cand = [], pct = [], poolRecs = [], candRecs = [];
+  months.forEach(m => {
+    const f = ssFunnel(recs.filter(r => r.creation_month === m), p);
+    pool.push(f.noEsc.length); cand.push(f.cand.length); poolRecs.push(f.noEsc); candRecs.push(f.cand);
+    pct.push(f.noEsc.length ? ssPct(f.cand.length, f.noEsc.length) : null);
+  });
+  const barLabel = color => ({display: true, color, anchor: 'end', align: 'end', font: {size: 10, weight: '600'}, formatter: v => v.toLocaleString()});
+  makeChart('ss_c_trend', {type: 'bar', data: {labels: labelsFor(months), datasets: [
+    {label: 'Resolved by L1 (no L2/SME involvement)', data: pool, backgroundColor: '#d8c9ec', borderWidth: 0, datalabels: barLabel('#6f5a8f')},
+    {label: 'Self-service candidates', data: cand, backgroundColor: '#560a91', borderWidth: 0, datalabels: barLabel('#560a91')},
+  ]}, options: baseLineOpts({
+    onClick: ssChartClick((di, i) => di === 0
+      ? ssOpenDrill(`${MONTH_LABEL_MAP[months[i]]} \u2014 resolved by L1, no L2/SME involvement`, poolRecs[i], `SelfService_Trend_L1_${months[i]}`)
+      : ssOpenDrill(`${MONTH_LABEL_MAP[months[i]]} \u2014 self-service candidates`, candRecs[i], `SelfService_Trend_Cand_${months[i]}`)),
+    onHover: ssChartHover,
+    scales: {x: {ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}},
+             y: {beginAtZero: true, grace: '12%', ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}}},
+    plugins: {
+      legend: {position: 'bottom', labels: {color: '#6f6a7c', boxWidth: 12, font: {size: 11}}},
+      tooltip: {backgroundColor: '#2b2733', titleColor: '#fff', bodyColor: '#fff'}}})});
+  makeChart('ss_c_trendpct', {type: 'bar', data: {labels: labelsFor(months), datasets: [
+    {label: 'Candidates as % of L1-resolved (no L2/SME involvement)', data: pct, backgroundColor: '#e2571f', borderWidth: 0,
+     datalabels: {display: ctx => ctx.dataset.data[ctx.dataIndex] !== null, color: '#e2571f', anchor: 'end', align: 'end', font: {size: 11, weight: '600'}, formatter: v => v.toFixed(0) + '%'}},
+  ]}, options: baseLineOpts({
+    onClick: ssChartClick((di, i) => ssOpenDrill(`${MONTH_LABEL_MAP[months[i]]} \u2014 self-service candidates`, candRecs[i], `SelfService_Trend_Cand_${months[i]}`)),
+    onHover: ssChartHover,
+    scales: {x: {ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}},
+             y: {min: 0, max: 100, ticks: {color: '#a29cb0', callback: v => v + '%'}, grid: {color: '#f3eff9'}}},
+    plugins: {legend: {display: false}, tooltip: {backgroundColor: '#2b2733', titleColor: '#fff', bodyColor: '#fff', callbacks: {label: c => c.parsed.y + '%'}}}})});
+}
+
+// ---- Panel 4: what L1 actually resolves, by resolution type ----
+function ssRenderResTypes(f, p){
+  const groups = ssGroupBy(f.noEsc, ssRc);
+  const rows = Object.keys(groups).map(k => {
+    const rs = groups[k], sfRecs = rs.filter(r => r.complexity_level === 'Straight Forward');
+    return {k, rs, sfRecs, n: rs.length, eff: ssAvgEffort(rs), sf: ssPct(sfRecs.length, rs.length),
+            excluded: SS_NO_REAL_FIX.has(k), used: !SS_NO_REAL_FIX.has(k) && p.resTypes.has(k)};
+  }).sort((a, b) => b.n - a.n);
+  const colorOf = r => r.used ? '#560a91' : (r.excluded ? '#e7c3c1' : '#cfc7dc');
+  makeChart('ss_c_restype', {type: 'bar',
+    data: {labels: rows.map(r => r.k), datasets: [{data: rows.map(r => r.n), backgroundColor: rows.map(colorOf), borderWidth: 0,
+      datalabels: {display: true, color: '#2b2733', anchor: 'end', align: 'end', font: {size: 10, weight: '600'}, formatter: v => v.toLocaleString()}}]},
+    options: baseLineOpts({indexAxis: 'y', layout: {padding: {right: 40, top: 4}}, interaction: {mode: 'nearest', intersect: true},
+      onClick: ssChartClick((di, i) => ssOpenDrill(`${rows[i].k} \u2014 resolved by L1`, rows[i].rs, 'SelfService_ResType_' + rows[i].k)),
+      onHover: ssChartHover,
+      plugins: {legend: {display: false}, tooltip: {backgroundColor: '#2b2733', titleColor: '#fff', bodyColor: '#fff'}},
+      scales: {x: {beginAtZero: true, ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}},
+               y: {ticks: {color: '#2b2733', font: {size: 10}}, grid: {display: false}}}})});
+
+  const denom = f.noEsc.length;
+  let html = '<tr><th style="text-align:left;">Resolution type</th><th>Calls</th><th>% of L1 calls</th><th>Avg effort (hrs)</th><th>% Straight Forward</th><th>Counted as self-serviceable?</th></tr>';
+  rows.forEach(r => {
+    const t = `${r.k} \u2014 resolved by L1`, fn = 'SelfService_ResType_' + r.k;
+    html += `<tr><td style="text-align:left;">${esc(r.k)}</td>` + ssCountCell(t, r.rs, fn) +
+      ssCountCell(t, r.rs, fn, ssPct(r.n, denom).toFixed(1) + '%') +
+      ssCountCell(t, r.rs, fn, r.eff === null ? '\u2014' : r.eff.toFixed(1)) +
+      ssCountCell(`${r.k} \u2014 Straight Forward`, r.sfRecs, 'SelfService_ResType_SF_' + r.k, r.sf.toFixed(0) + '%') +
+      `<td class="mono">${r.used ? '<span class="trend-up">Yes</span>' : (r.excluded ? '<span class="dim">Never (no real fix)</span>' : '<span class="dim">No</span>')}</td></tr>`;
+  });
+  document.getElementById('ss_restype_table').innerHTML = html;
+}
+
+// ---- Panel 5: knowledge readiness of the candidates ----
+function ssRenderKb(cand){
+  const g = {ready: [], publish: [], none: []};
+  cand.forEach(r => g[ssKbClass(r)].push(r));
+  const keys = ['ready', 'publish', 'none'];
+  makeChart('ss_c_kb', {type: 'doughnut',
+    data: {labels: keys.map(k => SS_KB_LABELS[k]), datasets: [{data: keys.map(k => g[k].length), backgroundColor: keys.map(k => SS_KB_COLORS[k]), borderWidth: 2, borderColor: '#fff',
+      datalabels: {display: ctx => ctx.dataset.data[ctx.dataIndex] > 0, color: ctx => ctx.dataIndex === 2 ? '#4b3b66' : '#fff',
+                   font: {size: 12, weight: '700'}, formatter: v => v.toLocaleString()}}]},
+    options: {responsive: true, maintainAspectRatio: false, cutout: '52%',
+      onClick: ssChartClick((di, i) => ssOpenDrill(`Candidates \u2014 ${SS_KB_LABELS[keys[i]]}`, g[keys[i]], 'SelfService_KB_' + keys[i])),
+      onHover: ssChartHover,
+      plugins: {legend: {position: 'bottom', labels: {color: '#6f6a7c', boxWidth: 12, font: {size: 11}}},
+                tooltip: {backgroundColor: '#2b2733', titleColor: '#fff', bodyColor: '#fff',
+                          callbacks: {label: c => `${c.label}: ${c.parsed.toLocaleString()} calls (${ssPct(c.parsed, cand.length)}%)`}}}}});
+
+  const meaning = {ready: 'Ready to enable now \u2014 point customers at the existing article.',
+                   publish: 'Needs an article written/published before customers can self-serve.',
+                   none: 'No evidence either way \u2014 review before deciding.'};
+  let html = '<tr><th style="text-align:left;">Knowledge readiness</th><th>Calls</th><th>% of candidates</th><th style="text-align:left;">What it means</th></tr>';
+  keys.forEach(k => {
+    const t = `Candidates \u2014 ${SS_KB_LABELS[k]}`, fn = 'SelfService_KB_' + k;
+    html += `<tr><td style="text-align:left;">${esc(SS_KB_LABELS[k])}</td>` + ssCountCell(t, g[k], fn) +
+      ssCountCell(t, g[k], fn, ssPct(g[k].length, cand.length).toFixed(1) + '%') + `<td style="text-align:left;" class="dim">${esc(meaning[k])}</td></tr>`;
+  });
+  document.getElementById('ss_kb_table').innerHTML = html;
+
+  // The platform's own KB fields are new and only recorded on a small share of calls so far - shown
+  // separately, with their coverage, rather than blended into the readiness split above.
+  function recordedTable(field, title, tableId, fname){
+    const withVal = cand.filter(r => r[field]);
+    const gg = ssGroupBy(withVal, r => r[field]);
+    let t = `<tr><th style="text-align:left;">${esc(title)}</th><th>Candidate calls</th></tr>`;
+    Object.keys(gg).sort((a, b) => gg[b].length - gg[a].length).forEach(k => {
+      t += `<tr><td style="text-align:left;">${esc(k)}</td>${ssCountCell(title + ' \u2014 ' + k, gg[k], fname + '_' + k)}</tr>`;
+    });
+    if(!withVal.length) t += '<tr><td colspan="2" class="dim" style="text-align:left;">Not recorded on any candidate call in this view.</td></tr>';
+    document.getElementById(tableId).innerHTML = t;
+    return withVal.length;
+  }
+  const a = recordedTable('kb_assessment', 'Platform KB assessment', 'ss_kbassess_table', 'SelfService_KBAssessment');
+  const b = recordedTable('resolution_source', 'Platform resolution source', 'ss_ressource_table', 'SelfService_ResolutionSource');
+  document.getElementById('ss_kb_coverage').textContent =
+    `These two platform fields are new and recorded on only ${a.toLocaleString()} (KB assessment) and ${b.toLocaleString()} (resolution source) of ${cand.length.toLocaleString()} candidate calls so far, ` +
+    'so they are shown for reference and not used in the split above.';
+}
+
+// ---- Panel 6: which support features hold the most candidates ----
+function ssRenderFeatures(f){
+  const poolBy = ssGroupBy(f.noEsc, r => r.feature || SS_NOT_RECORDED);
+  const candBy = ssGroupBy(f.cand, r => r.feature || SS_NOT_RECORDED);
+  const rows = Object.keys(candBy).map(k => ({k, pool: poolBy[k] || [], cand: candBy[k]}))
+    .sort((a, b) => b.cand.length - a.cand.length || b.pool.length - a.pool.length);
+  const top = rows.slice(0, 20);
+  let html = '<tr><th style="text-align:left;">Support feature</th><th>L1-resolved calls</th><th>Candidates</th><th>% of feature\'s L1 calls</th><th>Customers</th>' +
+             '<th>Candidate effort (hrs)</th><th>KB article exists</th><th>Publish KB first</th><th>No KB signal</th></tr>';
+  top.forEach(r => {
+    const kb = ssGroupBy(r.cand, ssKbClass);
+    const custs = new Set(r.cand.map(c => c.customer_name).filter(Boolean)).size;
+    const tc = `${r.k} \u2014 candidates`, fc = 'SelfService_Feature_Cand_' + r.k;
+    html += `<tr><td style="text-align:left;">${esc(r.k)}</td>` +
+      ssCountCell(`${r.k} \u2014 resolved by L1`, r.pool, 'SelfService_Feature_L1_' + r.k) +
+      ssCountCell(tc, r.cand, fc) +
+      ssCountCell(tc, r.cand, fc, ssPct(r.cand.length, r.pool.length).toFixed(1) + '%') +
+      ssCountCell(tc, r.cand, fc, custs) +
+      ssCountCell(tc, r.cand, fc, ssSumEffort(r.cand).toFixed(1)) +
+      ssCountCell(`${r.k} \u2014 KB exists`, kb.ready || [], 'SelfService_Feature_KBready_' + r.k) +
+      ssCountCell(`${r.k} \u2014 publish KB first`, kb.publish || [], 'SelfService_Feature_KBpublish_' + r.k) +
+      ssCountCell(`${r.k} \u2014 no KB signal`, kb.none || [], 'SelfService_Feature_KBnone_' + r.k) + '</tr>';
+  });
+  if(!top.length) html += '<tr><td colspan="9" class="empty">No self-service candidates for the current filters and definition.</td></tr>';
+  document.getElementById('ss_feature_table').innerHTML = html;
+  document.getElementById('ss_feature_note').textContent = rows.length > top.length
+    ? `Showing the top ${top.length} of ${rows.length} support features that have at least one candidate.` : `${rows.length} support feature(s) have at least one candidate.`;
+}
+
+// ---- Panel 7: which customers to enable first ----
+function ssRenderCustomers(f){
+  const poolBy = ssGroupBy(f.noEsc.filter(r => r.customer_name), r => r.customer_name);
+  const candBy = ssGroupBy(f.cand.filter(r => r.customer_name), r => r.customer_name);
+  const rows = Object.keys(candBy).map(k => ({k, pool: poolBy[k] || [], cand: candBy[k]}))
+    .sort((a, b) => b.cand.length - a.cand.length || b.pool.length - a.pool.length);
+  const top = rows.slice(0, 15);
+  let html = '<tr><th style="text-align:left;">Customer</th><th>Tower</th><th>L1-resolved calls</th><th>Candidates</th><th>% of their L1 calls</th>' +
+             '<th>Support features</th><th style="text-align:left;">Most frequent feature</th><th>Candidate effort (hrs)</th></tr>';
+  top.forEach(r => {
+    const byF = ssGroupBy(r.cand, c => c.feature || SS_NOT_RECORDED);
+    const topF = Object.keys(byF).sort((a, b) => byF[b].length - byF[a].length)[0];
+    const tc = `${r.k} \u2014 candidates`, fc = 'SelfService_Cust_Cand_' + r.k;
+    html += `<tr><td style="text-align:left;">${esc(r.k)}</td><td class="dim">${esc(customerTowerOf(r.k))}</td>` +
+      ssCountCell(`${r.k} \u2014 resolved by L1`, r.pool, 'SelfService_Cust_L1_' + r.k) +
+      ssCountCell(tc, r.cand, fc) +
+      ssCountCell(tc, r.cand, fc, ssPct(r.cand.length, r.pool.length).toFixed(1) + '%') +
+      ssCountCell(tc, r.cand, fc, Object.keys(byF).length) +
+      ssCountCell(`${r.k} \u2014 ${topF}`, byF[topF], `SelfService_Cust_${r.k}_${topF}`, `${esc(topF)} <span class="dim">(${byF[topF].length})</span>`, 'ss-left') +
+      ssCountCell(tc, r.cand, fc, ssSumEffort(r.cand).toFixed(1)) + '</tr>';
+  });
+  if(!top.length) html += '<tr><td colspan="8" class="empty">No self-service candidates for the current filters and definition.</td></tr>';
+  document.getElementById('ss_customer_table').innerHTML = html;
+  document.getElementById('ss_customer_note').textContent = rows.length > top.length
+    ? `Showing the top ${top.length} of ${rows.length} customers that have at least one candidate.` : `${rows.length} customer(s) have at least one candidate.`;
+}
+
+// ---------- Knowledge-base panels (8-11): what engineers recorded about the KB on each call ----------
+// Five fields describe one loop: was a KB article referred (was_kb_referred) -> was it good enough
+// (kb_assessment, asked only when one WAS referred) / where did the answer come from (resolution_source,
+// asked only when none was) -> should the resolution be added to the KB (add_to_kb) -> did a reviewer
+// decide to publish it (kb_review_publish_decision).
+
+// The two yes/no fields combined into mutually exclusive classes (both must be recorded to classify).
+const SS_KB_USE = [
+  {key: 'used_ok',   label: 'KB used \u2014 no update flagged',          color: '#1f9d63'},
+  {key: 'used_flag', label: 'KB used \u2014 but flagged to add / update', color: '#8fd0a8', dark: true},
+  {key: 'gap',       label: 'KB not used \u2014 flagged to add (gap)',    color: '#c98a10'},
+  {key: 'not_used',  label: 'KB not used \u2014 not flagged',             color: '#cfc7dc', dark: true},
+  {key: 'norec',     label: 'Not fully recorded',                         color: '#ece6f4', dark: true},
+];
+function ssKbUseClass(r){
+  if(r.kb_referred === null || r.kb_referred === undefined || r.add_to_kb === null || r.add_to_kb === undefined) return 'norec';
+  if(r.kb_referred) return r.add_to_kb ? 'used_flag' : 'used_ok';
+  return r.add_to_kb ? 'gap' : 'not_used';
+}
+// The reviewer's decision on a call flagged "add to KB"; blank means nobody has reviewed it yet.
+const SS_DECISIONS = [
+  {key: 'pending',            label: 'Not yet reviewed',      color: '#cfc7dc', dark: true},
+  {key: 'publishToKb',        label: 'Publish to KB',         color: '#1f9d63'},
+  {key: 'customerSpecificKb', label: 'Customer-specific KB',  color: '#2f8fd6'},
+  {key: 'doNotPublish',       label: 'Do not publish',        color: '#d0453f'},
+  {key: 'notApplicable',      label: 'Not applicable',        color: '#c98a10'},
+];
+function ssDecisionKey(r){ return r.kb_decision || 'pending'; }
+function ssDecisionList(recs){
+  const known = SS_DECISIONS.map(d => d.key);
+  const extra = [...new Set(recs.map(ssDecisionKey))].filter(k => !known.includes(k)).sort();
+  return SS_DECISIONS.concat(extra.map(k => ({key: k, label: k, color: '#9e9aa8'})));   // never drop a value a future export adds
+}
+const SS_ASSESS_LABEL = {kbSufficient: 'KB sufficient', kbAvailableNotRequired: 'KB available, not required', kbPartiallyUseful: 'KB partially useful', kbNeedsUpdate: 'KB needs update'};
+const SS_ASSESS_COLOR = {kbSufficient: '#1f9d63', kbAvailableNotRequired: '#8fd0a8', kbPartiallyUseful: '#c98a10', kbNeedsUpdate: '#d0453f'};
+const SS_SOURCE_LABEL = {kbAvailableKnownSteps: 'KB available (known steps)', other: 'Other', codeFixRequired: 'Code fix required',
+                         kbMissingNewRequired: 'KB missing \u2014 new article needed', kbInsufficientUpdateRequired: 'KB insufficient \u2014 update needed'};
+const SS_SOURCE_COLOR = {kbAvailableKnownSteps: '#1f9d63', other: '#9e9aa8', codeFixRequired: '#2f8fd6', kbMissingNewRequired: '#d0453f', kbInsufficientUpdateRequired: '#c98a10'};
+
+function ssByMonth(recs){
+  const by = {};
+  SELECTED_MONTHS.forEach(m => { by[m] = []; });
+  recs.forEach(r => { if(by[r.creation_month]) by[r.creation_month].push(r); });
+  return by;
+}
+const ssStackTooltip = {backgroundColor: '#2b2733', borderColor: '#e7e1f0', borderWidth: 1, titleColor: '#fff', bodyColor: '#fff'};
+const ssLegend = {position: 'bottom', labels: {color: '#6f6a7c', boxWidth: 12, font: {size: 11}}};
+
+// ---- Panel 8: did engineers use the KB, and did they flag gaps? ----
+function ssRenderKbUse(scope){
+  const months = SELECTED_MONTHS, by = ssByMonth(scope);
+  const cls = {};
+  months.forEach(m => { cls[m] = ssGroupBy(by[m], ssKbUseClass); });
+  const datasets = SS_KB_USE.map(c => {
+    const recsBy = months.map(m => cls[m][c.key] || []);
+    return {label: c.label, counts: recsBy.map(a => a.length), backgroundColor: c.color, borderWidth: 0,
+      data: months.map((m, i) => ssPct(recsBy[i].length, by[m].length)),
+      datalabels: {display: ctx => ctx.dataset.data[ctx.dataIndex] >= 7, color: c.dark ? '#2b2733' : '#fff', font: {size: 10, weight: '600'}, formatter: v => Math.round(v) + '%'}};
+  });
+  makeChart('ss_c_kbuse', {type: 'bar',
+    data: {labels: months.map(m => [MONTH_LABEL_MAP[m], by[m].length.toLocaleString() + ' calls']), datasets},
+    options: baseLineOpts({
+      onClick: ssChartClick((di, i) => ssOpenDrill(`${MONTH_LABEL_MAP[months[i]]} \u2014 ${SS_KB_USE[di].label}`, cls[months[i]][SS_KB_USE[di].key] || [], `SelfService_KBUse_${months[i]}_${SS_KB_USE[di].key}`)),
+      onHover: ssChartHover,
+      scales: {x: {stacked: true, ticks: {color: '#6f6a7c', font: {size: 11}}, grid: {display: false}},
+               y: {stacked: true, min: 0, max: 100, ticks: {color: '#a29cb0', callback: v => v + '%'}, grid: {color: '#f3eff9'}}},
+      plugins: {legend: ssLegend, tooltip: {...ssStackTooltip, filter: item => item.dataset.counts[item.dataIndex] > 0,
+        callbacks: {label: c => `${c.dataset.label}: ${c.dataset.counts[c.dataIndex].toLocaleString()} calls (${c.dataset.data[c.dataIndex]}%)`}}},
+    })});
+
+  let head = '<tr><th>Logged in</th><th>Calls in view</th>' + SS_KB_USE.map(c => `<th style="text-align:center;white-space:normal;min-width:104px;line-height:1.25;">${esc(c.label)}</th>`).join('') + '</tr>';
+  let rows = '';
+  const tot = {all: scope, c: ssGroupBy(scope, ssKbUseClass)};
+  months.concat(['__total__']).forEach(m => {
+    const all = m === '__total__' ? tot.all : by[m], c = m === '__total__' ? tot.c : cls[m];
+    const label = m === '__total__' ? 'All selected periods' : MONTH_LABEL_MAP[m], fn = m === '__total__' ? 'All' : m;
+    rows += `<tr${m === '__total__' ? ' class="ss-total-row"' : ''}><td>${esc(label)}</td>${ssCountCell(`${label} \u2014 calls in view`, all, `SelfService_KBUse_${fn}_All`)}` +
+      SS_KB_USE.map(k => ssPctCell(`${label} \u2014 ${k.label}`, c[k.key] || [], all.length, `SelfService_KBUse_${fn}_${k.key}`)).join('') + '</tr>';
+  });
+  document.getElementById('ss_kbuse_table').innerHTML = head + rows;
+}
+
+// ---- Panel 9: what happens to the calls flagged "add to KB"? ----
+function ssRenderKbReview(scope){
+  const months = SELECTED_MONTHS;
+  const flagged = scope.filter(r => r.add_to_kb === true);
+  const by = ssByMonth(flagged), decs = ssDecisionList(flagged);
+  const dec = {};
+  months.forEach(m => { dec[m] = ssGroupBy(by[m], ssDecisionKey); });
+  const datasets = decs.map(d => {
+    const counts = months.map(m => (dec[m][d.key] || []).length);
+    return {label: d.label, data: counts, backgroundColor: d.color, borderWidth: 0,
+      datalabels: {display: ctx => ctx.dataset.data[ctx.dataIndex] >= 12, color: d.dark ? '#2b2733' : '#fff', font: {size: 10, weight: '600'}, formatter: v => v.toLocaleString()}};
+  });
+  makeChart('ss_c_kbreview', {type: 'bar',
+    data: {labels: months.map(m => [MONTH_LABEL_MAP[m], by[m].length.toLocaleString() + ' flagged']), datasets},
+    options: baseLineOpts({
+      onClick: ssChartClick((di, i) => ssOpenDrill(`${MONTH_LABEL_MAP[months[i]]} \u2014 flagged "add to KB": ${decs[di].label}`, dec[months[i]][decs[di].key] || [], `SelfService_KBReview_${months[i]}_${decs[di].key}`)),
+      onHover: ssChartHover,
+      scales: {x: {stacked: true, ticks: {color: '#6f6a7c', font: {size: 11}}, grid: {display: false}},
+               y: {stacked: true, beginAtZero: true, grace: '8%', ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}, title: {display: true, text: 'Calls flagged "add to KB"', color: '#a29cb0'}}},
+      plugins: {legend: ssLegend, tooltip: {...ssStackTooltip, filter: item => item.parsed.y > 0,
+        callbacks: {label: c => `${c.dataset.label}: ${c.parsed.y.toLocaleString()} calls (${ssPct(c.parsed.y, by[months[c.dataIndex]].length)}% of that period's flagged calls)`}}},
+    })});
+
+  let head = '<tr><th>Logged in</th><th>Flagged "add to KB"</th>' + decs.map(d => `<th style="text-align:center;">${esc(d.label)}</th>`).join('') + '<th>Reviewed</th></tr>';
+  let rows = '';
+  months.concat(['__total__']).forEach(m => {
+    const all = m === '__total__' ? flagged : by[m], g = m === '__total__' ? ssGroupBy(flagged, ssDecisionKey) : dec[m];
+    const label = m === '__total__' ? 'All selected periods' : MONTH_LABEL_MAP[m], fn = m === '__total__' ? 'All' : m;
+    const reviewed = all.filter(r => r.kb_decision);
+    rows += `<tr${m === '__total__' ? ' class="ss-total-row"' : ''}><td>${esc(label)}</td>${ssCountCell(`${label} \u2014 flagged "add to KB"`, all, `SelfService_KBReview_${fn}_Flagged`)}` +
+      decs.map(d => ssPctCell(`${label} \u2014 ${d.label}`, g[d.key] || [], all.length, `SelfService_KBReview_${fn}_${d.key}`)).join('') +
+      ssCountCell(`${label} \u2014 flagged and reviewed`, reviewed, `SelfService_KBReview_${fn}_Reviewed`, ssPct(reviewed.length, all.length).toFixed(1) + '%') + '</tr>';
+  });
+  document.getElementById('ss_kbreview_table').innerHTML = head + rows;
+  const reviewedAll = flagged.filter(r => r.kb_decision).length;
+  const nf = scope.filter(r => r.add_to_kb !== true && r.kb_decision), nfBy = ssGroupBy(nf, r => r.kb_decision);
+  const nfText = Object.keys(nfBy).sort((a, b) => nfBy[b].length - nfBy[a].length).map(k => `${nfBy[k].length.toLocaleString()} ${(SS_DECISIONS.find(d => d.key === k) || {label: k}).label}`).join(', ');
+  document.getElementById('ss_kbreview_note').textContent =
+    `${flagged.length.toLocaleString()} calls in view were flagged "add to KB"; ${reviewedAll.toLocaleString()} (${ssPct(reviewedAll, flagged.length)}%) have a review decision and ${(flagged.length - reviewedAll).toLocaleString()} are still waiting.` +
+    (nf.length ? ` A further ${nf.length.toLocaleString()} calls that were not flagged also carry a decision (${nfText}), so reviewers also looked beyond the flags.` : '');
+}
+
+// ---- Panel 10: the platform's two newer fields ----
+function ssRenderKbPlatform(scope){
+  const months = SELECTED_MONTHS, by = ssByMonth(scope);
+  function barChart(canvasId, field, order, labels, colors, title){
+    const withVal = scope.filter(r => r[field]);
+    const g = ssGroupBy(withVal, r => r[field]);
+    const keys = order.filter(k => g[k]).concat(Object.keys(g).filter(k => !order.includes(k)).sort());
+    makeChart(canvasId, {type: 'bar',
+      data: {labels: keys.map(k => labels[k] || k), datasets: [{data: keys.map(k => g[k].length), backgroundColor: keys.map(k => colors[k] || '#9e9aa8'), borderWidth: 0,
+        datalabels: {display: true, color: '#2b2733', anchor: 'end', align: 'end', font: {size: 11, weight: '600'}, formatter: v => v.toLocaleString()}}]},
+      options: baseLineOpts({indexAxis: 'y', layout: {padding: {right: 36, top: 4}}, interaction: {mode: 'nearest', intersect: true},
+        onClick: ssChartClick((di, i) => ssOpenDrill(`${title} \u2014 ${labels[keys[i]] || keys[i]}`, g[keys[i]], `SelfService_${field}_${keys[i]}`)),
+        onHover: ssChartHover,
+        plugins: {legend: {display: false}, tooltip: {backgroundColor: '#2b2733', titleColor: '#fff', bodyColor: '#fff',
+          callbacks: {label: c => `${c.parsed.x.toLocaleString()} calls (${ssPct(c.parsed.x, withVal.length)}% of ${withVal.length.toLocaleString()} recorded)`}}},
+        scales: {x: {beginAtZero: true, ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}}, y: {ticks: {color: '#2b2733', font: {size: 11}}, grid: {display: false}}}})});
+    return withVal.length;
+  }
+  const na = barChart('ss_c_kbassess', 'kb_assessment', Object.keys(SS_ASSESS_LABEL), SS_ASSESS_LABEL, SS_ASSESS_COLOR, 'KB assessment');
+  const ns = barChart('ss_c_kbsource', 'resolution_source', Object.keys(SS_SOURCE_LABEL), SS_SOURCE_LABEL, SS_SOURCE_COLOR, 'Resolution source');
+
+  // adoption: each field against the calls it applies to (assessment: KB referred; source: KB not referred)
+  let head = '<tr><th>Logged in</th><th>Calls in view</th><th style="text-align:center;">KB referred</th><th style="text-align:center;">KB assessment recorded</th>' +
+             '<th style="text-align:center;">KB not referred</th><th style="text-align:center;">Resolution source recorded</th></tr>';
+  let rows = '';
+  months.concat(['__total__']).forEach(m => {
+    const all = m === '__total__' ? scope : by[m];
+    const label = m === '__total__' ? 'All selected periods' : MONTH_LABEL_MAP[m], fn = m === '__total__' ? 'All' : m;
+    const referred = all.filter(r => r.kb_referred === true), notRef = all.filter(r => r.kb_referred === false);
+    const aRec = all.filter(r => r.kb_assessment), sRec = all.filter(r => r.resolution_source);
+    rows += `<tr${m === '__total__' ? ' class="ss-total-row"' : ''}><td>${esc(label)}</td>${ssCountCell(`${label} \u2014 calls in view`, all, `SelfService_KBPlat_${fn}_All`)}` +
+      ssCountCell(`${label} \u2014 KB referred`, referred, `SelfService_KBPlat_${fn}_Referred`) +
+      ssPctCell(`${label} \u2014 KB assessment recorded`, aRec, referred.length, `SelfService_KBPlat_${fn}_Assess`) +
+      ssCountCell(`${label} \u2014 KB not referred`, notRef, `SelfService_KBPlat_${fn}_NotReferred`) +
+      ssPctCell(`${label} \u2014 resolution source recorded`, sRec, notRef.length, `SelfService_KBPlat_${fn}_Source`) + '</tr>';
+  });
+  document.getElementById('ss_kbplat_table').innerHTML = head + rows;
+  document.getElementById('ss_kbplat_note').textContent =
+    `Recorded on ${na.toLocaleString()} calls (KB assessment) and ${ns.toLocaleString()} calls (resolution source) in view. In this data KB assessment only ever appears on calls where a KB article was referred, and resolution source only on calls where none was, ` +
+    'so each is measured against its own base in the table (the % is the share of those calls where it was filled in).';
+}
+
+// ---- Panel 11: which support features hold the most unwritten knowledge? ----
+function ssRenderKbFeatures(scope){
+  const flagged = scope.filter(r => r.add_to_kb === true);
+  const decs = ssDecisionList(flagged);
+  const byF = ssGroupBy(scope, r => r.feature || SS_NOT_RECORDED);
+  const rows = Object.keys(byF).map(k => {
+    const all = byF[k], fl = all.filter(r => r.add_to_kb === true);
+    return {k, all, used: all.filter(r => r.kb_referred === true), fl, gap: all.filter(r => ssKbUseClass(r) === 'gap'),
+            reviewed: fl.filter(r => r.kb_decision), approved: fl.filter(r => r.kb_decision === 'publishToKb'), waiting: fl.filter(r => !r.kb_decision)};
+  }).filter(r => r.fl.length).sort((a, b) => b.waiting.length - a.waiting.length || b.fl.length - a.fl.length);
+  const topC = rows.slice(0, 12);
+  makeChart('ss_c_kbfeat', {type: 'bar',
+    data: {labels: topC.map(r => r.k), datasets: decs.map(d => ({label: d.label, backgroundColor: d.color, borderWidth: 0,
+      data: topC.map(r => r.fl.filter(x => ssDecisionKey(x) === d.key).length),
+      datalabels: {display: ctx => ctx.dataset.data[ctx.dataIndex] >= 14, color: d.dark ? '#2b2733' : '#fff', font: {size: 10, weight: '600'}, formatter: v => v.toLocaleString()}}))},
+    options: baseLineOpts({indexAxis: 'y', interaction: {mode: 'nearest', intersect: true},
+      onClick: ssChartClick((di, i) => ssOpenDrill(`${topC[i].k} \u2014 flagged "add to KB": ${decs[di].label}`, topC[i].fl.filter(x => ssDecisionKey(x) === decs[di].key), `SelfService_KBFeat_${topC[i].k}_${decs[di].key}`)),
+      onHover: ssChartHover,
+      scales: {x: {stacked: true, beginAtZero: true, ticks: {color: '#a29cb0'}, grid: {color: '#f3eff9'}, title: {display: true, text: 'Calls flagged "add to KB"', color: '#a29cb0'}},
+               y: {stacked: true, ticks: {color: '#2b2733', font: {size: 11}}, grid: {display: false}}},
+      plugins: {legend: ssLegend, tooltip: {...ssStackTooltip, filter: item => item.parsed.x > 0}}})});
+
+  const top = rows.slice(0, 15);
+  let html = '<tr><th style="text-align:left;">Support feature</th><th>Calls in view</th><th>KB article used</th><th>Flagged "add to KB"</th><th>Gap (KB not used, flagged)</th>' +
+             '<th>Reviewed</th><th>Approved to publish</th><th>Flagged, awaiting review</th></tr>';
+  top.forEach(r => {
+    const t = r.k, fn = 'SelfService_KBFeat_' + r.k;
+    html += `<tr><td style="text-align:left;">${esc(r.k)}</td>` +
+      ssCountCell(`${t} \u2014 calls in view`, r.all, fn + '_All') + ssCountCell(`${t} \u2014 KB article used`, r.used, fn + '_Used') +
+      ssCountCell(`${t} \u2014 flagged "add to KB"`, r.fl, fn + '_Flagged') + ssCountCell(`${t} \u2014 gap (KB not used, flagged)`, r.gap, fn + '_Gap') +
+      ssCountCell(`${t} \u2014 flagged and reviewed`, r.reviewed, fn + '_Reviewed') + ssCountCell(`${t} \u2014 approved to publish`, r.approved, fn + '_Approved') +
+      ssCountCell(`${t} \u2014 flagged, awaiting review`, r.waiting, fn + '_Waiting') + '</tr>';
+  });
+  if(!top.length) html += '<tr><td colspan="8" class="empty">No calls flagged "add to KB" in the current view.</td></tr>';
+  document.getElementById('ss_kbfeat_table').innerHTML = html;
+  document.getElementById('ss_kbfeat_note').textContent = rows.length > top.length
+    ? `Showing the top ${top.length} of ${rows.length} support features that have at least one flagged call, ranked by how many are still awaiting review.` : `${rows.length} support feature(s) have at least one flagged call, ranked by how many are still awaiting review.`;
+}
+
+function renderSelfServiceTab(){
+  const viewId = 'selfservice';
+  const el = document.getElementById('view-' + viewId);
+  if(!DATA.selfservice_records){
+    el.innerHTML = '<div class="panel"><h2>L1 Self-Service Opportunity</h2><div class="panel-sub">No Self-Service records could be built from the uploaded file.</div></div>';
+    return;
+  }
+
+  document.getElementById('tabFilters_' + viewId).innerHTML = `
+      <div class="picker-group"><label>Team</label><div id="${viewId}_team_root"></div></div>
+      <div class="picker-group"><label>Engineer</label><div id="${viewId}_engineer_root"></div></div>
+      <div class="picker-group"><label>Tower</label><div id="${viewId}_tower_root"></div></div>
+      <div class="picker-group"><label>Customer</label><div id="${viewId}_customer_root"></div></div>`;
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button type="button" class="export-btn" id="ssExportAllBtn" title="One workbook with every Self-Service table, the candidate list and all calls in view">\u2B07 Export to Excel (complete Self-Service)</button></div>
+    <div class="panel"><h2>L1 Self-Service Opportunity</h2>
+      <div class="panel-sub">Which calls handled by L1 could the customer have solved on their own? Every panel below works on the calls <b>logged</b> in the selected Time period (and passing the filters), with each call's status <b>as of now</b>. Recent periods therefore look incomplete: many of their calls are still open. The <b>Team</b> and <b>Engineer</b> filters select calls by who currently owns them &mdash; for a resolved call, who resolved it. <b>Click any number</b> \u2014 in a card, a table or a chart bar \u2014 to see the calls behind it; the window that opens has an <b>Export to Excel</b> button.</div>
+      <div class="picker-row" style="margin-bottom:12px;"><div class="picker-group"><label>Service</label><div id="${viewId}_service_root"></div></div></div>
+      <div id="ss_kpis"></div>
+    </div>
+
+    <div class="panel"><h2>1. Where do the calls logged in each period end up? \u2014 resolved by team</h2>
+      <div class="panel-sub">Of the calls logged in a period, how many were resolved by each team as of now, and what share that is. "Resolved by" is the team of the call's current owner. Cancelled and deferred calls were closed without a resolution by any team, so they are shown separately. Click a chart segment or any cell to see the calls.</div>
+      <div class="chart-wrap" style="height:360px;"><canvas id="ss_c_cohort"></canvas></div>
+      <div class="table-scroll" style="margin-top:16px;"><table id="ss_cohort_table"></table></div>
+      ${exportButtonHtml('ss_cohort_table', 'SelfService_Resolved_By_Team')}
+    </div>
+
+    <div class="panel"><h2>2. Funnel \u2014 from logged calls to self-service candidates</h2>
+      <div class="panel-sub">Each step keeps only the calls that also meet the next condition. The last step is the candidate list: calls L1 resolved on its own, with a real fix, of a type a customer could plausibly do, at the selected complexity and effort. <b>You can change this definition below</b> \u2014 the candidate count, and every panel after this one, update with it.</div>
+      <div class="ss-controls">
+        <div class="picker-group"><label>Self-serviceable resolution types</label><div id="ss_restype_root"></div></div>
+        <div class="picker-group"><label>Complexity</label><div id="ss_cx_root"></div></div>
+        <div class="picker-group"><label>Max effort per call</label>
+          <select id="ss_effort_pick">
+            <option value="0.5">up to 0.5 hr</option><option value="1" selected>up to 1 hr</option>
+            <option value="2">up to 2 hrs</option><option value="4">up to 4 hrs</option><option value="">Any effort</option>
+          </select></div>
+      </div>
+      <div class="grid2" style="grid-template-columns:1fr 1.15fr;align-items:start;">
+        <div class="chart-wrap" style="height:340px;"><canvas id="ss_c_funnel"></canvas></div>
+        <div class="table-scroll"><table id="ss_funnel_table"></table></div>
+      </div>
+      ${exportButtonHtml('ss_funnel_table', 'SelfService_Funnel')}
+    </div>
+
+    <div class="panel"><h2>3. Candidate volume by logged period</h2>
+      <div class="panel-sub">How many of the calls L1 resolved on its own were candidates, period by period \u2014 is this a steady stream or a one-off? Recent periods are incomplete (calls still open). Click a bar to see the calls.</div>
+      <div class="grid2">
+        <div><h3 class="ss-h3">Calls resolved by L1 vs self-service candidates</h3><div class="chart-wrap" style="height:300px;"><canvas id="ss_c_trend"></canvas></div></div>
+        <div><h3 class="ss-h3">Candidates as % of those L1 calls</h3><div class="chart-wrap" style="height:300px;"><canvas id="ss_c_trendpct"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="panel"><h2>4. What L1 actually resolves \u2014 by resolution type</h2>
+      <div class="panel-sub">All calls L1 resolved without involving L2/SME, by how they were resolved. Purple bars are the types currently counted as self-serviceable (change them in the definition above); pink bars were closed without a real fix and are never counted.</div>
+      <div class="chart-wrap" style="height:380px;"><canvas id="ss_c_restype"></canvas></div>
+      <div class="table-scroll" style="margin-top:16px;"><table id="ss_restype_table"></table></div>
+      ${exportButtonHtml('ss_restype_table', 'SelfService_Resolution_Types')}
+    </div>
+
+    <div class="panel"><h2>5. Knowledge readiness of the candidates</h2>
+      <div class="panel-sub">A customer can only self-serve if the answer is written down. For the candidates: did the engineer refer an existing KB article, or flag the resolution to be added to the KB?</div>
+      <div class="grid2" style="grid-template-columns:1fr 1.4fr;align-items:center;">
+        <div class="chart-wrap" style="height:280px;"><canvas id="ss_c_kb"></canvas></div>
+        <div><div class="table-scroll"><table id="ss_kb_table"></table></div>${exportButtonHtml('ss_kb_table', 'SelfService_KB_Readiness')}</div>
+      </div>
+      <div class="grid2" style="margin-top:16px;">
+        <div class="table-scroll"><table id="ss_kbassess_table"></table></div>
+        <div class="table-scroll"><table id="ss_ressource_table"></table></div>
+      </div>
+      <div class="ss-note" id="ss_kb_coverage"></div>
+    </div>
+
+    <div class="panel"><h2>6. Which support features hold the most candidates?</h2>
+      <div class="panel-sub">Candidates grouped by the support feature the call was raised under, with how much of that feature's L1 work they represent and whether knowledge already exists. These are the categories to look at first.</div>
+      <div class="table-scroll"><table id="ss_feature_table"></table></div>
+      <div class="ss-note" id="ss_feature_note"></div>
+      ${exportButtonHtml('ss_feature_table', 'SelfService_Features')}
+    </div>
+
+    <div class="panel"><h2>7. Which customers to enable first?</h2>
+      <div class="panel-sub">Customers raising the most candidate calls \u2014 where a how-to guide, training or self-service access would remove the most L1 effort.</div>
+      <div class="table-scroll"><table id="ss_customer_table"></table></div>
+      <div class="ss-note" id="ss_customer_note"></div>
+      ${exportButtonHtml('ss_customer_table', 'SelfService_Customers')}
+    </div>
+
+    <div class="panel"><h2>8. Knowledge base \u2014 was an article used, and where are the gaps?</h2>
+      <div class="panel-sub">Engineers record two things on every resolved call: whether they referred a KB article, and whether the resolution should be added to the KB. Together they show where knowledge is already in use and where it is missing &mdash; a customer can only self-serve what is written down. <b>Panels 8 to 11 use the calls chosen below.</b> "Not fully recorded" means one of the two questions was left blank. Click a bar segment or any cell to see the calls.</div>
+      <div class="ss-controls"><div class="picker-group"><label>Calls shown in panels 8 to 11</label>
+        <select id="ss_kbscope_pick"><option value="pool" selected>All calls L1 resolved on its own</option><option value="cand">Self-service candidates only</option></select></div></div>
+      <div class="chart-wrap" style="height:340px;"><canvas id="ss_c_kbuse"></canvas></div>
+      <div class="table-scroll" style="margin-top:16px;"><table id="ss_kbuse_table"></table></div>
+      ${exportButtonHtml('ss_kbuse_table', 'SelfService_KB_Use')}
+    </div>
+
+    <div class="panel"><h2>9. What happens to calls flagged "add to KB"?</h2>
+      <div class="panel-sub">When an engineer flags a resolution to be added to the KB, a reviewer can decide whether to publish it. This shows the calls flagged in each period and what was decided; grey is a flag nobody has reviewed yet (the backlog). Click a bar segment or any cell to see the calls.</div>
+      <div class="chart-wrap" style="height:320px;"><canvas id="ss_c_kbreview"></canvas></div>
+      <div class="table-scroll" style="margin-top:16px;"><table id="ss_kbreview_table"></table></div>
+      <div class="ss-note" id="ss_kbreview_note"></div>
+      ${exportButtonHtml('ss_kbreview_table', 'SelfService_KB_Review')}
+    </div>
+
+    <div class="panel"><h2>10. The platform's newer KB fields \u2014 assessment and resolution source</h2>
+      <div class="panel-sub">Two newer fields add detail: <b>KB assessment</b> says how good the referred article was, and <b>resolution source</b> says where the answer came from when no article was referred. "KB available (known steps)" is read here as: the steps were already documented in the KB.</div>
+      <div class="grid2">
+        <div><h3 class="ss-h3">KB assessment (calls where an article was referred)</h3><div class="chart-wrap" style="height:230px;"><canvas id="ss_c_kbassess"></canvas></div></div>
+        <div><h3 class="ss-h3">Resolution source (calls where no article was referred)</h3><div class="chart-wrap" style="height:250px;"><canvas id="ss_c_kbsource"></canvas></div></div>
+      </div>
+      <div class="table-scroll" style="margin-top:16px;"><table id="ss_kbplat_table"></table></div>
+      <div class="ss-note" id="ss_kbplat_note"></div>
+      ${exportButtonHtml('ss_kbplat_table', 'SelfService_KB_PlatformFields')}
+    </div>
+
+    <div class="panel"><h2>11. Which support features hold the most unwritten knowledge?</h2>
+      <div class="panel-sub">Calls flagged "add to KB", by support feature, split by what the reviewer decided. The grey part is knowledge engineers say should be written down but nobody has yet reviewed &mdash; the features at the top are where to start writing.</div>
+      <div class="chart-wrap" style="height:440px;"><canvas id="ss_c_kbfeat"></canvas></div>
+      <div class="table-scroll" style="margin-top:16px;"><table id="ss_kbfeat_table"></table></div>
+      <div class="ss-note" id="ss_kbfeat_note"></div>
+      ${exportButtonHtml('ss_kbfeat_table', 'SelfService_KB_Features')}
+    </div>`;
+
+  // ----- filters -----
+  const SERVICES = ['Incident Management', 'Service Request'];
+  const teamWidget = createMultiSelectDropdown(document.getElementById(viewId + '_team_root'), {
+    options: ALL_TEAMS, selected: new Set(ALL_TEAMS), searchable: false, onChange: onTeamChange});
+  let engOptions = ALL_OWNERS.slice();
+  let custOptions = ALL_CUSTOMERS.slice();
+  const engineerWidget = createMultiSelectDropdown(document.getElementById(viewId + '_engineer_root'), {
+    options: engOptions, selected: new Set(engOptions), searchable: true, onChange: update});
+  const towerWidget = createMultiSelectDropdown(document.getElementById(viewId + '_tower_root'), {
+    options: ALL_TOWERS, selected: new Set(ALL_TOWERS), searchable: false, onChange: onTowerChange});
+  const customerWidget = createMultiSelectDropdown(document.getElementById(viewId + '_customer_root'), {
+    options: ALL_CUSTOMERS, selected: new Set(ALL_CUSTOMERS), searchable: true, onChange: update});
+  const serviceWidget = createMultiSelectDropdown(document.getElementById(viewId + '_service_root'), {
+    options: SERVICES, selected: new Set(SERVICES), searchable: false, onChange: update});
+
+  // ----- candidate definition -----
+  const ssAllRecs = (DATA.__sapp_pristine_original_tabs && DATA.__sapp_pristine_original_tabs.selfservice_records) || DATA.selfservice_records;   // unaffected by the Global Filter, so the option list is stable
+  const poolCodes = ssGroupBy(ssAllRecs.filter(r => r.outcome === 'resolved' && ssIsL1(r.team) && !r.escalated && !SS_NO_REAL_FIX.has(r.resolution_code)), ssRc);
+  const codeOptions = Object.keys(poolCodes).sort((a, b) => poolCodes[b].length - poolCodes[a].length);
+  const resTypeWidget = createMultiSelectDropdown(document.getElementById('ss_restype_root'), {
+    options: codeOptions, selected: new Set(SS_DEFAULT_RES_TYPES.filter(c => codeOptions.includes(c))), searchable: false, onChange: update});
+  const CX = ['Straight Forward', 'Medium Complex', 'High Complex'];
+  const cxWidget = createMultiSelectDropdown(document.getElementById('ss_cx_root'), {
+    options: CX, selected: new Set(['Straight Forward']), searchable: false, onChange: update});
+  const effortPick = document.getElementById('ss_effort_pick');
+  effortPick.onchange = update;
+  const kbScopePick = document.getElementById('ss_kbscope_pick');
+  kbScopePick.onchange = update;
+
+  function selectedTeams(){ const s = teamWidget.getSelected(); return (s.length && s.length < ALL_TEAMS.length) ? s : null; }
+  function selectedEngineers(){ const s = engineerWidget.getSelected(); return (s.length && s.length < engOptions.length) ? s : null; }
+  function selectedTowers(){ const s = towerWidget.getSelected(); return (s.length && s.length < ALL_TOWERS.length) ? s : null; }
+  function selectedCustomers(){ const s = customerWidget.getSelected(); return (s.length && s.length < custOptions.length) ? s : null; }
+  // A dependent list follows its parent: picking Team(s) narrows the Engineer list to those teams' people, picking
+  // Tower(s) narrows the Customer list. If the dependent list had NOT been narrowed by hand, it stays "everything
+  // available" as the parent changes - so widening the parent again really does bring everything back. If it had
+  // been narrowed by hand, that choice is kept (limited to what is still available).
+  function onTeamChange(){
+    const prevAll = engineerWidget.getSelected().length === engOptions.length;
+    const sel = teamWidget.getSelected();
+    const active = sel.length ? sel : ALL_TEAMS;
+    engOptions = ALL_OWNERS.filter(o => active.includes(OWNER_TEAM_MAP[o]));
+    const still = engineerWidget.getSelected().filter(o => engOptions.includes(o));
+    engineerWidget.setOptions(engOptions, (prevAll || !still.length) ? engOptions : still);
+    update();
+  }
+  function onTowerChange(){
+    const prevAll = customerWidget.getSelected().length === custOptions.length;
+    const selTowers = towerWidget.getSelected();
+    const active = selTowers.length ? selTowers : ALL_TOWERS;
+    custOptions = ALL_CUSTOMERS.filter(c => active.includes(CUSTOMER_TOWER_MAP[c]));
+    const still = customerWidget.getSelected().filter(c => custOptions.includes(c));
+    customerWidget.setOptions(custOptions, (prevAll || !still.length) ? custOptions : still);
+    update();
+  }
+
+  function update(){
+    ssResetDrills();
+    const recs = ssFilterRecords({teams: selectedTeams(), engineers: selectedEngineers(), towers: selectedTowers(),
+                                  customers: selectedCustomers(), services: serviceWidget.getSelected()});
+    const eff = effortPick.value;
+    const p = {resTypes: new Set(resTypeWidget.getSelected()), complexity: new Set(cxWidget.getSelected()), maxEffort: eff === '' ? null : parseFloat(eff)};
+    const f = ssFunnel(recs, p);
+    SS_LAST = {recs, f, p, kbScopeKey: kbScopePick.value, teams: selectedTeams(), engineers: selectedEngineers(), towers: selectedTowers(), customers: selectedCustomers(), services: serviceWidget.getSelected(), effort: eff, kbScope: null};
+    ssRenderKpis(recs, f);
+    ssRenderCohort(recs);
+    ssRenderFunnel(f);
+    ssRenderTrend(recs, p);
+    ssRenderResTypes(f, p);
+    ssRenderKb(f.cand);
+    ssRenderFeatures(f);
+    ssRenderCustomers(f);
+    const kbScope = kbScopePick.value === 'cand' ? f.cand : f.noEsc;     // panels 8-11: every L1 call, or just the candidates
+    SS_LAST.kbScope = kbScope;
+    ssRenderKbUse(kbScope);
+    ssRenderKbReview(kbScope);
+    ssRenderKbPlatform(kbScope);
+    ssRenderKbFeatures(kbScope);
+  }
+  RERENDER_CALLBACKS.push(update);
+  update();
+  const xb = document.getElementById('ssExportAllBtn'); if(xb) xb.addEventListener('click', ssExportToExcel);
+}
+
+let SS_LAST = null;
+// One workbook with everything on the tab, for the current filters / time period / candidate definition.
+function ssExportToExcel(){
+  const S = SS_LAST; if(!S) return;
+  const {recs, f, p, kbScope} = S;
+  const yn = v => v === true ? 'Yes' : (v === false ? 'No' : '');
+  const lbl = a => (a && a.length) ? a.join(', ') : 'All';
+  const cand = f.cand, l1 = f.noEsc;
+  const kbc = ssGroupBy(cand, ssKbClass);
+  const sheets = [];
+  sheets.push({name: 'Summary', headers: ['Metric', 'Value'], rows: [
+    ['Logged period', periodLabel()], ['Team', lbl(S.teams)], ['Engineer', lbl(S.engineers)], ['Tower', lbl(S.towers)], ['Customer', lbl(S.customers)], ['Service', lbl(S.services)],
+    ['Self-serviceable resolution types', [...p.resTypes].join(', ') || 'None'], ['Complexity', [...p.complexity].join(', ') || 'None'],
+    ['Max effort per call (hrs)', p.maxEffort === null ? 'Any' : p.maxEffort],
+    ['Calls logged', recs.length], ['Resolved by L1', f.l1.length], ['Resolved by L1, no L2/SME involvement', l1.length],
+    ['Self-service candidates', cand.length], ['Candidates as % of L1-resolved', ssPct(cand.length, f.l1.length) + '%'],
+    ['L1 effort on candidates (hrs)', ssSumEffort(cand)], ['Avg effort per candidate (hrs)', cand.length ? round1(ssSumEffort(cand) / cand.length) : 0],
+    ['Candidates: KB article exists', (kbc.ready || []).length], ['Candidates: publish KB first', (kbc.publish || []).length], ['Candidates: no KB signal', (kbc.none || []).length],
+    ['KB panels (8-11) scope', S.kbScopeKey === 'cand' ? 'Self-service candidates only' : 'All calls L1 resolved on its own'],
+  ]});
+  // 1. cohort
+  const teams = ssTeams(), segs = teams.concat([SS_OPEN, SS_OTHER]);
+  const ch = {};
+  SELECTED_MONTHS.forEach(m => { ch[m] = []; });
+  recs.forEach(r => { if(ch[r.creation_month]) ch[r.creation_month].push(r); });
+  const cohortRows = SELECTED_MONTHS.map(m => [MONTH_LABEL_MAP[m], ch[m].length].concat(segs.map(s => ch[m].filter(r => ssSegmentOf(r) === s).length)));
+  cohortRows.push(['All selected periods', recs.length].concat(segs.map(s => recs.filter(r => ssSegmentOf(r) === s).length)));
+  sheets.push({name: '1 Resolved by team', headers: ['Logged in', 'Calls logged'].concat(segs), rows: cohortRows});
+  // 2. funnel
+  const n0 = f.steps[0].records.length;
+  sheets.push({name: '2 Funnel', headers: ['Step', 'Calls', '% of logged', '% of previous step'], rows: f.steps.map((s, i) => [s.label, s.records.length, ssPct(s.records.length, n0), i ? ssPct(s.records.length, f.steps[i - 1].records.length) : ''])});
+  // 3. trend
+  const trend = SELECTED_MONTHS.map(m => { const g = ssFunnel(recs.filter(r => r.creation_month === m), p); return [MONTH_LABEL_MAP[m], g.noEsc.length, g.cand.length, g.noEsc.length ? ssPct(g.cand.length, g.noEsc.length) : '']; });
+  sheets.push({name: '3 Candidates by period', headers: ['Logged in', 'Resolved by L1 (no L2/SME)', 'Self-service candidates', 'Candidates % of L1'], rows: trend});
+  // 4. resolution types
+  const rg = ssGroupBy(l1, ssRc);
+  sheets.push({name: '4 Resolution types', headers: ['Resolution type', 'Calls', '% of L1 calls', 'Avg effort (hrs)', '% Straight Forward', 'Counted as self-serviceable?'],
+    rows: Object.keys(rg).sort((a, b) => rg[b].length - rg[a].length).map(k => { const rs = rg[k]; return [k, rs.length, ssPct(rs.length, l1.length), ssAvgEffort(rs) === null ? '' : ssAvgEffort(rs),
+      ssPct(rs.filter(r => r.complexity_level === 'Straight Forward').length, rs.length), SS_NO_REAL_FIX.has(k) ? 'Never (no real fix)' : (p.resTypes.has(k) ? 'Yes' : 'No')]; })});
+  // 5. KB readiness
+  sheets.push({name: '5 KB readiness', headers: ['Knowledge readiness', 'Calls', '% of candidates'], rows: ['ready', 'publish', 'none'].map(k => [SS_KB_LABELS[k], (kbc[k] || []).length, ssPct((kbc[k] || []).length, cand.length)])});
+  // 6. features
+  const pf = ssGroupBy(l1, r => r.feature || SS_NOT_RECORDED), cf = ssGroupBy(cand, r => r.feature || SS_NOT_RECORDED);
+  sheets.push({name: '6 Features', headers: ['Support feature', 'L1-resolved calls', 'Candidates', '% of feature L1 calls', 'Customers', 'Candidate effort (hrs)', 'KB article exists', 'Publish KB first', 'No KB signal'],
+    rows: Object.keys(cf).sort((a, b) => cf[b].length - cf[a].length).map(k => { const kb = ssGroupBy(cf[k], ssKbClass); return [k, (pf[k] || []).length, cf[k].length, ssPct(cf[k].length, (pf[k] || []).length),
+      new Set(cf[k].map(c => c.customer_name).filter(Boolean)).size, ssSumEffort(cf[k]), (kb.ready || []).length, (kb.publish || []).length, (kb.none || []).length]; })});
+  // 7. customers
+  const pc = ssGroupBy(l1.filter(r => r.customer_name), r => r.customer_name), cc = ssGroupBy(cand.filter(r => r.customer_name), r => r.customer_name);
+  sheets.push({name: '7 Customers', headers: ['Customer', 'Tower', 'L1-resolved calls', 'Candidates', '% of their L1 calls', 'Support features', 'Most frequent feature', 'Candidate effort (hrs)'],
+    rows: Object.keys(cc).sort((a, b) => cc[b].length - cc[a].length).map(k => { const bf = ssGroupBy(cc[k], c => c.feature || SS_NOT_RECORDED); const top = Object.keys(bf).sort((a, b) => bf[b].length - bf[a].length)[0];
+      return [k, customerTowerOf(k), (pc[k] || []).length, cc[k].length, ssPct(cc[k].length, (pc[k] || []).length), Object.keys(bf).length, top + ' (' + bf[top].length + ')', ssSumEffort(cc[k])]; })});
+  // 8. KB use by period
+  const kbBy = ssByMonth(kbScope);
+  sheets.push({name: '8 KB use', headers: ['Logged in', 'Calls in view'].concat(SS_KB_USE.map(c => c.label)),
+    rows: SELECTED_MONTHS.concat(['__t']).map(m => { const all = m === '__t' ? kbScope : kbBy[m]; const g = ssGroupBy(all, ssKbUseClass);
+      return [m === '__t' ? 'All selected periods' : MONTH_LABEL_MAP[m], all.length].concat(SS_KB_USE.map(c => (g[c.key] || []).length)); })});
+  // 9. KB review
+  const flagged = kbScope.filter(r => r.add_to_kb === true), decs = ssDecisionList(flagged), fBy = ssByMonth(flagged);
+  sheets.push({name: '9 KB review decisions', headers: ['Logged in', 'Flagged "add to KB"'].concat(decs.map(d => d.label), ['Reviewed']),
+    rows: SELECTED_MONTHS.concat(['__t']).map(m => { const all = m === '__t' ? flagged : fBy[m]; const g = ssGroupBy(all, ssDecisionKey);
+      return [m === '__t' ? 'All selected periods' : MONTH_LABEL_MAP[m], all.length].concat(decs.map(d => (g[d.key] || []).length), [all.filter(r => r.kb_decision).length]); })});
+  // 10. platform fields
+  const platRows = [];
+  [['KB assessment', 'kb_assessment', SS_ASSESS_LABEL], ['Resolution source', 'resolution_source', SS_SOURCE_LABEL]].forEach(([title, field, labels]) => {
+    const g = ssGroupBy(kbScope.filter(r => r[field]), r => r[field]);
+    Object.keys(g).sort((a, b) => g[b].length - g[a].length).forEach(k => platRows.push([title, labels[k] || k, g[k].length]));
+  });
+  sheets.push({name: '10 KB platform fields', headers: ['Field', 'Value', 'Calls'], rows: platRows});
+  // 11. KB by feature
+  const kf = ssGroupBy(kbScope, r => r.feature || SS_NOT_RECORDED);
+  sheets.push({name: '11 KB by feature', headers: ['Support feature', 'Calls in view', 'KB article used', 'Flagged "add to KB"', 'Gap (KB not used, flagged)', 'Reviewed', 'Approved to publish', 'Flagged, awaiting review'],
+    rows: Object.keys(kf).map(k => { const all = kf[k], fl = all.filter(r => r.add_to_kb === true); return [k, all.length, all.filter(r => r.kb_referred === true).length, fl.length,
+      all.filter(r => ssKbUseClass(r) === 'gap').length, fl.filter(r => r.kb_decision).length, fl.filter(r => r.kb_decision === 'publishToKb').length, fl.filter(r => !r.kb_decision).length]; })
+      .filter(r => r[3] > 0).sort((a, b) => b[7] - a[7] || b[3] - a[3])});
+  // call-level sheets
+  const callHeaders = ['External ID', 'Customer', 'Logged in', 'Support category', 'Support feature', 'Sub-feature', 'Resolution type', 'Complexity', 'Effort (hrs)', 'Service', 'Severity', 'Resolved by (team)', 'Owner team', 'Owner',
+    'L2/SME involved', 'Self-service candidate', 'KB readiness', 'KB referred', 'Flagged add to KB', 'KB review decision', 'KB assessment', 'Resolution source', 'Current Status', 'Problem Statement', 'Resolution Steps'];
+  const candSet = new Set(cand);
+  const callRow = r => [r.external_id, r.customer_name || '', r.logged_in || MONTH_LABEL_MAP[r.creation_month] || r.creation_month, r.support_category || '', r.feature || '', r.subfeature || '', r.resolution_code || '', r.complexity_level || '',
+    r.effort_hrs === null || r.effort_hrs === undefined ? '' : r.effort_hrs, r.service, r.severity || '', r.team || '', r.owner_team || '', r.owner || '', yn(r.escalated), candSet.has(r) ? 'Yes' : 'No',
+    r.outcome === 'resolved' ? SS_KB_LABELS[ssKbClass(r)] : '', yn(r.kb_referred), yn(r.add_to_kb), r.kb_decision || '', r.kb_assessment || '', r.resolution_source || '', r.current_status || '', r.problem_statement || '', r.resolution_steps || ''];
+  sheets.push({name: 'Self-service candidates', headers: callHeaders, rows: cand.map(callRow)});
+  sheets.push({name: 'All calls in view', headers: callHeaders, rows: recs.map(callRow)});
+  exportWorkbookRAG(sheets, 'Self_Service_Complete');
+}
+
+
 function renderEngineerComplianceTab(){
   const viewId = 'engcompliance';
   const el = document.getElementById('view-'+viewId);
@@ -10948,6 +11972,11 @@ function renderNotes(){
           <li><b>Escalation taxonomy</b> (Escalation Analysis): any ticket with a non-blank <code>escalation_type</code> counts as escalated, and every distinct value present becomes its own chart/segment (SapphireUNO treats it as open text, not a fixed list). In this tool's real export data that currently resolves to exactly the same three values used elsewhere (<i>potentialEscalation</i>, <i>salesEscalation</i>, <i>businessEscalation</i>), so in practice the two models agree here even though the code doesn't assume a fixed list.</li>
           <li><b>KB Decision buckets</b> (Knowledge Base): <code>kb_review_publish_decision</code> is classified into Published/Pending Review/Rejected/Not Required/Other by a blunt substring match on the raw text (SapphireUNO's own logic, kept as-is) — checking for "publish"/"approv", then "pending"/"review", then "reject"/"declin", then "not requir"/"n/a", in that order; a blank value displays as Pending Review. Against this tool's real decision values this produces one notable quirk: <code>doNotPublish</code> contains the substring "publish" and so is bucketed as <b>Published</b> — the opposite of its plain-English meaning — while <code>notApplicable</code> and <code>customerSpecificKb</code> fall through to <b>Other</b>. Not corrected here, to keep this module a faithful port rather than a reinterpretation.</li>
           <li><b>Knowledge Base enhancements</b>: the page now processes only tickets whose status is <i>Resolved - Pending for Confirmation</i>, <i>Closed</i> or <i>Customer Agreed</i>. It reads <code>was_kb_referred</code> (→ <code>kb_assessment</code> when Yes, <code>resolution_source</code> when No), <code>add_to_kb</code>, <code>kb_review_publish_decision</code>, <code>rca</code>, <code>resolution_code</code> and the Problem Statement / Resolution Steps pairs (user entered and recommended) straight from the uploaded Excel; the matching columns are found with case, spaces and punctuation ignored and the page shows which ones it picked. User-entered text is never modified or replaced by the recommended text. Where the file has no Recommended value for a ticket with Add to KB = Yes, a deterministic rule-based version is generated (no AI service is called): the Problem Statement becomes <i>Problem / Details / Applies to</i> (sign-offs and greetings removed, the customer name replaced by \"the customer\"), and the Resolution Steps become a numbered list of imperative steps followed by the RCA and resolution type/code when they are short; it re-orders and tidies existing wording but cannot add technical detail that is not in the entry. Such values are tagged <i>Auto-generated (rule-based)</i> in the tables, popup and Excel exports. Every card, chart bar, category and table row opens a drill-down whose Excel export contains all KB columns for exactly those tickets, with User Entered and Recommended side by side.</li>
+      <li><b>Self-Service tab</b> (after Knowledge Base): helps decide which calls handled by L1 could be solved by the customer themselves. It works on the <b>cohort of calls logged</b> in the selected Time period (Time period here means <i>logged</i> period; open calls are included), passing the tab's own Team / Engineer / Tower / Customer filters, its Service filter, and the Global Filter. <b>Team and Engineer select calls by their current owner</b> &mdash; for a resolved call, whoever resolved it. A call is "Still open" if its status is in the Open category; Cancel / Deferred are shown separately; Closed, Resolved - Pending for Confirmation and Customer Agreed count as resolved; Duplicates are excluded. <b>"L2/SME involved"</b> means an L2 or SME engineer/assignment time is recorded on the call. Every number, table cell and chart bar opens the calls behind it (click a row for full ticket detail) with an Export to Excel button.
+        <ul style="margin-top:6px;">
+          <li><b>Self-service candidate</b>: resolved by an L1 team, no L2/SME involvement, a real fix recorded (resolution_code is not "Resolved with 3 Strike without Resolution" or "Cancel / Denied"), a self-serviceable resolution type (default Demo / Clarification, SOP - Help link / Community link, Configuration - Basic), the selected complexity (default Straight Forward) and within the selected effort limit (default up to 1 hour of <code>total_effort_spent_hrs</code>; a call with no effort recorded is never counted when a limit is set). These defaults are judgement calls &mdash; change them on the tab. The data cannot tell whether a customer's users have the access to do the action themselves. Complexity is read from the <code>complexity_level</code> column as uploaded.</li>
+          <li><b>Knowledge readiness / panels 8-11</b>: "KB article exists" when <code>was_kb_referred</code> = Yes; otherwise "Publish a KB article first" when <code>add_to_kb</code> = Yes; otherwise "No KB signal". Panel 8 combines the two yes/no fields into exclusive groups; panel 9 shows flagged calls against <code>kb_review_publish_decision</code> (blank = not yet reviewed, raw values such as publishToKb / doNotPublish are shown as-is); panel 10 shows <code>kb_assessment</code> and the resolution-source column, each against its own base; panel 11 ranks support features by flagged calls awaiting review. If the file has no such columns, those panels show "not recorded".</li>
+        </ul></li>
       <li><b>New raw columns</b> used only by these sections (not read anywhere else in this tool): <code>priority</code>, <code>reason_for_escalation</code>, <code>rca</code>, <code>kb_review_publish_decision</code>, and the full value set of <code>resolution_type</code> (elsewhere in this tool only two of its values are special-cased for open-bucket classification).</li>
           <li>Every KPI card, chart segment, table row, and heatmap cell in these sections is independently drillable to its exact underlying ticket list, and every section has its own "Export to Excel" button with the same Red/Amber/Green cell coloring as the rest of this tool. Row clicks on the Aging/Escalation/KB tables open a shared ticket-detail popup (not SapphireUNO's own ticket-detail modal, rebuilt here in this tool's own modal style); row clicks on the Ticket Journey table open a dedicated delegation-timeline popup instead.</li>
         </ul>
@@ -17141,13 +18170,13 @@ if(!engDropdownOutsideCloseBound){
 }
 
 // ================= TAB WIRING =================
-const TAB_FILTER_IDS = ['tabFilters_engineers', 'tabFilters_towercust', 'tabFilters_engcompliance'];
+const TAB_FILTER_IDS = ['tabFilters_engineers', 'tabFilters_towercust', 'tabFilters_engcompliance', 'tabFilters_selfservice'];
 // The 4 original tabs whose own filter row (Time period, plus whichever of
 // Team/Engineer/Tower/Customer applies) should show inline in #controlBar, right above
 // the page - per explicit request, even though the same fields are also reachable
 // through the Global Filter panel. Every other (SapphireUNO-style) tab keeps
 // #controlBar hidden, since those sections filter via that panel instead.
-const SAPP_NATIVE_FILTER_VIEWS = new Set(['overview', 'engineers', 'towercust', 'engcompliance']);
+const SAPP_NATIVE_FILTER_VIEWS = new Set(['overview', 'engineers', 'towercust', 'engcompliance', 'selfservice']);
 document.querySelectorAll('#tabNav button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     if(typeof closeChartExpand === 'function') closeChartExpand();
@@ -17161,6 +18190,13 @@ document.querySelectorAll('#tabNav button').forEach(btn=>{
       if(node) node.style.display = (id===activeFilterId) ? 'flex' : 'none';
     });
     document.body.classList.toggle('sapp-native-filters', SAPP_NATIVE_FILTER_VIEWS.has(btn.dataset.view));
+    // On Self-Service the Time period selects when calls were LOGGED (open calls are included), unlike the other tabs.
+    (function(){
+      const onSS = btn.dataset.view === 'selfservice';
+      const hint = document.getElementById('monthFilterHint'), tf = document.querySelector('.time-filter-inline');
+      if(hint) hint.textContent = onSS ? 'by logged period' : 'excl. Open calls';
+      if(tf) tf.title = onSS ? 'Selects the period calls were LOGGED in. Calls still open are included and shown as Still open.' : 'Applies to every tab except the current Open-calls count, which is always live.';
+    })();
     // Item #2: keep the "Reviewing: ..." status strip in sync with whichever
     // section just became active.
     if(typeof sappUpdateSectionStatusBar === 'function') sappUpdateSectionStatusBar();
@@ -31442,19 +32478,19 @@ REFGOV.ExportWorkbook = exportWorkbook;
     { label:'Resolution Steps – Recommended', get:function(r){ return kbShort(r.kb_rs_rec, 90); } },
     { label:'Created', get:function(r){ return r._creation_date ? fmtDateShort(r._creation_date) : ''; } }
   ];
-  const KB_FULL_HEADERS = ['Ticket ID', 'Title', 'Customer', 'Engineer', 'Current Status', 'Priority', 'Severity', 'Support Category', 'Service Type',
+  const KB_FULL_HEADERS = ['Ticket ID', 'Title', 'Customer', 'Engineer', 'Current Status', 'Priority', 'Severity', 'Support Category', 'Support Feature', 'Sub-feature', 'Service Type',
     'Created', 'Resolved', 'Closed', 'Was KB Referred', 'KB Assessment', 'Resolution Source', 'Add to KB', 'KB Review / Publish Decision', 'KB Decision (Bucket)',
     'Problem Statement – User Entered', 'Problem Statement – Recommended', 'Problem Statement Differs?', 'Problem Statement – Recommended Source',
     'Resolution Steps – User Entered', 'Resolution Steps – Recommended', 'Resolution Steps Differs?', 'Resolution Steps – Recommended Source',
     'Resolution Code', 'Resolution Type', 'RCA', 'Hold Days'];
-  const KB_DECISION_COL = 17;
+  const KB_DECISION_COL = 19;
   function kbDateOut(d){ return d ? d.toISOString().slice(0, 10) : ''; }
   function kbRaw(v){ return (v === null || v === undefined) ? '' : v; }
   // User-entered text is exported exactly as uploaded (never trimmed or rewritten).
   function kbFullRow(r){
     const hd = REFGOV.HoldDays ? REFGOV.HoldDays(r) : null;
     return [ r.ticket_id || '', kbRaw(r.title), r.customer_name || '', r.assign_owner_name || '', r.current_status || '', kbRaw(r.priority), kbRaw(r.severity),
-      r.support_category || '', kbServiceType(r), kbDateOut(r._creation_date), kbDateOut(r._resolved_date), kbDateOut(r._closed_date),
+      r.support_category || '', kbRaw(r.support_feature), kbRaw(r.support_subfeature), kbServiceType(r), kbDateOut(r._creation_date), kbDateOut(r._resolved_date), kbDateOut(r._closed_date),
       boolish(r.was_kb_referred) ? 'Yes' : 'No', kbRaw(r.kb_assessment), kbRaw(r.kb_resolution_source), boolish(r.add_to_kb) ? 'Yes' : 'No',
       kbRaw(r.kb_review_publish_decision), kbDecisionBucket(r.kb_review_publish_decision) || 'Pending Review',
       kbRaw(r.kb_ps_user), kbRaw(r.kb_ps_rec), kbChangedLabel(r.kb_ps_user, r.kb_ps_rec), kbRaw(r.kb_ps_rec_src),
