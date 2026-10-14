@@ -2778,6 +2778,39 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
   /* four filters live in the top bar on this tab, so its dropdowns are a little narrower than on the other tabs */
   #tabFilters_selfservice{gap:12px;}
   #tabFilters_selfservice .msdrop-btn{min-width:80px;}
+  /* ---- Performance score breakdown (v6.2b) ---- */
+  .score-cell{cursor:pointer;white-space:nowrap;}
+  .score-cell:hover{background:var(--panel-2);}
+  .score-cell:focus-visible{outline:2px solid var(--purple-soft);outline-offset:-2px;}
+  .score-info{display:inline-block;margin-left:5px;font-size:11px;color:var(--purple-soft);opacity:.55;}
+  .score-cell:hover .score-info{opacity:1;}
+  .score-box{max-width:880px;}
+  .score-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:8px;}
+  .score-big{font-size:34px;font-weight:700;font-family:var(--mono);color:var(--purple);}
+  .score-meta{color:var(--ink-dim);font-size:12.5px;}
+  .score-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#ece6f4;margin:6px 0 8px;}
+  .score-bar span{display:block;height:100%;}
+  .score-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-dim);margin-bottom:14px;}
+  .score-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+  .score-formula{font-size:12.5px;color:var(--ink-dim);margin:0 0 12px;line-height:1.55;}
+  table.score-table{width:100%;}
+  table.score-table td{white-space:normal;vertical-align:top;text-align:left;line-height:1.5;}
+  table.score-table td.num{text-align:right;font-family:var(--mono);white-space:nowrap;}
+  table.score-table th:nth-child(n+3){text-align:right;}
+  table.score-table th:nth-child(2){text-align:left;}
+  table.score-table .dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:0;}
+  table.score-table .sub{display:block;color:var(--ink-faint);font-size:11.5px;margin-top:3px;}
+  table.score-table tr.excluded td{color:var(--ink-faint);background:var(--panel-2);}
+  table.score-table tr.score-total td{font-weight:700;border-top:2px solid var(--line);}
+  table.score-table tr.score-total td:first-child{font-family:var(--mono);font-weight:600;color:var(--ink-dim);font-size:12px;}
+  .score-notes{font-size:11.5px;color:var(--ink-faint);margin-top:12px;line-height:1.5;}
+  .score-link{color:var(--purple);cursor:pointer;font-size:11.5px;text-decoration:underline;display:inline-block;margin-top:4px;}
+  #scoreOverlay .modal-box.score-box{max-width:920px;width:96vw;max-height:90vh;border:1px solid var(--line);border-radius:14px;}
+  #scoreOverlay .modal-header{padding:18px 22px;}
+  #scoreOverlay .modal-header h3{font-size:16px;font-weight:700;color:var(--purple);font-family:var(--sans);}
+  #scoreOverlay .modal-body{padding:18px 22px;overflow:auto;}
+  #scoreOverlay .modal-footer{border-top:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;gap:10px;}
+  .score-cell .score-info{font-family:var(--sans);}
 </style>
 </head>
 <body>
@@ -3010,7 +3043,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             <!-- Add your Excel file names from the MSPData folder below.
                  Each option's value is the file's path relative to this
                  HTML file, and must be committed to the same repo. -->
-            <option value="MSPData/CallDump_11Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
+            <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
 
             <!-- Add more <option> entries here, following the same
                  MSPData/filename.xlsx pattern, e.g.:
@@ -4036,6 +4069,21 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
   <section class="view" id="view-notes"></section>
   <section class="view sapp-view" id="view-settings"></section>
 </main>
+
+<div class="modal-overlay" id="scoreOverlay" style="z-index:190;">
+  <div class="modal-box score-box">
+    <div class="modal-header">
+      <h3 id="scoreTitle"></h3>
+      <button class="modal-close-btn" id="scoreCloseBtn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="scoreBody"></div>
+    <div class="modal-footer">
+      <span class="dim" style="font-size:12px;margin-right:auto;">Built from the same numbers as the table, so it always matches the score shown.</span>
+      <button class="dd-btn dd-btn-primary" id="scoreExportBtn"><i class="fa-solid fa-file-excel"></i> Export to Excel</button>
+      <button class="dd-btn dd-btn-ghost" id="scoreCloseBtn2">Close</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="drilldownOverlay">
   <div class="modal-box dd-modal">
@@ -5277,6 +5325,26 @@ function openBucketOf(row){
   return 'Engineer';
 }
 
+// Complexity of a call, used by Engineer Performance's Resolution Score (and Self-Service).
+// 1) the uploaded `complexity_level` column when it holds a recognised value; 2) otherwise the call's
+// Final Complexity (`complexity_level_resolve`), read exactly the way Complexity Calibration reads it
+// (ccComplexityRank); 3) otherwise null, which the Resolution column shows as N/A.
+function resolveComplexityLevel(r){
+  const CANON = ['', 'Straight Forward', 'Medium Complex', 'High Complex'];
+  const has = v => v !== null && v !== undefined && String(v).trim() !== '';
+  if(has(r.complexity_level)){
+    const own = String(r.complexity_level).trim();
+    if(own === CANON[1] || own === CANON[2] || own === CANON[3]) return { label: own, source: 'complexity_level' };
+    const rk = ccComplexityRank(own);
+    if(rk) return { label: CANON[rk], source: 'complexity_level' };
+  }
+  if(has(r.complexity_level_resolve)){
+    const rk = ccComplexityRank(r.complexity_level_resolve);
+    if(rk) return { label: CANON[rk], source: 'Final Complexity' };
+  }
+  return { label: null, source: null };
+}
+
 function buildTicketVolumeRecords(rows, ownerTeamMap, now){
   now = now || new Date();
   return rows.map(r=>{
@@ -5288,12 +5356,13 @@ function buildTicketVolumeRecords(rows, ownerTeamMap, now){
       ageBucket = ageBucketOf(ageDays);
       openBucket = openBucketOf(r);
     }
+    const cxr = resolveComplexityLevel(r);
     return {
       owner: r.owner || 'Unassigned', customer_name: r.customer_name || null,
       creation_month: r.creation_month, is_duplicate: cat==='Duplicate',
       resolved_month: r.resolved_month, is_open: isOpen,
       open_bucket: openBucket, age_days: ageDays, age_bucket: ageBucket,
-      Team: ownerTeamMap[r.owner] || 'No Team', complexity_level: r.complexity_level || null,
+      Team: ownerTeamMap[r.owner] || 'No Team', complexity_level: cxr.label, complexity_source: cxr.source,
       service_rating: (r.service_rating===undefined?null:r.service_rating),
       external_id: r.external_id, severity: r.severity, service: r.service,
       current_status: r.current_status,
@@ -5502,14 +5571,14 @@ function buildSelfServiceRecords(clean, ownerTeamMap){
     const outcome = cat === 'Closed' ? 'resolved' : (cat === 'Open' ? 'open' : 'closed_other');
     const ownerTeam = ownerTeamMap[r.owner] || 'No Team';
     const eff = r.total_effort_spent_hrs;
-    const cx = txt(r.complexity_level);
+    const cxr = resolveComplexityLevel(r);
     out.push({
       ticket_id: r.external_id, external_id: r.external_id, customer_name: r.customer_name || null,
       creation_month: r.creation_month, resolved_month: r.resolved_month || null,
       current_status: r.current_status, outcome,
       team: outcome === 'resolved' ? ownerTeam : null, owner_team: ownerTeam, owner: r.owner || null,
       service: r.service, severity: r.severity || null,
-      complexity_level: cx ? (CX[cx.toLowerCase()] || cx) : null,
+      complexity_level: cxr.label,
       feature: r.support_feature || null, subfeature: r.support_subfeature || null, support_category: r.support_category || null,
       problem_statement: kbm.ps_user ? raw(r[kbm.ps_user]) : null, resolution_steps: kbm.rs_user ? raw(r[kbm.rs_user]) : null,
       resolution_code: txt(r.resolution_code),
@@ -6831,7 +6900,7 @@ const DEFAULT_CUSTOMER_TOWER_MAP = {
 "PVH Arvind Fashion": "Standard",
 "PWC (BSM)": "Standard",
 "Parekh Integrated Services Pvt Ltd": "Standard",
-"Patanjali Food Limited": "Standard",
+"Patanjali Food Limited": "VAS",
 "Pipelineinfra": "Standard",
 "Price Water Coopers": "Standard",
 "Prince Pipes and Fittings Ltd": "Standard",
@@ -8431,11 +8500,23 @@ function kpiCardCell(labelText, valueHtml, count, recs, expectedCount, drillTitl
   return `<div class="kpi drillable" data-drill-id="${id}" title="Click to view underlying tickets"><div class="label">${labelText}</div><div class="value">${valueHtml}</div></div>`;
 }
 
+// Value label for a bar: sits just ABOVE the bar's top edge (anchor 'end' + align 'end'), so it is never drawn on
+// top of / behind the bar itself. Used by the Volume trend charts on Overview, Team / Engineer and Tower / Customer.
+function barTopLabel(color){
+  return Object.assign(dlInt(color, 'end'), {anchor:'end', align:'end', offset:3, clamp:true, clip:false, font:{size:10, weight:'700'},
+    formatter: v => (v===null||v===undefined) ? '' : Number(v).toLocaleString()});
+}
 function volumeChart(canvasId, g){
   makeChart(canvasId, {type:'bar', data:{labels:labelsFor(SELECTED_MONTHS), datasets:[
-    {label:'Logged', data:SELECTED_MONTHS.map(m=>g.logged[m].Total), backgroundColor:'#560a91', datalabels:dlInt('#560a91','end')},
-    {label:'Resolved', data:SELECTED_MONTHS.map(m=>g.resolved[m].Total), backgroundColor:'#e2571f', datalabels:dlInt('#e2571f','end')},
-  ]}, options: baseLineOpts()});
+    {label:'Logged', data:SELECTED_MONTHS.map(m=>g.logged[m].Total), backgroundColor:'#560a91', datalabels:barTopLabel('#560a91')},
+    {label:'Resolved', data:SELECTED_MONTHS.map(m=>g.resolved[m].Total), backgroundColor:'#e2571f', datalabels:barTopLabel('#e2571f')},
+  ]}, options: baseLineOpts({
+    layout:{padding:{top:24}},
+    scales:{
+      x:{ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}},
+      y:{ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}, beginAtZero:true, grace:'12%'}
+    }
+  })});
 }
 function csatChart(canvasId, g){
   // Combo chart: survey count as bars (right axis), mean rating as a line (left axis, 0-5).
@@ -9703,6 +9784,19 @@ function setupGlobalFilterBar(){
 document.getElementById('titleSub').textContent = 'Ticket volume · performance · SLA compliance · Delegation & Ownership';
 
 document.getElementById('drilldownCloseBtn').addEventListener('click', closeDrilldown);
+document.getElementById('scoreCloseBtn').addEventListener('click', closeScoreBreakdown);
+document.getElementById('scoreCloseBtn2').addEventListener('click', closeScoreBreakdown);
+document.getElementById('scoreExportBtn').addEventListener('click', exportScoreBreakdown);
+document.getElementById('scoreOverlay').addEventListener('click', (e) => { if(e.target.id==='scoreOverlay') closeScoreBreakdown(); });
+// Escape closes the score window only when nothing is stacked on top of it; Enter / Space on a Score cell opens it.
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape'){
+    const so = document.getElementById('scoreOverlay');
+    if(so.classList.contains('open') && !document.querySelector('.modal-overlay.open:not(#scoreOverlay)')) closeScoreBreakdown();
+  } else if((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('[data-score-id]')){
+    e.preventDefault(); openScoreBreakdown(e.target.closest('[data-score-id]').dataset.scoreId);
+  }
+});
 document.getElementById('drilldownOverlay').addEventListener('click', (e) => { if(e.target.id==='drilldownOverlay') closeDrilldown(); });
 function closeDelegTimeline(){ document.getElementById('delegTimelineOverlay').classList.remove('open'); }
 document.getElementById('delegTimelineCloseBtn').addEventListener('click', closeDelegTimeline);
@@ -9749,6 +9843,8 @@ document.getElementById('drilldownExportBtn').addEventListener('click', () => {
 document.body.addEventListener('click', (e) => {
   const exportEl = e.target.closest('[data-export-table]');
   if(exportEl){ exportTableToExcel(exportEl.dataset.exportTable, exportEl.dataset.exportFilename); return; }
+  const scoreEl = e.target.closest('[data-score-id]');
+  if(scoreEl){ openScoreBreakdown(scoreEl.dataset.scoreId); return; }
   const drillEl = e.target.closest('[data-drill-id]');
   if(drillEl){ triggerDrilldown(drillEl.dataset.drillId); return; }
 });
@@ -10608,7 +10704,7 @@ const PERF_DRILL_COLUMNS = {
   resolution: [
     {key:'external_id', label:'External ID'}, {key:'customer_name', label:'Customer'},
     {key:'severity', label:'Severity'}, {key:'resolved_month', label:'Resolved Month'},
-    {key:'complexity_level', label:'Complexity'}, {key:'weight', label:'Weight (pts)'},
+    {key:'complexity_level', label:'Complexity'}, {key:'complexity_source', label:'Complexity taken from'}, {key:'weight', label:'Weight (pts)'},
   ],
   csat: [
     {key:'external_id', label:'External ID'}, {key:'customer_name', label:'Customer'},
@@ -10616,6 +10712,142 @@ const PERF_DRILL_COLUMNS = {
     {key:'service_rating', label:'Rating'},
   ],
 };
+
+// ---- "How is this score calculated?" (v6.2b) ----
+// Clicking an engineer's Score opens a breakdown built from the SAME numbers renderPerformanceTable just used
+// (never recomputed separately), so the explanation can never disagree with the score on screen.
+const PERF_BREAKDOWNS = {};
+let PERF_BREAKDOWN_SEQ = 0;
+const PERF_PART_COLORS = {sla: '#560a91', deleg: '#2f8fd6', resolution: '#1f9d63', csat: '#c98a10'};
+
+function buildScoreDetail(r, ctx){
+  const res = r.resolution, cs = r.csat, W = COMPLEXITY_WEIGHTS;
+  const cx = {sf: 0, med: 0, high: 0};
+  r.resolvedRecs.forEach(x => {
+    if(x.complexity_level === 'Straight Forward') cx.sf++;
+    else if(x.complexity_level === 'Medium Complex') cx.med++;
+    else if(x.complexity_level === 'High Complex') cx.high++;
+  });
+  const n = v => Number(v).toLocaleString();
+  const cxFromCol = r.resolvedRecs.filter(x => x.complexity_source === 'complexity_level').length;
+  const cxFromFinal = r.resolvedRecs.filter(x => x.complexity_source === 'Final Complexity').length;
+  const parts = [];
+
+  // SLA Compliance
+  parts.push({key: 'sla', label: 'SLA Compliance', nominal: PERFORMANCE_WEIGHTS.sla * 100, on: ctx.slaOn, value: r.sla.pct, drillId: ctx.slaId,
+    off: 'No SLA checks apply to this engineer in the current view.',
+    lines: [`${n(r.sla.compliant)} of ${n(r.sla.applicable)} SLA checks were met. Each ticket counts once for every SLA rule that applies to it, across the ${ctx.activeSlaCount} rule(s) in the score.`],
+    sub: r.slaByRule.filter(x => x.applicable > 0).map(x => `${x.label}: ${n(x.compliant)}/${n(x.applicable)}`).join('  \u00b7  ')});
+
+  // Delegation Compliance
+  parts.push({key: 'deleg', label: 'Delegation Compliance', nominal: PERFORMANCE_WEIGHTS.delegation * 100, on: ctx.delegOn, value: r.deleg.pct, drillId: ctx.delegId,
+    off: 'No concluded delegation holds in the current view.',
+    lines: [`Of ${n(r.deleg.applicable)} times a ticket was held at this engineer's tier and then moved on or resolved, ${n(r.deleg.compliant)} were within that tier's allowed time.`]});
+
+  // Resolution Score
+  const resLines = [];
+  if(res.weightedSum !== undefined){
+    resLines.push(`Each resolved call earns points by complexity: ${n(cx.sf)} Straight Forward \u00d7 ${W['Straight Forward']} + ${n(cx.med)} Medium \u00d7 ${W['Medium Complex']} + ${n(cx.high)} High \u00d7 ${W['High Complex']} = ${n(res.weightedSum)} points, from ${n(res.resolvedCount)} resolved call(s).` +
+      (res.excluded ? ` ${n(res.excluded)} call(s) with no complexity level are not counted.` : ''));
+    if(cxFromFinal) resLines.push(`Complexity comes from the complexity_level column for ${n(cxFromCol)} call(s); for ${n(cxFromFinal)} call(s) that column was empty, so the call's Final Complexity (complexity_level_resolve) was used.`);
+    if(ctx.maxWeighted > 0){
+      resLines.push(ctx.topEng === r.eng
+        ? `This engineer has the highest total in view (${n(ctx.maxWeighted)} points), which is defined as 100%.`
+        : `It is measured against the highest total in view \u2014 ${ctx.topEng}, with ${n(ctx.maxWeighted)} points (= 100%): ${n(res.weightedSum)} \u00f7 ${n(ctx.maxWeighted)} = ${fmtPct(r.resolutionPct)}.`);
+    }
+  }
+  parts.push({key: 'resolution', label: 'Resolution Score', nominal: PERFORMANCE_WEIGHTS.resolution * 100, on: ctx.resOn, value: r.resolutionPct, drillId: ctx.resId,
+    off: 'No resolved calls with a complexity level in the current view.', lines: resLines,
+    sub: 'Relative score: it moves when you change the Team, Tower, Customer or Time period filters, because it compares engineers in view.'});
+
+  // CSAT
+  const csLines = [];
+  if(cs.collectionRate !== null){
+    csLines.push(`${n(cs.surveyCount)} survey(s) on ${n(cs.resolvedCount)} resolved call(s) = ${round1(cs.collectionRate * 100)}% collected. The target is 40%, so ${round1(cs.collectionRate * 100)}% \u00f7 40% = ${fmtPct(cs.surveyRatePct)} (capped at 100%).`);
+    csLines.push(cs.ratingMean === null ? 'No ratings yet, so nothing is deducted for rating.'
+      : (cs.ratingPenalty > 0 ? `Average rating ${cs.ratingMean} is below 4.0, so ${cs.ratingPenalty} points are deducted (5 per 0.25 below 4.0): ${fmtPct(cs.surveyRatePct)} \u2212 ${cs.ratingPenalty} = ${fmtPct(cs.csatPct)}.`
+        : `Average rating ${cs.ratingMean} is 4.0 or above, so nothing is deducted.`));
+  }
+  parts.push({key: 'csat', label: 'CSAT', nominal: PERFORMANCE_WEIGHTS.csat * 100, on: ctx.csatOn, value: cs.csatPct, drillId: ctx.csatId,
+    off: 'No resolved calls in the current view.', lines: csLines});
+
+  // Which parts count, and what weight each really carries once the missing ones drop out.
+  parts.forEach(p => { p.included = p.on && p.value !== null && p.value !== undefined; });
+  const totalNominal = parts.filter(p => p.included).reduce((a, p) => a + p.nominal, 0);
+  parts.forEach(p => {
+    p.weightUsed = p.included && totalNominal > 0 ? p.nominal / totalNominal * 100 : 0;
+    p.points = p.included ? p.value * p.weightUsed / 100 : 0;
+    p.excludedWhy = !p.on ? 'Not scored \u2014 switched off in "Score components" above the table.' : (p.included ? '' : 'Not scored \u2014 ' + p.off.charAt(0).toLowerCase() + p.off.slice(1));
+  });
+  const pointsTotal = parts.reduce((a, p) => a + p.points, 0);
+  return {eng: r.eng, team: OWNER_TEAM_MAP[r.eng], score: r.score, rank: ctx.rank, total: ctx.total, parts, totalNominal, pointsTotal, period: periodLabel()};
+}
+
+function renderScoreBreakdown(d){
+  const bar = d.parts.filter(p => p.included).map(p => `<span title="${esc(p.label)}: ${p.points.toFixed(2)} points" style="width:${p.points}%;background:${PERF_PART_COLORS[p.key]}"></span>`).join('');
+  const legend = d.parts.filter(p => p.included).map(p => `<span><i style="background:${PERF_PART_COLORS[p.key]}"></i>${esc(p.label)} ${p.points.toFixed(1)}</span>`).join('');
+  const shared = d.parts.some(p => !p.included);
+  const rows = d.parts.map(p => {
+    if(!p.included){
+      return `<tr class="excluded"><td><b>${esc(p.label)}</b></td><td colspan="4">${esc(p.excludedWhy)}</td></tr>`;
+    }
+    const link = p.drillId ? ` <span class="score-link" data-drill-id="${p.drillId}">View tickets</span>` : '';
+    const wtxt = p.weightUsed.toFixed(1) + '%' + (Math.abs(p.weightUsed - p.nominal) > 0.05 ? `<span class="sub">${p.nominal}% normally</span>` : '');
+    return `<tr><td><span class="dot" style="background:${PERF_PART_COLORS[p.key]}"></span><b>${esc(p.label)}</b></td>
+      <td>${p.lines.map(esc).join('<br>')}${p.sub ? `<span class="sub">${esc(p.sub)}</span>` : ''}${link}</td>
+      <td class="num">${fmtPct(p.value)}</td><td class="num">${wtxt}</td><td class="num">${p.points.toFixed(2)}</td></tr>`;
+  }).join('');
+  const inc = d.parts.filter(p => p.included);
+  const sum = inc.map(p => `${p.value.toFixed(1)} \u00d7 ${p.weightUsed.toFixed(1)}%`).join(' + ');
+  return `
+    <div class="score-top"><div class="score-big">${fmtPct(d.score)}</div>
+      <div class="score-meta">${esc(d.eng)} \u00b7 ${esc(d.team || '')} \u00b7 rank ${d.rank} of ${d.total} in view \u00b7 ${esc(d.period)}</div></div>
+    <div class="score-bar">${bar}</div><div class="score-legend">${legend}<span class="dim">points out of 100</span></div>
+    <p class="score-formula">The score is a <b>weighted average</b> of the components below. Each component is a 0\u2013100 value; the weights are 35% SLA Compliance, 20% Delegation Compliance, 35% Resolution Score and 10% CSAT.
+      ${shared ? ' Components that are switched off or have no data are left out and their weight is shared proportionally among the rest, so the weights always add up to 100%.' : ''}
+      Ticket volume is not part of the score.</p>
+    <table class="score-table"><tr><th>Component</th><th>How it was worked out</th><th>Value</th><th>Weight</th><th>Points</th></tr>${rows}
+      <tr class="score-total"><td colspan="4">Score = ${esc(sum)}</td><td class="num">${d.pointsTotal.toFixed(2)}</td></tr></table>
+    <div class="score-notes">Shown as ${fmtPct(d.score)} (the points above add up to ${d.pointsTotal.toFixed(2)}, rounded to one decimal). The score follows the "Score components" selection and the Team, Tower, Customer and Time period filters currently applied.</div>`;
+}
+
+function openScoreBreakdown(id){
+  const d = PERF_BREAKDOWNS[id];
+  if(!d) return;
+  document.getElementById('scoreTitle').textContent = 'How ' + d.eng + "'s score is calculated";
+  document.getElementById('scoreBody').innerHTML = renderScoreBreakdown(d);
+  CURRENT_SCORE_ID = id;
+  document.getElementById('scoreOverlay').classList.add('open');
+}
+function closeScoreBreakdown(){ document.getElementById('scoreOverlay').classList.remove('open'); }
+
+// Excel export of the open breakdown: a summary, the component-by-component working, and the tickets behind every
+// scored component (same records as the "View tickets" links), so the number can be audited offline.
+let CURRENT_SCORE_ID = null;
+function exportScoreBreakdown(){
+  const d = PERF_BREAKDOWNS[CURRENT_SCORE_ID]; if(!d) return;
+  const yn = v => v === true ? 'Yes' : v === false ? 'No' : (v === null || v === undefined ? '' : v);
+  const num = v => (v === null || v === undefined || isNaN(v)) ? '' : Number(v);
+  const sheets = [];
+  sheets.push({name: 'Score summary', headers: ['Item', 'Value'], rows: [
+    ['Engineer', d.eng], ['Team', d.team || ''], ['Rank in view', d.rank + ' of ' + d.total], ['Period', d.period],
+    ['Score (%)', num(d.score)], ['Points (sum of the components, out of 100)', Number(d.pointsTotal.toFixed(2))],
+    ['Normal weights', 'SLA ' + PERFORMANCE_WEIGHTS.sla * 100 + '% / Delegation ' + PERFORMANCE_WEIGHTS.delegation * 100 + '% / Resolution ' + PERFORMANCE_WEIGHTS.resolution * 100 + '% / CSAT ' + PERFORMANCE_WEIGHTS.csat * 100 + '%'],
+    ['Note', 'Weighted average of the included components. Components that are switched off or have no data are left out and their weight is shared proportionally. Ticket volume is not part of the score. Resolution is relative to the highest total in view, so it moves with the Team / Tower / Customer / Time period filters.'],
+  ]});
+  sheets.push({name: 'Score breakdown', headers: ['Component', 'Counted?', 'How it was worked out', 'Value (%)', 'Weight used (%)', 'Normal weight (%)', 'Points'],
+    rows: d.parts.map(p => p.included
+      ? [p.label, 'Yes', p.lines.concat(p.sub ? [p.sub] : []).join(' '), num(p.value), Number(p.weightUsed.toFixed(1)), p.nominal, Number(p.points.toFixed(2))]
+      : [p.label, 'No', p.excludedWhy, '', 0, p.nominal, 0]).concat([['Score', '', '', num(d.score), 100, 100, Number(d.pointsTotal.toFixed(2))]])});
+  const NAMES = {sla: 'SLA tickets', deleg: 'Delegation holds', resolution: 'Resolution calls', csat: 'CSAT calls'};
+  d.parts.forEach(p => {
+    const dd = p.included && p.drillId ? DRILLDOWN_REGISTRY[p.drillId] : null;
+    if(!dd || !dd.records || !dd.records.length) return;
+    sheets.push({name: NAMES[p.key] || p.label, headers: dd.columns.map(c => c.label),
+      rows: dd.records.map(rec => dd.columns.map(c => { const v = rec[c.key]; return typeof v === 'boolean' ? yn(v) : (v === null || v === undefined ? '' : v); }))});
+  });
+  exportWorkbookRAG(sheets, 'Score_Breakdown_' + String(d.eng).replace(/[^A-Za-z0-9]+/g, '_'));
+}
 
 function renderPerformanceTable(tableId, engineers, towers, customers, selectedComponentIds){
   const compSet = selectedComponentIds || new Set(PERF_COMPONENT_IDS);
@@ -10644,6 +10876,7 @@ function renderPerformanceTable(tableId, engineers, towers, customers, selectedC
       eng,
       sla: slaOn ? engineerOverallSla(eng, towers, customers, activeSlaCols) : {applicable:0, compliant:0, pct:null},
       slaRecs, slaGroupedRecs,
+      slaByRule: slaCellsWithLabels.map(c => ({label: c.label, applicable: c.recs.length, compliant: c.recs.filter(x => x.compliant).length})),
       deleg: engineerOverallDelegation(eng, towers, customers),
       delegTouches,
       resolution: engineerResolutionRaw(eng, towers, customers),
@@ -10675,6 +10908,8 @@ function renderPerformanceTable(tableId, engineers, towers, customers, selectedC
   // visible, just not hidden.
   const rowData = scored.filter(r => r.score !== null);
   rowData.sort((a,b) => b.score - a.score);
+  const topRaw = scored.reduce((best, x) => (!best || x.resolution.weightedSum > best.resolution.weightedSum) ? x : best, null);
+  const perfCtxBase = {slaOn, delegOn, resOn, csatOn, activeSlaCount: activeSlaCols.length, maxWeighted, topEng: topRaw ? topRaw.eng : null, total: rowData.length};
 
   const cls = (on) => on ? '' : ' dim';
   let rows = `<tr><th>Rank</th><th>Engineer</th><th>Team</th><th>Score</th>
@@ -10683,7 +10918,7 @@ function renderPerformanceTable(tableId, engineers, towers, customers, selectedC
     <th>Resolution${resOn?'':' (not scored)'}</th>
     <th>CSAT${csatOn?'':' (not scored)'}</th></tr>`;
   rowData.forEach((r,i)=>{
-    const resTitle = `${r.resolution.weightedSum} weighted pts across ${r.resolution.resolvedCount} resolved calls (relative to the top scorer currently in view) — click to view tickets`;
+    const resTitle = `${r.resolution.weightedSum} weighted pts across ${r.resolution.resolvedCount} resolved calls (complexity from the complexity_level column, else the call's Final Complexity; calls with neither are left out) (relative to the top scorer currently in view) — click to view tickets`;
     const csatTitle = `${r.csat.surveyCount} surveys of ${r.csat.resolvedCount} resolved (${r.csat.collectionRate===null?'—':round1(r.csat.collectionRate*100)+'%'} collection vs 40% target) = ${r.csat.surveyRatePct===null?'—':r.csat.surveyRatePct+'%'} base. Avg rating ${r.csat.ratingMean===null?'—':r.csat.ratingMean}${r.csat.ratingPenalty>0?' -> -'+r.csat.ratingPenalty+'% penalty (below 4.0)':' -> no penalty'}. Click to view tickets`;
 
     const slaId = registerDrilldown(`SLA — ${r.eng}`, r.slaGroupedRecs, SLA_DRILL_COLUMNS_GROUPED, `Performance_SLA_${r.eng}`);
@@ -10691,15 +10926,37 @@ function renderPerformanceTable(tableId, engineers, towers, customers, selectedC
     const resolutionDrillRecs = r.resolvedRecs.map(rec => Object.assign({}, rec, {weight: COMPLEXITY_WEIGHTS[rec.complexity_level] ?? ''}));
     const resId = registerDrilldown(`Resolution — ${r.eng}`, resolutionDrillRecs, PERF_DRILL_COLUMNS.resolution, `Performance_Resolution_${r.eng}`);
     const csatId = registerDrilldown(`CSAT — ${r.eng}`, r.resolvedRecs, PERF_DRILL_COLUMNS.csat, `Performance_CSAT_${r.eng}`);
+    const scoreId = 'ps' + (PERF_BREAKDOWN_SEQ++);
+    PERF_BREAKDOWNS[scoreId] = buildScoreDetail(r, Object.assign({}, perfCtxBase, {rank: i + 1, slaId, delegId, resId, csatId}));
 
     rows += `<tr><td class="mono dim">${i+1}</td><td>${esc(r.eng)}</td><td class="dim">${esc(OWNER_TEAM_MAP[r.eng])}</td>
-      <td class="mono ${pctClass(r.score)}">${fmtPct(r.score)}</td>
+      <td class="mono ${pctClass(r.score)} score-cell" data-score-id="${scoreId}" tabindex="0" role="button" title="Click to see how this score is calculated">${fmtPct(r.score)}<span class="score-info" aria-hidden="true">&#9432;</span></td>
       <td class="mono drillable${cls(slaOn)} ${slaOn?pctClass(r.sla.pct):''}" data-drill-id="${slaId}" title="Click to view underlying tickets">${fmtPctCount(r.sla.pct, r.sla.compliant, r.sla.applicable)}</td>
       <td class="mono drillable${cls(delegOn)} ${delegOn?pctClass(r.deleg.pct):''}" data-drill-id="${delegId}" title="Click to view underlying tickets">${fmtPctCount(r.deleg.pct, r.deleg.compliant, r.deleg.applicable)}</td>
       <td class="mono drillable${cls(resOn)} ${resOn?pctClass(r.resolutionPct):''}" data-drill-id="${resId}" title="${esc(resTitle)}">${r.resolutionPct===null?'N/A':fmtPct(r.resolutionPct)+' ('+r.resolution.weightedSum+'pt/'+r.resolution.resolvedCount+')'}</td>
       <td class="mono drillable${cls(csatOn)}" data-drill-id="${csatId}" title="${esc(csatTitle)}">${r.csat.csatPct===null?'N/A':fmtPct(r.csat.csatPct)}</td></tr>`;
   });
   document.getElementById(tableId).innerHTML = rowData.length ? rows : '<tr><td class="empty">No data for the current filters.</td></tr>';
+  // Live note: where the complexity behind the Resolution column came from, for the engineers / period in view.
+  if(resOn){
+    const tb = document.getElementById(tableId), host = tb && (tb.closest('.table-scroll') || tb.closest('table') || tb);
+    if(host && host.parentNode){
+      const nid = tableId + '_cxnote';
+      let note = document.getElementById(nid);
+      if(!note){ note = document.createElement('div'); note.id = nid; note.className = 'panel-sub'; note.style.margin = '6px 0'; host.parentNode.insertBefore(note, host); }
+      let fromCol = 0, fromFinal = 0, none = 0;
+      raw.forEach(r => r.resolvedRecs.forEach(x => {
+        if(x.complexity_source === 'complexity_level') fromCol++;
+        else if(x.complexity_source === 'Final Complexity') fromFinal++;
+        else none++;
+      }));
+      const parts = [];
+      if(fromCol) parts.push(fromCol.toLocaleString() + ' from the complexity_level column');
+      if(fromFinal) parts.push(fromFinal.toLocaleString() + ' from Final Complexity');
+      if(none) parts.push(none.toLocaleString() + ' with no complexity (left out of Resolution)');
+      note.innerHTML = '<b>Resolution complexity source</b> (resolved calls in view): ' + (parts.length ? parts.join(' \u00B7 ') : 'none') + '.';
+    }
+  }
 }
 
 /* ===== Self-Service tab (ported from Call Dump Analytics) ===== */
@@ -11888,6 +12145,7 @@ function renderNotes(){
       <li><b>Ticket Volume by Engineer</b>: Logged and Resolved respect the Time period filter and the Team/Tower/Customer reslicing; Open is always the current live count (like Tickets Open elsewhere in this dashboard), unaffected by the Time period filter.</li>
       <li><b>Engineer Performance score</b>: a transparent, disclosed weighted blend across 4 groups — <b>35% SLA Compliance</b> (the 6 re-attributed metrics blended together, ticket-count-weighted) + <b>20% Delegation Compliance</b> (their own tier's cutoff) + <b>35% Resolution Score</b> (complexity-weighted resolved calls, see below) + <b>10% CSAT</b> (survey collection rate with a rating penalty, see below). This weighting is a management judgment call, stated explicitly rather than hidden.
         <ul style="margin-top:6px;">
+          <li><b>Resolution Score &mdash; where the complexity comes from</b>: each resolved call is weighted by its <code>complexity_level</code> (Straight Forward 1 / Medium Complex 3 / High Complex 5). If that column is missing or blank for a call, the call's <b>Final Complexity</b> (<code>complexity_level_resolve</code>, read the same way as in Complexity Calibration) is used instead. A call with neither is left out of the weighting, and an engineer with no usable complexity in the period shows <b>N/A</b>. The Resolution drill-down has a "Complexity taken from" column showing which source each call used.</li>
           <li><b>CSAT, step by step</b>: (1) Base = survey collection rate (surveys ÷ resolved calls in the current filter/period), scaled against a 40% target — hitting exactly 40% earns 100% of the CSAT slice, below scales down proportionally, above 40% is capped at 100% rather than an open-ended bonus. This is now the <i>entire</i> basis of the score — CSAT is no longer blended with the average rating the way it used to be. (2) Penalty: if the average rating across those surveys is below 4.0, subtract 5 percentage points for every 0.25 the average falls short of 4.0 (proportional, e.g. a 3.5 average is 0.5 below 4.0 → 2 × 5 = 10 points off; a 3.625 average is 1.5 steps → 7.5 points off). A 4.0-or-above average applies no penalty. (3) Final = max(0, Base − Penalty). This was changed specifically because the old 50/50 blend let a thin survey sample with a good rating inflate the score — e.g. 3 surveys out of 31 resolved calls, all rated 5, used to score ~62% (driven mostly by the rating half) despite barely anyone actually responding; under this formula that same example scores ~24% (driven entirely by the thin 3/31 collection rate, with no rating boost to offset it).</li>
         </ul>
         <ul style="margin-top:6px;">
@@ -23838,14 +24096,14 @@ async function drExportWorkbook(sheets, filename){
     'Ramya R':'L1 - ITSM','Keerthana R':'L1 - ITSM','Rafnas P':'L1 - ITSM','Jenish Velmurugan':'L1 - ITSM',
     'Raju R':'L1 - ITSM','Dhanush M':'L1 - ITSM','Aparna JS':'L1 - ITSM','Shruti Yelamali':'L1 - ITSM','Aswin Kumar A S':'L1 - ITSM',
     'Shahana Begum':'L2 - ITSM','Hitesh Shetty':'L2 - ITSM','Mohammed Imthiyaz':'L2 - ITSM','Kiruthika S':'L2 - ITSM','Rajpraveen':'L2 - ITSM',
-    'Raj Kamal':'PLATFORM','Kimaja R':'PLATFORM','Kowshick Shalom':'PLATFORM',
+    'Raj Kamal':'PLATFORM','Kimaja R':'PLATFORM','Harshitha P L':'PLATFORM','Kowshick Shalom':'PLATFORM',
     'Charles':'SME - ITSM','Rajkumar Iyyappaprakash':'SME - ITSM','Raja BT':'SME - ITSM',
     'Arshad Khan':'SME - ITOM','Nitin Panwar':'SME - ITOM'
   };
   function drOwnerTeamMap(){ return OWNER_TEAM_MAP || TEAM_MAP; }
 
   // ================================================================
-  // WORKBOOK-DRIVEN RULE ENGINE (SapphireIMS SLA Review template v15-v24)
+  // WORKBOOK-DRIVEN RULE ENGINE (SapphireIMS SLA Review template v15-v26)
   // ----------------------------------------------------------------
   // Everything below is driven by the review workbook's Config / Rules /
   // SLA_Reference / Tower_Map / Team_Map tabs. Output rows follow the
@@ -23868,15 +24126,16 @@ async function drExportWorkbook(sheets, filename){
     'Cholamandalam Investment & Finance Company Limited':'VAS','Cybage Pvt Ltd':'VAS','Dalmia Cements Bharat Ltd':'VAS','Future Generali':'VAS',
     'Gujarat Fluorochemicals Limited (GFL)':'VAS','Indian Immunologicals Ltd (IIL)':'VAS','Intellect Design Arena':'VAS',
     'Life Insurance Corporation of India (LIC) - Dynacons':'VAS','Manipal Health Enterprise':'VAS','Sify Technologies':'VAS',
-    'Seshaasai Technologies Limited':'VAS','Avanse Financial Services':'VAS','Bata International':'VAS','Kirloskar Group':'VAS','Qinecsa':'VAS','Angel Broking':'VAS'
+    'Seshaasai Technologies Limited':'VAS','Avanse Financial Services':'VAS','Bata International':'VAS','Kirloskar Group':'VAS','Qinecsa':'VAS','Angel Broking':'VAS',
+    'Patanjali Food Limited':'VAS'
   };
   const PRX_TEAM_MAP = {
     'Sankar K':'L1 - ITOM','Jaya Soorya':'L1 - ITOM','Mugesh Marachan':'L2 - ITOM','Vidhyappratha M S':'L2 - ITOM',
     'Ramya R':'L1 - ITSM','Keerthana R':'L1 - ITSM','Rafnas P':'L1 - ITSM','Jenish Velmurugan':'L1 - ITSM','Raju R':'L1 - ITSM','Dhanush M':'L1 - ITSM',
     'Aparna JS':'L1 - ITSM','Shruti Yelamali':'L1 - ITSM','Aswin Kumar A S':'L1 - ITSM',
     'Shahana Begum':'L2 - ITSM','Hitesh Shetty':'L2 - ITSM','Mohammed Imthiyaz':'L2 - ITSM','Kiruthika S':'L2 - ITSM','Rajpraveen':'L2 - ITSM',
-    'Raj Kamal':'PLATFORM','Kimaja R':'PLATFORM','Kowshick Shalom':'PLATFORM',
-    'Charles':'SME','Arshad Khan':'SME','Nitin Panwar':'SME','Raja BT':'SME','Rajkumar Iyyappaprakash':'SME'
+    'Raj Kamal':'PLATFORM','Kimaja R':'PLATFORM','Harshitha P L':'PLATFORM','Kowshick Shalom':'PLATFORM',
+    'Charles':'SME - ITSM','Arshad Khan':'SME - ITOM','Nitin Panwar':'SME - ITOM','Raja BT':'SME - ITSM','Rajkumar Iyyappaprakash':'SME - ITSM'
   };
   // Rule catalogue (Rules tab). computed:false = "Proposed - not computed" / "Retired" -> never emits rows.
   // cat = dashboard business area used by the existing sections / KPI cards.
@@ -23885,6 +24144,7 @@ async function drExportWorkbook(sheets, filename){
     { id:'LEAD-CLS-FLD-01', tier:'Lead', stage:'Classification', sev:'Major', cat:'Data Quality', name:'Missing Classification Fields' },
     { id:'LEAD-ASG-TAT-01', tier:'Lead', stage:'Assignment', sev:'Major', cat:'Data Quality', name:'Assignment Delay' },
     { id:'LEAD-ASG-VAL-01', tier:'Lead', stage:'Assignment', sev:'Minor', cat:'Data Quality', name:'Invalid Tier Assignment' },
+    { id:'LEAD-CMPLX-REV-01', tier:'Lead', stage:'Complexity', sev:'Minor', cat:'Data Quality', name:'Complexity Changed After Assignment' },
     { id:'L1-NRC-FLD-01', tier:'L1', stage:'New Record', sev:'Minor', cat:'Data Quality', name:'Missing Intake Fields' },
     { id:'L1-ACK-TAT-01..06', tier:'L1', stage:'Acknowledged', sev:'Blocker/Major', cat:'SLA', name:'First Response SLA' },
     { id:'L1-WIP-TYPE-01', tier:'L1', stage:'Work In Progress', sev:'Major', cat:'Data Quality', name:'Resolution Type Not Set' },
@@ -24119,6 +24379,28 @@ async function drExportWorkbook(sheets, filename){
     if(!prxBlank(p.assign_to) && PRX_TIERS.indexOf(String(p.assign_to).trim()) === -1){
       out.push(prxMk(c,'LEAD-ASG-VAL-01',ST.BC,'assign_to is L1, L2 or SME',String(p.assign_to),'assign_to holds an invalid tier — correct it.',prxAttr(c,'Lead')));
     }
+    // ---------- LEAD-CMPLX-REV-01 (v25, refined v26) ----------
+    // complexity_level_resolve vs the assign-time complexity set by the tier that RESOLVED the ticket
+    // (the tier holding it at resolve_time = latest of assign_l1/l2/sme_time at or before resolve_time,
+    // ties -> higher tier; never inferred from resolution_type or current status). Any difference, either
+    // direction (case/whitespace-insensitive) -> ONE row, At risk, attributed to Lead. Nothing is flagged
+    // (and nothing is Not-evaluable) when the resolve rating is blank, there is no resolve_time / no tier
+    // assigned by then, or the resolving tier has no assign-time rating. No Duplicate/Cancel exclusion.
+    if(!prxBlank(p.complexity_level_resolve) && p.resolve_time){
+      let rt = null, rtMs = null;
+      PRX_TIERS.forEach(function(tr){
+        const at = p['assign_' + tr.toLowerCase() + '_time'];
+        if(at && at.getTime() <= p.resolve_time.getTime() && (rtMs === null || at.getTime() >= rtMs)){ rt = tr; rtMs = at.getTime(); }
+      });
+      if(rt){
+        const resR = String(p.complexity_level_resolve).trim(), asgV = p[rt.toLowerCase() + '_complexity_level_assign'];
+        const cmpKey = function(v){ return prxLow(v).replace(/\s+/g, ''); };
+        if(!prxBlank(asgV) && cmpKey(asgV) !== cmpKey(resR)){
+          out.push(prxMk(c,'LEAD-CMPLX-REV-01',ST.RISK,rt+' (resolving tier) assign-time complexity matches resolve-time ('+resR+')',rt+' assign='+String(asgV).trim()+' vs resolve='+resR,
+            'Complexity changed between assignment and resolution on the resolving team ('+rt+') \u2014 Lead to review whether the original assessment or routing needs correcting.',prxAttr(c,'Lead')));
+        }
+      }
+    }
     // ---------- L1-NRC-FLD-01 ----------
     {
       const miss = ['title','urgency','severity'].filter(function(f){ return prxBlank(p[f]); });
@@ -24255,7 +24537,7 @@ async function drExportWorkbook(sheets, filename){
           if(bd > 5) out.push(prxMk(c,'ANY-CNF-WINDOW-01',ST.BC,exp,prxFix1(bd)+' bd to confirm','Customer confirmation took longer than the 5-business-day window.',prxAttr(c,'Any')));
         } else {
           const bd = prxBizMin(start, now) / PRX_DAY_MIN;
-          if(bd > 5) out.push(prxMk(c,'ANY-CNF-WINDOW-01',ST.BO,exp,prxFix1(bd)+' bd, unconfirmed','ACT NOW: confirmation window exceeded — follow up or auto-close.',prxAttr(c,'Any')));
+          if(bd > 5) out.push(prxMk(c,'ANY-CNF-WINDOW-01',ST.BO,exp,prxFix1(bd)+' bd, unconfirmed','ACT NOW: past the 5-business-day confirmation window with no customer response.',prxAttr(c,'Any')));
           else if(5 - bd <= 2) out.push(prxMk(c,'ANY-CNF-WINDOW-01',ST.RISK,exp,prxFix1(bd)+' bd, unconfirmed','Confirmation window closes today or tomorrow — follow up with the customer.',prxAttr(c,'Any')));
         }
       }
@@ -24427,7 +24709,7 @@ async function drExportWorkbook(sheets, filename){
       const exp = 'resolved by EDOC date ('+prxFmtD(p.edoc)+')';
       const attr = prxAttr(c, 'Any');
       if(c.resolved){
-        if(prxDateKey(p.resolve_time) > prxDateKey(p.edoc)) out.push(prxMk(c,ID,ST.BC,exp,'resolved '+prxFmtD(p.resolve_time),'Resolved after the published EDOC date.',attr));
+        if(prxDateKey(p.resolve_time) > prxDateKey(p.edoc)) out.push(prxMk(c,ID,ST.BC,exp,prxFmtD(p.resolve_time),'Resolved after its own published EDOC date.',attr));
       } else {
         if(prxDateKey(now) > prxDateKey(p.edoc)) out.push(prxMk(c,ID,ST.BO,exp,'unresolved as of '+prxFmtD(now),'ACT NOW: past its own published EDOC date and still unresolved.',attr));
         else {
