@@ -2866,6 +2866,19 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
 #view-engprod .rg-W{background:#e3eefb;color:#0d47a1}#view-engprod a.ep-w{text-decoration:none;cursor:pointer}#view-engprod a.ep-w:hover .rg{box-shadow:0 0 0 2px #90b6ee}
 #view-engprod .ep-kpi .go{font-size:10.5px;font-weight:700;color:var(--ink-faint);margin-top:5px;letter-spacing:.02em}#view-engprod .ep-kpi:hover .go{color:var(--purple)}
 #view-engprod .ep-cs{cursor:pointer;transition:box-shadow .14s,border-color .14s}#view-engprod .ep-cs:hover{box-shadow:0 2px 10px rgba(86,10,145,.14);border-color:var(--purple-soft)}
+#view-engprod .ep-cs.dg{border-left-color:#0e8a8a}#view-engprod .rg-D{background:#efe6fa;color:#560a91}
+#view-engprod .table-scroll{overflow-x:auto}
+#view-engprod #epTable{min-width:1900px}#view-engprod #epTable th,#view-engprod #epTable td{white-space:nowrap}
+#view-engprod #epTable th:first-child,#view-engprod #epTable td:first-child{position:sticky;left:0;z-index:2;background:var(--panel);min-width:150px;box-shadow:2px 0 0 rgba(120,110,140,.18)}
+#view-engprod #epTable th:first-child{z-index:4}
+#view-engprod #epTable .ep-er:hover td:first-child,#view-engprod #epTable .ep-er.open td:first-child{background:var(--panel-2)}
+#view-engprod #epTable .ep-exp td{position:static;box-shadow:none;min-width:0;white-space:normal}
+#view-engprod .ep-capturing .ep-nocap,#view-engprod .ep-capturing .ep-act{display:none !important}
+#view-engprod .ep-capturing #epTable{min-width:0}
+#view-engprod .ep-slastrip{margin:4px 0 8px}
+#view-engprod .ep-cs.sla-G{border-left-color:#1f9d63}#view-engprod .ep-cs.sla-G b{color:#146c43}#view-engprod .ep-cs.sla-A{border-left-color:#e0a21a}#view-engprod .ep-cs.sla-A b{color:#8a5a00}
+#view-engprod .ep-cs.sla-R{border-left-color:#d6402f}#view-engprod .ep-cs.sla-R b{color:#a8261a}#view-engprod .ep-cs.sla-N{border-left-color:#b9b3c7}
+#view-engprod .ep-dd-r>div{left:auto;right:0;max-height:340px;min-width:230px}
 </style>
 </head>
 <body>
@@ -16141,16 +16154,28 @@ function wireTlmExportAll(){
 }
 
 // ================= Section 1: Aging Analysis =================
+// Label helpers for the Aging Analysis charts: every bar / slice / stack shows its count and its share (%) of the open (or aged) total.
+const agPct = (v, t) => t ? Math.round(v/t*1000)/10 : 0;
 function renderAgingDistributionChart(canvasId, byBucket, bucketOrder){
-  makeChart(canvasId, {type:'bar', data:{labels:bucketOrder, datasets:[{label:'Open tickets', data:bucketOrder.map(b=>byBucket[b].length), backgroundColor:bucketOrder.map(b=>GOV_BUCKET_COLORS[b])}]},
-    options: Object.assign(sappLineOpts(), {onClick:(evt, els)=>{
+  const counts = bucketOrder.map(b=>byBucket[b].length), total = counts.reduce((x,y)=>x+y,0);
+  makeChart(canvasId, {type:'bar', data:{labels:bucketOrder, datasets:[{label:'Open tickets', data:counts, backgroundColor:bucketOrder.map(b=>GOV_BUCKET_COLORS[b]), borderRadius:5, maxBarThickness:64,
+      datalabels:Object.assign(barTopLabel('#2b2733'), {display:ctx=>ctx.dataset.data[ctx.dataIndex]>0, textAlign:'center',
+        formatter:v => v+'\n'+agPct(v,total)+'%'})}]},
+    options: Object.assign(sappLineOpts({layout:{padding:{top:34}}, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#2b2733', callbacks:{label:i=>' '+i.parsed.y+' open tickets ('+agPct(i.parsed.y,total)+'% of '+total+')'}}}}), {onClick:(evt, els)=>{
       if(!els.length) return; const idx=els[0].index; const b=bucketOrder[idx]; const recs=byBucket[b];
       if(recs.length) openDrilldown(`Aging — ${b}`, govAgingDrillRows(recs), GOV_AGING_DRILL_COLUMNS, 'AgingDist_'+b.replace(/[^a-z0-9]+/gi,'_'));
     }})});
 }
 function renderAgingCompositionChart(canvasId, byBucket, bucketOrder){
-  makeChart(canvasId, {type:'doughnut', data:{labels:bucketOrder, datasets:[{data:bucketOrder.map(b=>byBucket[b].length), backgroundColor:bucketOrder.map(b=>GOV_BUCKET_COLORS[b])}]},
-    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{color:'#6f6a7c', boxWidth:10, font:{size:10}}}},
+  const counts = bucketOrder.map(b=>byBucket[b].length), total = counts.reduce((x,y)=>x+y,0);
+  const centre = {id:'agCentre', afterDraw(ch){ const m = ch.getDatasetMeta(0).data[0]; if(!m) return; const c = ch.ctx; c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#2b2733';
+    c.font='700 22px sans-serif'; c.fillText(total, m.x, m.y-7); c.font='600 10px sans-serif'; c.fillStyle='#6f6a7c'; c.fillText('OPEN TICKETS', m.x, m.y+12); c.restore(); }};
+  makeChart(canvasId, {type:'doughnut', plugins:[centre], data:{labels:bucketOrder, datasets:[{data:counts, backgroundColor:bucketOrder.map(b=>GOV_BUCKET_COLORS[b]), borderColor:'#fff', borderWidth:2,
+      datalabels:{display:ctx=>total>0 && ctx.dataset.data[ctx.dataIndex]/total>=.04, color:'#fff', font:{size:11, weight:'700'}, textAlign:'center', formatter:v=>v+'\n'+agPct(v,total)+'%'}}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'55%', plugins:{
+      legend:{position:'bottom', labels:{color:'#6f6a7c', boxWidth:10, font:{size:10}, generateLabels:ch=>{ const base = Chart.defaults.plugins.legend.labels.generateLabels(ch);
+        base.forEach((l,i)=>{ l.text = bucketOrder[i]+' · '+counts[i]+' ('+agPct(counts[i],total)+'%)'; }); return base; }}},
+      tooltip:{callbacks:{label:i=>' '+i.label+': '+i.parsed+' tickets ('+agPct(i.parsed,total)+'%)'}}},
       onClick:(evt, els)=>{ if(!els.length) return; const idx=els[0].index; const b=bucketOrder[idx]; const recs=byBucket[b];
         if(recs.length) openDrilldown(`Aging — ${b}`, govAgingDrillRows(recs), GOV_AGING_DRILL_COLUMNS, 'AgingComp_'+b.replace(/[^a-z0-9]+/gi,'_')); }
     }});
@@ -16159,26 +16184,35 @@ function renderAgingStackedChart(canvasId, open, field, bucketOrder){
   const byCat = {};
   open.forEach(r=>{ const c = r[field] || 'Unclassified'; (byCat[c]=byCat[c]||[]).push(r); });
   const top8 = Object.entries(byCat).sort((a,b)=>b[1].length-a[1].length).slice(0,8);
-  const labels = top8.map(([c])=>c);
+  const labels = top8.map(([c])=>c), totals = top8.map(([,r])=>r.length), grand = open.length, maxT = Math.max(1, ...totals);
   const datasets = bucketOrder.map(b=>{
     const recsByCat = top8.map(([,recs])=>recs.filter(r=>r.aging_bucket===b));
-    return {label:b, backgroundColor:GOV_BUCKET_COLORS[b], stack:'s', data: recsByCat.map(a=>a.length), _recsByCat: recsByCat};
+    return {label:b, backgroundColor:GOV_BUCKET_COLORS[b], stack:'s', data: recsByCat.map(a=>a.length), _recsByCat: recsByCat,
+      datalabels:{display:ctx=>{ const v = ctx.dataset.data[ctx.dataIndex]; return v>0 && v/maxT >= .07; }, color:'#fff', font:{size:10, weight:'700'}, anchor:'center', align:'center', formatter:v=>v}};
   });
+  // Invisible "Total" series: carries the stack total (and its % of all open tickets) above each stack.
+  datasets.push({type:'line', label:'Total', data:totals, borderWidth:0, pointRadius:0, pointHoverRadius:0, fill:false, order:0,
+    datalabels:{display:true, anchor:'end', align:'top', offset:2, color:'#2b2733', textAlign:'center', font:{size:10, weight:'700'}, formatter:v=>v+' ('+agPct(v,grand)+'%)'}});
   makeChart(canvasId, {type:'bar', data:{labels, datasets}, options: Object.assign(sappLineOpts({
-    scales:{ x:{stacked:true, ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}}, y:{stacked:true, beginAtZero:true, ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}} }
+    layout:{padding:{top:30}},
+    plugins:{legend:{labels:{color:'#6f6a7c', boxWidth:12, font:{size:11}, filter:i=>i.text!=='Total'}},
+      tooltip:{backgroundColor:'#2b2733', callbacks:{label:i=>{ const t = totals[i.dataIndex]; return i.dataset.label==='Total' ? ' Total: '+i.parsed.y+' ('+agPct(i.parsed.y,grand)+'% of all open)' : ' '+i.dataset.label+': '+i.parsed.y+' ('+agPct(i.parsed.y,t)+'% of '+t+')'; }}}},
+    scales:{ x:{stacked:true, ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}}, y:{stacked:true, beginAtZero:true, grace:'8%', ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}} }
   }), {onClick:(evt, els)=>{
-    if(!els.length) return; const e2=els[0]; const ds=datasets[e2.datasetIndex]; const recs=ds._recsByCat[e2.index];
+    if(!els.length) return; const e2=els.find(x=>datasets[x.datasetIndex]._recsByCat)||null; if(!e2) return; const ds=datasets[e2.datasetIndex]; const recs=ds._recsByCat[e2.index];
     if(recs && recs.length) openDrilldown(`${ds.label} — ${labels[e2.index]}`, govAgingDrillRows(recs), GOV_AGING_DRILL_COLUMNS, 'AgingStack_'+labels[e2.index].replace(/[^a-z0-9]+/gi,'_')+'_'+ds.label.replace(/[^a-z0-9]+/gi,'_'));
   }})});
 }
 function renderAgingTopBarChart(canvasId, agedRows, field, color, label){
   const byGroup = {};
   agedRows.forEach(r=>{ const g = r[field] || 'Unassigned'; (byGroup[g]=byGroup[g]||[]).push(r); });
-  const top10 = Object.entries(byGroup).sort((a,b)=>b[1].length-a[1].length).slice(0,10);
-  makeChart(canvasId, {type:'bar', data:{labels:top10.map(([g])=>g), datasets:[{label, data:top10.map(([,r])=>r.length), backgroundColor:color}]},
-    options: Object.assign(sappLineOpts({indexAxis:'y'}), {onClick:(evt, els)=>{
+  const top10 = Object.entries(byGroup).sort((a,b)=>b[1].length-a[1].length).slice(0,10), total = agedRows.length;
+  makeChart(canvasId, {type:'bar', data:{labels:top10.map(([g])=>g), datasets:[{label, data:top10.map(([,r])=>r.length), backgroundColor:color, borderRadius:4, maxBarThickness:26,
+      datalabels:{display:true, anchor:'end', align:'right', offset:4, clamp:true, clip:false, color:'#2b2733', font:{size:10, weight:'700'}, formatter:v=>v+' ('+agPct(v,total)+'%)'}}]},
+    options: Object.assign(sappLineOpts({indexAxis:'y', layout:{padding:{right:64}}, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#2b2733', callbacks:{label:i=>' '+i.parsed.x+' '+label.toLowerCase()+' ('+agPct(i.parsed.x,total)+'% of '+total+' aged)'}}},
+      scales:{ x:{beginAtZero:true, grace:'6%', ticks:{color:'#a29cb0', font:{size:11}, precision:0}, grid:{color:'#f3eff9'}}, y:{ticks:{color:'#6f6a7c', font:{size:11}}, grid:{display:false}} }}), {onClick:(evt, els)=>{
       if(!els.length) return; const idx=els[0].index; const recs=top10[idx][1];
-      if(recs.length) openDrilldown(`${label} — ${top10[idx][0]}`, govAgingDrillRows(recs), GOV_AGING_DRILL_COLUMNS, label.replace(/\s+/g,'_')+'_'+top10[idx][0].replace(/[^a-z0-9]+/gi,'_'));
+      if(recs.length) openDrilldown(`${label} — ${top10[idx][0]}`, govAgingDrillRows(recs), GOV_AGING_DRILL_COLUMNS, label.replace(/\\s+/g,'_')+'_'+top10[idx][0].replace(/[^a-z0-9]+/gi,'_'));
     }})});
 }
 function renderAgingTable(open){
@@ -35724,29 +35758,51 @@ REFGOV.ExportWorkbook = exportWorkbook;
   const fD = d => P2(d.getDate())+' '+MON[d.getMonth()]+(d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():'');
   const toD = v => { if(!v) return null; const d = v instanceof Date ? v : new Date(v); return isNaN(d) ? null : d; };
   const isWork = d => d.getDay()!==0 && !HOL.has(dk(d));
-  const S = { period:'daily', from:null, to:null, team:'', level:'', engs:new Set(), prio:'', stat:new Set(), cust:new Set(), target:5, ws:1,
+  // The 7 SLA metrics of the Engineer Summary (same attribution records as the By Team / Engineer SLA table: DATA.sla_attributed).
+  // dt = date a record is counted on: 'cr' = ticket creation date (creation-based metrics), 'rd' = resolved date (resolution-based metrics).
+  const SLA_DEFS = [
+    {k:'s_resp_im', mk:'resp1', svc:'Incident Management', short:'1st Resp SLA – IM', full:'1st Response SLA — Incident Mgmt', dt:'cr'},
+    {k:'s_resp_sr', mk:'resp1', svc:'Service Request', short:'1st Resp SLA – SR', full:'1st Response SLA — Service Request', dt:'cr'},
+    {k:'s_sub_im', mk:'subsequent_im', svc:null, short:'Subseq Resp SLA (IM)', full:'Subsequent Response SLA (IM only)', dt:'cr'},
+    {k:'s_res_im', mk:'resolution_im', svc:null, short:'Resolution SLA – IM', full:'Resolution SLA — Incident Mgmt', dt:'rd'},
+    {k:'s_res_sr', mk:'resolution_sr_standard', svc:null, short:'Res SLA 3bd – SR Std', full:'Resolution SLA (3bd) — SR Standard', dt:'rd'},
+    {k:'s_edoc', mk:'edoc_shared', svc:null, short:'EDOC Shared 3bd – SR NS', full:'EDOC Shared in 3bd — SR Non-Standard', dt:'cr'},
+    {k:'s_meet', mk:'resolution_meeting_edoc', svc:null, short:'Res Mtg EDOC – SR NS', full:'Resolution Meeting EDOC — SR Non-Standard', dt:'rd'}];
+  const slaTarget = () => typeof SLA_TARGET!=='undefined' ? SLA_TARGET : 98;
+  const slaK = v => v===null||v===undefined ? 'N' : v>=slaTarget() ? 'G' : v>=90 ? 'A' : 'R';
+  const HK = 'ep_hidden_cols_v1';
+  const S = { hide:new Set(), period:'daily', from:null, to:null, team:'', level:'', engs:new Set(), prio:'', stat:new Set(), cust:new Set(), target:5, ws:1,
               metric:'both', rag:'', net:true, aged:true, wfc:true, age:10, q:'', sort:{k:'resolved',dir:-1}, page:1, open:null, ePeriod:'', src:null };
   let EV = null, OPEN = {}, LAST = null, chart = null, latest = null, tq = null;
 
   function build(){
     const rows = (DATA && DATA.gov_rows) || [];
     if(EV && S.src === rows) return;
-    S.src = rows; EV = { A:[], R:[], O:[] }; OPEN = {}; let mx = 0; const now = +new Date();
+    S.src = rows; EV = { A:[], R:[], O:[], D:[], S:[] }; const byId = {}; OPEN = {}; let mx = 0; const now = +new Date();
     const rdOf = r => { const st = r.current_status; return CLOSED.has(st) ? toD(r.resolve_time) : st==='Cancel' ? toD(r.cancel_time) : st==='Deferred' ? toD(r.deferred_time) : null; };
     rows.forEach(r => {
       if(r.service!=='Incident Management' && r.service!=='Service Request') return;
-      const st = r.current_status, owner = String(r.owner || r.assign_owner_name || '').trim() || 'Unlogged';
+      const st = r.current_status, owner = String(r.owner || r.assign_owner_name || '').trim() || 'Unassigned';
       const tiers = [['L1',r.assign_l1_time,r.assign_to_l1_engineer],['L2',r.assign_l2_time,r.assign_to_l2_engineer],['SME',r.assign_sme_time,r.assign_to_sme]]
         .map(t=>({tier:t[0], t:toD(t[1]), eng:t[2] && String(t[2]).trim()})).filter(t=>t.t && t.eng);
       const own = tiers.filter(t=>t.eng===owner).sort((x,y)=>y.t-x.t)[0], tier = own ? own.tier : 'Unspecified';
       const cr = toD(r.creation_time), rd = rdOf(r);
+      byId[String(r.ticket_id)] = {r, cr, rd};
       if(cr){ EV.A.push({t:cr, eng:owner, tier, cr, rd, r, dupe:st==='Duplicate', wfc:/^waiting (on|for) customer$/i.test(String(st).trim()), open:!CLOSED.has(st) && st!=='Cancel' && st!=='Deferred' && st!=='Duplicate'}); if(+cr>mx && +cr<=now) mx = +cr; }
       if(rd){ EV.R.push({t:rd, eng:owner, tier, cr, rd, r}); if(+rd>mx && +rd<=now) mx = +rd; }
-      if(!CLOSED.has(st) && st!=='Cancel' && st!=='Deferred' && st!=='Duplicate' && owner!=='Unlogged'){
+      // Delegation (same definition as Delegation Overview): L1 -> L2 = ticket has an L2 hand-off; L1 -> SME = SME hand-off with no L2 stage (direct).
+      // Credited to the L1 owner who handed it over, on the hand-off date.
+      const l2t = toD(r.assign_l2_time), smt = toD(r.assign_sme_time), l1e = String(r.assign_to_l1_engineer || '').trim() || 'Unassigned';
+      if(l2t) EV.D.push({t:l2t, kind:'L2', eng:l1e, tier:'L1', to:String(r.assign_to_l2_engineer || '').trim(), cr, rd, r});
+      else if(smt) EV.D.push({t:smt, kind:'SME', eng:l1e, tier:'L1', to:String(r.assign_to_sme || '').trim(), cr, rd, r});
+      if(!CLOSED.has(st) && st!=='Cancel' && st!=='Deferred' && st!=='Duplicate' && owner!=='Unassigned'){
         const o = OPEN[owner] || (OPEN[owner] = {n:0, old:0}); o.n++; if((r.age_days||0) > 7) o.old++;
         EV.O.push({eng:owner, tier, cr, rd:null, r});
       }
     });
+    SLA_DEFS.forEach(d => { ((DATA.sla_attributed || {})[d.mk] || []).forEach(x => {
+      if(d.svc && x.service !== d.svc) return; const tk = byId[String(x.external_id)]; if(!tk) return; const t = d.dt==='cr' ? tk.cr : (tk.rd || toD(tk.r.resolve_time) || tk.cr); if(!t) return;   // same fallback chain as Team / Engineer's resMonth: resolved date -> resolve_time -> creation date (open / undated tickets that still carry a TAT)
+      EV.S.push({k:d.k, t, eng:x.engineer || 'Unassigned', ok:!!x.compliant, r:tk.r, cr:tk.cr, rd:tk.rd}); }); });
     latest = mx ? sod(new Date(mx)) : sod(new Date());
   }
   const teamOf = e => (typeof OWNER_TEAM_MAP!=='undefined' && OWNER_TEAM_MAP[e]) || 'No Team';
@@ -35789,8 +35845,13 @@ REFGOV.ExportWorkbook = exportWorkbook;
     const get = n => E[n] || (E[n] = {name:n, team:teamOf(n), a:0, r:0, tiers:{}, days:new Set(), byB:{}});
     const eachB = (e, ev, f) => { [S.period].forEach(p => { const k = bkey(ev.t, p); (e.byB[k] || (e.byB[k] = {a:0,r:0}))[f]++; if(bi[k]) bi[k][f]++; }); };
     EV.A.forEach(ev => { if(!inRange(ev,from,to) || !pass(ev)) return; const e = get(ev.eng); e.a++; e.tiers[ev.tier] = (e.tiers[ev.tier]||0)+1; eachB(e, ev, 'a'); });
+    const slaTot = {}; SLA_DEFS.forEach(d => slaTot[d.k] = {ok:0, tot:0});
+    EV.S.forEach(ev => { if(!inRange(ev,from,to) || !pass({eng:ev.eng, tier:S.level, r:ev.r})) return; const e = get(ev.eng), t = slaTot[ev.k], y = (e.sla || (e.sla = {}))[ev.k] || (e.sla[ev.k] = {ok:0, tot:0});
+      t.tot++; y.tot++; if(ev.ok){ t.ok++; y.ok++; } });
+    EV.D.forEach(ev => { if(!inRange(ev,from,to) || !pass(ev)) return; const e = get(ev.eng); e.tiers.L1 = (e.tiers.L1||0); ev.kind==='L2' ? e.dl2 = (e.dl2||0)+1 : e.dsme = (e.dsme||0)+1; });
     EV.R.forEach(ev => { if(!inRange(ev,from,to) || !pass(ev)) return; const e = get(ev.eng); e.r++; e.tiers[ev.tier] = (e.tiers[ev.tier]||0)+1; e.days.add(dk(ev.t)); eachB(e, ev, 'r'); });
-    const isIM = r => r.service==='Incident Management', sp = {imA:0,srA:0,imR:0,srR:0,oN:0,oIM:0,oSR:0,oOld:0};
+    const isIM = r => r.service==='Incident Management', sp = {imA:0,srA:0,imR:0,srR:0,oN:0,oIM:0,oSR:0,oOld:0,dl2:0,dsme:0};
+    EV.D.forEach(ev => { if(inRange(ev,from,to) && pass(ev)) ev.kind==='L2' ? sp.dl2++ : sp.dsme++; });
     EV.A.forEach(ev => { if(inRange(ev,from,to) && pass(ev)) isIM(ev.r) ? sp.imA++ : sp.srA++; });
     EV.R.forEach(ev => { if(inRange(ev,from,to) && pass(ev)) isIM(ev.r) ? sp.imR++ : sp.srR++; });
     EV.O.forEach(ev => { if(!pass(ev)) return; sp.oN++; isIM(ev.r) ? sp.oIM++ : sp.oSR++; if((ev.r.age_days||0) > 7) sp.oOld++; });
@@ -35802,7 +35863,12 @@ REFGOV.ExportWorkbook = exportWorkbook;
         avg: wd ? e.r/wd : null, tgt, ach: tgt ? e.r/tgt : null, zero, trend:tr, open:o?o.n:0, old:o?o.old:0 });
     });
     const wmap = {}; EV.A.forEach(ev => { if(ev.wfc && pass(ev)) wmap[ev.eng] = (wmap[ev.eng]||0)+1; });
-    list.forEach(e => { e.wavg = wd ? e.r/(wd/6) : null; e.wfcN = wmap[e.name] || 0; });
+    const om = {}; EV.O.forEach(ev => { if(!pass(ev)) return; const x = om[ev.eng] || (om[ev.eng] = {n:0, old:0, hold:0}); x.n++; if((ev.r.age_days||0) > 7) x.old++; const h = holdOf(ev.r); if(h) x.hold += h; });
+    list.forEach(e => { const x = om[e.name] || {n:0, old:0, hold:0}; e.open = x.n; e.old = x.old; e.holdOpen = Math.round(x.hold*10)/10; });
+    const bm = {}; EV.O.forEach(ev => { if(!pass(ev)) return; const a = ev.r.age_days; if(a===null || a===undefined) return; const k = a<=7 ? 'b1' : a<=10 ? 'b2' : a<=15 ? 'b3' : null; if(k) (bm[ev.eng] || (bm[ev.eng] = {b1:0,b2:0,b3:0}))[k]++; });
+    list.forEach(e => { const x = bm[e.name] || {b1:0,b2:0,b3:0}; e.b1 = x.b1; e.b2 = x.b2; e.b3 = x.b3; });
+    list.forEach(e => SLA_DEFS.forEach(d => { const y = (e.sla || {})[d.k] || {ok:0, tot:0}; e[d.k] = y.tot ? Math.round(y.ok/y.tot*1000)/10 : null; e[d.k+'_n'] = y; }));
+    list.forEach(e => { e.wavg = wd ? e.r/(wd/6) : null; e.wfcN = wmap[e.name] || 0; e.dl2 = e.dl2 || 0; e.dsme = e.dsme || 0; });
     list.forEach(e => { e.rag = e.ach===null ? 'N' : e.ach>=1 ? 'G' : e.ach>=.8 ? 'A' : 'R'; e.ragN = {R:0,A:1,G:2,N:3}[e.rag]; });
     // Rating 0–10 = 50% target achievement (capped 100%) + 20% closure ratio (capped 100%) + 20% consistency (working days with a closure) + 10% ageing (open tickets not older than 7 days)
     list.forEach(e => {
@@ -35810,19 +35876,21 @@ REFGOV.ExportWorkbook = exportWorkbook;
       e.rParts = {t, q, k, g}; e.rating = t===null ? null : Math.round(10*(.5*t+.2*q+.2*k+.1*g)*10)/10;
     });
     const A = list.reduce((s,e)=>s+e.a,0), R = list.reduce((s,e)=>s+e.r,0);
-    return Object.assign({ from, to, bs, wd, list, A, R, below: list.filter(e => e.ach !== null && e.ach < 1).length }, sp);
+    return Object.assign({ from, to, bs, wd, list, A, R, below: list.filter(e => e.ach !== null && e.ach < 1).length, sla: slaTot }, sp);
   }
 
   // ---------- records (materialised only on demand) ----------
   const COLS = [{key:'ticket_id',label:'Ticket ID'},{key:'title',label:'Subject'},{key:'engineer',label:'Owner / Engineer'},{key:'tier',label:'Level'},
     {key:'event',label:'Event'},{key:'priority',label:'Priority'},{key:'status',label:'Status'},{key:'logged',label:'Logged (Created) Date'},
-    {key:'resolved',label:'Resolved / Closed Date'},{key:'age',label:'Ticket Age (days)'},{key:'service',label:'Service'},{key:'customer',label:'Customer'}];
+    {key:'resolved',label:'Resolved / Closed Date'},{key:'age',label:'Ticket Age (days)'},{key:'service',label:'Service'},{key:'customer',label:'Customer'},{key:'hold',label:'Hold Days'}];
+  // Hold Days = days the ticket spent in Waiting on Customer, Under Observation, Under Sales Discussion and Resolved-Pending (open windows run to today). Uses the dashboard's own govHoldDays rule.
+  const holdOf = r => { const f = (typeof REFGOV!=='undefined' && REFGOV.HoldDays) || window.GovHoldDays; if(!f) return null; try { const h = f(r); return (h===null || h===undefined || isNaN(h)) ? null : Math.round(h*10)/10; } catch(e){ return null; } };
   const rec = (ev, type) => ({ ticket_id:String(ev.r.ticket_id||''), title:ev.r.title||'', engineer:ev.eng, tier:ev.tier, event:type, priority:ev.r.priority||'',
-    status:ev.r.current_status||'', logged:ev.cr, resolved:ev.rd, age: ev.r.age_days==null?'':ev.r.age_days, service: ev.r.service==='Incident Management'?'IM':'SR', customer: ev.r.customer_name || 'Unassigned' });
+    status:ev.r.current_status||'', logged:ev.cr, resolved:ev.rd, age: ev.r.age_days==null?'':ev.r.age_days, service: ev.r.service==='Incident Management'?'IM':'SR', customer: ev.r.customer_name || 'Unassigned', hold: holdOf(ev.r) });
   function records(c, opt){
     opt = opt || {};
     if(opt.type==='Waiting') return EV.A.filter(ev => ev.wfc && pass(ev) && (!opt.eng || ev.eng===opt.eng)).map(ev => rec(ev,'Waiting on Customer')).sort((x,y)=>(y.age||0)-(x.age||0));
-    if(opt.type==='Open') return EV.O.filter(ev => pass(ev) && (!opt.eng || ev.eng===opt.eng)).map(ev => rec(ev,'Open')).sort((x,y)=>(y.age||0)-(x.age||0));
+    if(opt.type==='Open') return EV.O.filter(ev => pass(ev) && (!opt.eng || ev.eng===opt.eng) && (opt.amin===undefined || (ev.r.age_days!=null && ev.r.age_days > opt.amin && ev.r.age_days <= opt.amax))).map(ev => rec(ev,'Open')).sort((x,y)=>(y.age||0)-(x.age||0));
     const from = opt.from || c.from, to = opt.to || c.to, out = [];
     const add = (arr, type) => arr.forEach(ev => { if(inRange(ev,from,to) && pass(ev) && (!opt.eng || ev.eng===opt.eng)) out.push(rec(ev,type)); });
     if(opt.type!=='Resolved') add(EV.A,'Logged'); if(opt.type!=='Logged') add(EV.R,'Resolved');
@@ -35843,14 +35911,14 @@ REFGOV.ExportWorkbook = exportWorkbook;
     ['Engineers', S.engs.size ? [...S.engs].join(', ') : 'All'],['Priority', S.prio||'All'],['Ticket status', S.stat.size ? [...S.stat].join(', ') : 'All'],['Customer', S.cust.size ? [...S.cust].join(', ') : 'All'],['Target (resolutions / working day)', S.target],['Ageing threshold (days)', S.age],['Waiting on Customer line','Tickets whose current status is Waiting on Customer, counted from their creation date'],
     ['Week starts', ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][S.ws]],['Eligible working days (Mon–Sat excl. holidays)', c.wd],
     ['Logged rule','Ticket creation date, once per ticket, credited to the current owner (same as Team / Engineer Volume trend)'],['Resolved rule','Resolve date (Closed / Resolved-Pending / Customer Agreed), cancel date (Cancel) or deferred date (Deferred), credited to the current owner; Duplicate excluded'],
-    ['Rating (0-10)','50% target achievement + 20% closure ratio + 20% consistency (working days with a closure) + 10% ageing (open tickets not older than 7 days); green >= 8, amber >= 6'],['Weekly Avg Closure','Resolved ÷ (eligible working days ÷ 6), i.e. average closures per Mon–Sat working week; coloured against target × 6'],['Waiting on Customer Cases','Tickets owned by the engineer whose current status is Waiting on Customer (snapshot, not limited by the date range)'],['Generated', new Date().toLocaleString()]];
+    ['Rating (0-10)','50% target achievement + 20% closure ratio + 20% consistency (working days with a closure) + 10% ageing (open tickets not older than 7 days); green >= 8, amber >= 6'],['Backlog Open 0-7 / 7-10 / 10-15 Days','Open tickets owned now (current snapshot) by ticket age in days: 0-7, over 7 up to 10, over 10 up to 15. Tickets older than 15 days are not in these three columns.'],['SLA columns / cards','Same 7 metrics and attribution as the By Team / Engineer SLA table. % = met ÷ applicable tickets; creation-based metrics are counted on the ticket creation date, resolution-based metrics on the resolved date (creation date when the ticket has no resolved date, as in Team / Engineer); the support-level filter does not apply. Green >= '+slaTarget()+'%, amber >= 90%, red below.'],['Hold Days','Days the ticket spent in Waiting on Customer, Under Observation, Under Sales Discussion and Resolved-Pending (open windows run to today) — same rule as the dashboard\'s Daily Review / Ticket Detail. Summary sheet: total of Hold Days across the engineer\'s open cases.'],['Weekly Avg Closure','Resolved ÷ (eligible working days ÷ 6), i.e. average closures per Mon–Sat working week; coloured against target × 6'],['Waiting on Customer Cases','Tickets owned by the engineer whose current status is Waiting on Customer (snapshot, not limited by the date range)'],['Delegated L1 -> L2 / L1 -> SME','L1 -> L2: ticket handed from the L1 owner to an L2 owner. L1 -> SME: handed directly from the L1 owner to an SME owner (no L2 stage). Counted on the hand-off date and credited to the L1 owner.'],['Generated', new Date().toLocaleString()]];
   function drill(title, recs, c, extra){
     const pairs = [['Records', recs.length]].concat(crit(c).slice(0,7)).concat(extra||[]);
     openDrilldown(title, recs, COLS, 'EngProductivity_'+title.replace(/[^A-Za-z0-9]+/g,'_').slice(0,50), pairs);
   }
   const ENG_COLS = [{key:'engineer',label:'Engineer'},{key:'team',label:'Team'},{key:'level',label:'Level'},{key:'logged',label:'Logged'},{key:'resolved',label:'Resolved'},{key:'net',label:'Net Movement'},
     {key:'target',label:'Target (total)'},{key:'ach',label:'Target Achievement %'},{key:'avg',label:'Avg / Working Day'},{key:'wavg',label:'Weekly Avg Closure'},{key:'zero',label:'Zero-Closure Days'},
-    {key:'rating',label:'Rating (0-10)'},{key:'open',label:'Open Cases'},{key:'old',label:'Open > 7 days'},{key:'wfc',label:'Waiting on Customer'}];
+    {key:'rating',label:'Rating (0-10)'},{key:'open',label:'Open Cases'},{key:'old',label:'Open > 7 days'},{key:'wfc',label:'Waiting on Customer'},{key:'hold',label:'Hold Days (open cases, total)'}];
   function cardDrill(t, c){
     const last = c.bs[c.bs.length-1], ex = (a, bb) => [['Interval', bb.label+' ('+fD(bb.start)+' – '+fD(bb.end)+')']].concat(a || []);
     if(t==='logged') return drill('Logged tickets', records(c,{type:'Logged'}), c, [['Logged',c.A],['IM',c.imA],['SR',c.srA]]);
@@ -35863,17 +35931,39 @@ REFGOV.ExportWorkbook = exportWorkbook;
       return drill('Peak resolved · '+best.label, records(c,{type:'Resolved', from:best.start<c.from?c.from:best.start, to:best.end>c.to?c.to:best.end}), c, ex([['Resolved',best.r]], best)); }
     if(t==='aged' && last) return drill('Open cases aged ≥ '+S.age+' days · '+last.label, agedRecs(c,last), c, [['As of', fD(new Date(last.ref))],['Note','Currently open cases only']]);
     if(t==='wfc' && last) return drill('Waiting on Customer · '+last.label, wfcRecs(c,last), c, [['As of', fD(new Date(last.ref))],['Note','Tickets whose current status is Waiting on Customer']]);
+    if(t.indexOf('sla:')===0){ const d = SLA_DEFS.find(x => x.k===t.slice(4)); return d && drillSla(d, slaRecs(c,d), c, [['Rule','Attribution as in the By Team / Engineer SLA table; level filter is not applied to SLA records']]); }
+    if(t==='dl2') return drillDeleg('Delegated L1 → L2', delegRecs(c,'L2'), c, [['Rule','Tickets handed from the L1 owner to an L2 owner, by hand-off date, credited to the L1 owner']]);
+    if(t==='dsme') return drillDeleg('Delegated L1 → SME', delegRecs(c,'SME'), c, [['Rule','Tickets handed directly from the L1 owner to an SME owner (no L2 stage), by hand-off date, credited to the L1 owner']]);
     if(t==='below'){
       let rows = c.list.filter(e => e.ach!==null && e.ach < 1), ttl = 'Engineers below target';
       if(!rows.length){ rows = c.list.slice(); ttl = 'Engineer target achievement (none below target)'; }
       rows.sort((x,y) => (x.ach===null)-(y.ach===null) || x.ach-y.ach);
       const recs = rows.map(e => ({engineer:e.name, team:e.team, level:e.level, logged:e.a, resolved:e.r, net:e.net, target:e.tgt, ach:e.ach===null?'N/A':+(e.ach*100).toFixed(1), avg:e.avg===null?'N/A':+e.avg.toFixed(2),
-        wavg:e.wavg===null?'N/A':+e.wavg.toFixed(2), zero:e.zero, rating:e.rating===null?'N/A':e.rating, open:e.open, old:e.old, wfc:e.wfcN}));
+        wavg:e.wavg===null?'N/A':+e.wavg.toFixed(2), zero:e.zero, rating:e.rating===null?'N/A':e.rating, open:e.open, old:e.old, wfc:e.wfcN, hold:e.holdOpen}));
       return openDrilldown(ttl, recs, ENG_COLS, 'EngProductivity_'+ttl.replace(/[^A-Za-z0-9]+/g,'_'), [['Engineers', recs.length],['Target / working day', S.target],['Eligible working days', c.wd]].concat(crit(c).slice(1,7)));
     }
   }
-  const SUMH = ['Engineer','Team','Level','Logged','Resolved','Net Movement','Closure/Logged Ratio','Avg Resolutions / Working Day','Eligible Working Days','Target (total)','Target Achievement %','Zero-Closure Days','Trend','Open Tickets (current)','Open > 7 days (current)','Overall RAG (Target)','Rating (0-10)','Weekly Avg Closure','Waiting on Customer Cases (current)'];
-  const sumRow = (e,c) => [e.name,e.team,e.level,e.a,e.r,e.net,e.ratio===null?'N/A':+e.ratio.toFixed(3),e.avg===null?'N/A':+e.avg.toFixed(2),c.wd,e.tgt,e.ach===null?'N/A':+(e.ach*100).toFixed(1),e.zero,e.trend,e.open,e.old,{G:'Green',A:'Amber',R:'Red',N:'N/A'}[e.rag], e.rating===null?'N/A':e.rating, e.wavg===null?'N/A':+e.wavg.toFixed(2), e.wfcN];
+  const DELEG_COLS = [{key:'ticket_id',label:'Ticket ID'},{key:'title',label:'Subject'},{key:'customer',label:'Customer'},{key:'l1',label:'L1 Owner (Delegated By)'},{key:'to',label:'Delegated To (Owner)'},
+    {key:'level',label:'Delegated To Level'},{key:'when',label:'Delegation Date'},{key:'priority',label:'Priority'},{key:'status',label:'Status'},{key:'logged',label:'Logged (Created) Date'},
+    {key:'resolved',label:'Resolved / Closed Date'},{key:'age',label:'Ticket Age (days)'},{key:'service',label:'Service'},{key:'hold',label:'Hold Days'}];
+  const delegRecs = (c, kind, opt) => { opt = opt || {}; const from = opt.from || c.from, to = opt.to || c.to;
+    return EV.D.filter(ev => (!kind || ev.kind===kind) && inRange(ev,from,to) && pass(ev) && (!opt.eng || ev.eng===opt.eng)).map(ev => ({ ticket_id:String(ev.r.ticket_id||''), title:ev.r.title||'', customer:ev.r.customer_name||'Unassigned',
+      l1:ev.eng, to:ev.to||'Unassigned', level:ev.kind, when:ev.t, priority:ev.r.priority||'', status:ev.r.current_status||'', logged:ev.cr, resolved:ev.rd, age:ev.r.age_days==null?'':ev.r.age_days,
+      service:ev.r.service==='Incident Management'?'IM':'SR', hold:holdOf(ev.r) })).sort((x,y)=>y.when-x.when); };
+  const drillDeleg = (title, recs, c, extra) => openDrilldown(title, recs, DELEG_COLS, 'EngProductivity_'+title.replace(/[^A-Za-z0-9]+/g,'_').slice(0,50), [['Records', recs.length]].concat(crit(c).slice(0,7)).concat(extra||[]));
+  const SLA_COLS = [{key:'ticket_id',label:'Ticket ID'},{key:'title',label:'Subject'},{key:'engineer',label:'SLA Owner (Engineer)'},{key:'customer',label:'Customer'},{key:'service',label:'Service'},
+    {key:'severity',label:'Severity'},{key:'priority',label:'Priority'},{key:'status',label:'Status'},{key:'metric',label:'SLA Metric'},{key:'result',label:'SLA Result'},{key:'when',label:'SLA Counted On'},
+    {key:'logged',label:'Logged (Created) Date'},{key:'resolved',label:'Resolved / Closed Date'},{key:'age',label:'Ticket Age (days)'},{key:'hold',label:'Hold Days'}];
+  const slaRecs = (c, d, opt) => { opt = opt || {}; const defs = d ? [d] : SLA_DEFS, out = [];
+    EV.S.forEach(ev => { if(d && ev.k!==d.k) return; if(!inRange(ev,c.from,c.to) || !pass({eng:ev.eng, tier:S.level, r:ev.r}) || (opt.eng && ev.eng!==opt.eng)) return;
+      const df = SLA_DEFS.find(x => x.k===ev.k); out.push({ ticket_id:String(ev.r.ticket_id||''), title:ev.r.title||'', engineer:ev.eng, customer:ev.r.customer_name||'Unassigned', service:ev.r.service==='Incident Management'?'IM':'SR',
+        severity:ev.r.severity||'', priority:ev.r.priority||'', status:ev.r.current_status||'', metric:df.full, result:ev.ok?'Met':'Breached', when:ev.t, logged:ev.cr, resolved:ev.rd, age:ev.r.age_days==null?'':ev.r.age_days, hold:holdOf(ev.r) }); });
+    return out.sort((x,y)=>(x.result>y.result)-(x.result<y.result) || y.when-x.when); };
+  const drillSla = (d, recs, c, extra) => { const ok = recs.filter(r=>r.result==='Met').length;
+    openDrilldown(d.full, recs, SLA_COLS, 'EngProductivity_SLA_'+d.k, [['Records', recs.length],['Met', ok],['Breached', recs.length-ok],['SLA %', recs.length ? Math.round(ok/recs.length*1000)/10+'%' : 'N/A'],['SLA target', slaTarget()+'%'],
+      ['Counted on', d.dt==='cr' ? 'Ticket creation date' : 'Ticket resolved date (creation date when the ticket has no resolved date)']].concat(crit(c).slice(1,7)).concat(extra||[])); };
+  const SUMH = ['Engineer','Team','Level','Logged','Resolved','Net Movement','Closure/Logged Ratio','Avg Resolutions / Working Day','Eligible Working Days','Target (total)','Target Achievement %','Zero-Closure Days','Trend','Open Tickets (current)','Backlog Open 0-7 Days','Backlog Open 7-10 Days','Backlog Open 10-15 Days','Overall RAG (Target)','Rating (0-10)','Weekly Avg Closure','Waiting on Customer Cases (current)','Delegated L1 -> L2','Delegated L1 -> SME','Hold Days (open cases, total)'].concat(SLA_DEFS.map(d => d.full+' %'), SLA_DEFS.map(d => d.full+' (met / applicable)'));
+  const sumRow = (e,c) => [e.name,e.team,e.level,e.a,e.r,e.net,e.ratio===null?'N/A':+e.ratio.toFixed(3),e.avg===null?'N/A':+e.avg.toFixed(2),c.wd,e.tgt,e.ach===null?'N/A':+(e.ach*100).toFixed(1),e.zero,e.trend,e.open,e.b1,e.b2,e.b3,{G:'Green',A:'Amber',R:'Red',N:'N/A'}[e.rag], e.rating===null?'N/A':e.rating, e.wavg===null?'N/A':+e.wavg.toFixed(2), e.wfcN, e.dl2, e.dsme, e.holdOpen].concat(SLA_DEFS.map(d => e[d.k]===null ? 'N/A' : e[d.k]), SLA_DEFS.map(d => e[d.k+'_n'].ok+'/'+e[d.k+'_n'].tot));
   const trendRows = (bs, byB) => bs.map(b => { const x = byB ? (byB[b.key]||{a:0,r:0}) : b; return [b.label+(b.partial?' (partial)':''), x.a, x.r, x.a-x.r].concat(!byB && b.aged!==undefined ? [b.aged, b.wfc] : []); });
   const tickRows = recs => recs.map(r => COLS.map(c => r[c.key]));
   // One complete workbook (RAG-coloured): Summary, Trend, Engineer Trend, Ticket Details (all filtered records), Filter Criteria.
@@ -35883,7 +35973,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
     const sRows = c.list.map(e => { const r = sumRow(e,c), avgT = S.target ? (e.avg===null?null:e.avg/S.target) : null;
       sc.push([null,null,null,null,null, e.net>0?'RED':e.net<0?'GREEN':'AMBER', rag3(e.ratio,1,.8), rag3(avgT,1,.8), null,null, rag3(e.ach,1,.8),
         e.zero===0?'GREEN':e.zero<=Math.max(1,Math.round(c.wd*.1))?'AMBER':'RED', e.trend==='▲'?'GREEN':e.trend==='▼'?'RED':e.trend==='▬'?'AMBER':null,
-        null, e.old===0?'GREEN':e.old<=3?'AMBER':'RED', {G:'GREEN',A:'AMBER',R:'RED'}[e.rag]||null, e.rating===null?null:e.rating>=8?'GREEN':e.rating>=6?'AMBER':'RED', rag3(avgT,1,.8), null]); return r; });
+        null, null, e.b2>0?'AMBER':null, e.b3>0?'RED':null, {G:'GREEN',A:'AMBER',R:'RED'}[e.rag]||null, e.rating===null?null:e.rating>=8?'GREEN':e.rating>=6?'AMBER':'RED', rag3(avgT,1,.8), null, null, null, null].concat(SLA_DEFS.map(d => ({G:'GREEN',A:'AMBER',R:'RED'}[slaK(e[d.k])] || null)), SLA_DEFS.map(() => null))); return r; });
     const trRows = trendRows(c.bs); trRows.forEach((r,i) => tc.push([null,null,null, r[3]>0?'RED':r[3]<0?'GREEN':'AMBER', r[4]>0?'RED':null, null]));
     const etRows = []; c.list.forEach(e => c.bs.forEach(b => { const x = e.byB[b.key]||{a:0,r:0}; etRows.push([e.name, b.label+(b.partial?' (partial)':''), x.a, x.r, x.a-x.r]); ec.push([null,null,null,null, x.a-x.r>0?'RED':x.a-x.r<0?'GREEN':'AMBER']); }));
     const recs = records(c), dRows = tickRows(recs), dc = recs.map(r => [undefined,undefined,undefined,undefined, r.event==='Resolved'?'GREEN':null, undefined,undefined,undefined,undefined,
@@ -35893,6 +35983,8 @@ REFGOV.ExportWorkbook = exportWorkbook;
       {name:'Trend', headers:['Interval','Logged','Resolved','Net Movement','Open cases aged >= '+S.age+' days (as of interval end)','Waiting on Customer cases (as of interval end)'], rows:trRows, cellColors:tc},
       {name:'Engineer Trend', headers:['Engineer','Interval ('+per+')','Logged','Resolved','Net Movement'], rows:etRows, cellColors:ec},
       {name:'Ticket Details', headers:COLS.map(x=>x.label), rows:dRows, cellColors:dc},
+      {name:'Delegations', headers:DELEG_COLS.map(x=>x.label), rows:delegRecs(c).map(r => DELEG_COLS.map(x => r[x.key]))},
+      {name:'SLA Details', headers:SLA_COLS.map(x=>x.label), rows:slaRecs(c).map(r => SLA_COLS.map(x => r[x.key]))},
       {name:'Filter Criteria', headers:['Filter','Value'], rows:crit(c).concat([['RAG key','Net: red = backlog growing, green = shrinking · Ratio/Target: green ≥100%, amber ≥80%, red <80% · Age: green ≤3d, amber ≤7d, red >7d · Zero-closure days: green 0']])}],
       'EngProductivity_Full_'+dk(c.from)+'_'+dk(c.to)); }
   function exportEng(name){
@@ -35900,7 +35992,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
     const bs = buckets(c.from, c.to, per), idx = {}; bs.forEach(b=>idx[b.key]=b);
     const byB = {}; recs.forEach(r => { const d = r.event==='Logged'?r.logged:r.resolved; const k = bkey(d, per); (byB[k]||(byB[k]={a:0,r:0}))[r.event==='Logged'?'a':'r']++; });
     exportWorkbookRAG([{name:'Summary', headers:SUMH, rows:[sumRow(e,c)]},{name:'Trend', headers:['Interval','Logged','Resolved','Net Movement'], rows:trendRows(bs,byB)},
-      {name:'Ticket Details', headers:COLS.map(x=>x.label), rows:tickRows(recs)},{name:'Filter Criteria', headers:['Filter','Value'], rows:crit(c)}],
+      {name:'Ticket Details', headers:COLS.map(x=>x.label), rows:tickRows(recs)},{name:'Delegations', headers:DELEG_COLS.map(x=>x.label), rows:delegRecs(c,null,{eng:name}).map(r => DELEG_COLS.map(x => r[x.key]))},{name:'SLA Details', headers:SLA_COLS.map(x=>x.label), rows:slaRecs(c,null,{eng:name}).map(r => SLA_COLS.map(x => r[x.key]))},{name:'Filter Criteria', headers:['Filter','Value'], rows:crit(c)}],
       'EngProductivity_'+name.replace(/[^A-Za-z0-9]+/g,'_')+'_'+dk(c.from)+'_'+dk(c.to)); }
 
   // ---------- UI ----------
@@ -35924,12 +36016,18 @@ REFGOV.ExportWorkbook = exportWorkbook;
    </div>
    <div class="ep-note"><b>How to read this:</b> <i>Logged</i> counts each ticket once, by its creation date, for the ticket’s current owner. <i>Resolved</i> counts each ticket once, by its resolve date (Closed / Resolved-Pending / Customer Agreed), cancel date (Cancel) or deferred date (Deferred). This is the same rule as Team / Engineer → Volume trend. They are independent datasets, so a ticket logged and resolved in the same period appears in both. Working days = Mon–Sat excluding holidays; future dates are excluded and the latest interval is marked partial.</div>
    <div class="ep-kpis" id="epKpis"></div>
-   <div class="ep-card"><div class="ep-row"><h3 id="epChartTitle">Trend</h3><div class="ep-row"><div class="cust-toolbar" id="epMetric" style="margin:0"><button class="seg-btn" data-m="both">Both</button><button class="seg-btn" data-m="logged">Logged</button><button class="seg-btn" data-m="resolved">Resolved</button></div>
-     <label class="ep-chk"><input type="checkbox" id="epNet" checked> Net movement</label><label class="ep-chk"><input type="checkbox" id="epAged" checked> Open cases aged line</label><label class="ep-chk"><input type="checkbox" id="epWfc" checked> Waiting on Customer line</label></div></div><div class="ep-cstats" id="epChartStats"></div><div class="ep-hint">Select a bar or point to drill down · red date labels are non-working days (Sunday / holiday) and their bars are shaded lighter</div><div class="ep-cscroll"><div id="epChartBox" style="position:relative;height:410px"><canvas id="epChart"></canvas></div></div></div>
-   <div class="ep-card"><div class="ep-row"><h3>Engineer summary</h3><div class="ep-row"><input type="search" id="epSearch" placeholder="Search engineer / team…"><button class="export-btn" id="epExportAll" title="One workbook: summary, trends, every ticket, filters — with RAG colours">⬇ Export Excel (Full, RAG)</button></div></div>
-     <div class="ep-chips" id="epChips"></div><div class="ep-hint">Select an engineer to expand their trend and ticket details. Hover a coloured cell for its rule.</div><div class="table-scroll"><table class="ep-t" id="epTable"></table></div><div class="ep-pager" id="epPager"></div></div>
+   <div class="ep-card" id="epTrendCard"><div class="ep-row"><h3 id="epChartTitle">Trend</h3><div class="ep-row ep-nocap"><button class="export-btn" id="epShotTrend" title="Download the trend heading, cards and chart as one PNG image">📷 Capture image</button><div class="cust-toolbar" id="epMetric" style="margin:0"><button class="seg-btn" data-m="both">Both</button><button class="seg-btn" data-m="logged">Logged</button><button class="seg-btn" data-m="resolved">Resolved</button></div>
+     <label class="ep-chk"><input type="checkbox" id="epNet" checked> Net movement</label><label class="ep-chk"><input type="checkbox" id="epAged" checked> Open cases aged line</label><label class="ep-chk"><input type="checkbox" id="epWfc" checked> Waiting on Customer line</label></div></div><div class="ep-cstats" id="epChartStats"></div><div class="ep-hint ep-nocap">Select a bar or point to drill down · red date labels are non-working days (Sunday / holiday) and their bars are shaded lighter</div><div class="ep-cscroll"><div id="epChartBox" style="position:relative;height:410px"><canvas id="epChart"></canvas></div></div></div>
+   <div class="ep-card" id="epEngCard"><div class="ep-row"><h3>Engineer summary</h3><div class="ep-row ep-nocap"><button class="export-btn" id="epShotEng" title="Download the full engineer summary (all columns and all rows) as one PNG image">📷 Capture image</button><input type="search" id="epSearch" placeholder="Search engineer / team…"><details class="ep-dd ep-dd-r" id="epColDD"><summary id="epColSum">☰ Columns</summary><div id="epColList"></div></details><button class="export-btn" id="epExportAll" title="One workbook: summary, trends, every ticket, filters — with RAG colours">⬇ Export Excel (Full, RAG)</button></div></div>
+     <div class="ep-cstats ep-slastrip" id="epSla"></div><div class="ep-chips" id="epChips"></div><div class="ep-hint ep-nocap">Select an engineer to expand their trend and ticket details. Hover a coloured cell for its rule.</div><div class="table-scroll"><table class="ep-t" id="epTable"></table></div><div class="ep-pager ep-nocap" id="epPager"></div></div>
   </div>`;
-  const COLSD = [['name','Engineer',0],['rating','Rating (0–10)',1],['team','Team / Level',0],['a','Logged',1],['r','Resolved',1],['net','Net',1],['ratio','Closure ratio',1],['avg','Avg / day',1],['wavg','Weekly avg closure',1],['ach','Target ach.',1],['zero','Zero-closure days',1],['trend','Trend',0],['open','Backlog (open · >7d)',1],['wfcN','Waiting on Customer',1]];
+  const COLSD = [['name','Engineer',0],['rating','Rating (0–10)',1],['team','Team / Level',0],['a','Logged',1],['r','Resolved',1],['open','Open Cases',1],['net','Net',1],['ratio','Closure ratio',1],['avg','Avg / day',1],['wavg','Weekly avg closure',1],['ach','Target ach.',1],['zero','Zero-closure days',1],['trend','Trend',0],['b1','Backlog Open 0-7 Days',1],['b2','Backlog Open 7-10 Days',1],['b3','Backlog Open 10-15 Days',1],['wfcN','Waiting on Customer',1],['dl2','L1 → L2',1],['dsme','L1 → SME',1]].concat(SLA_DEFS.map(d => [d.k, d.short, 1, d.full+' (% met · click the cell for tickets)']));
+  const colVisible = h => h[0]==='name' || !S.hide.has(h[0]);
+  function buildColMenu(){
+    $('epColList').innerHTML = '<div class="ep-ddact"><a data-a="all">Select all</a> · <a data-a="none">Clear all</a></div>'+COLSD.map(h => '<label><input type="checkbox" data-col="'+h[0]+'"'+(h[0]==='name'?' checked disabled':(S.hide.has(h[0])?'':' checked'))+'> '+esc(h[1])+'</label>').join('');
+    $('epColSum').textContent = '☰ Columns ('+COLSD.filter(colVisible).length+'/'+COLSD.length+')';
+  }
+  const saveHide = () => { try { localStorage.setItem(HK, JSON.stringify([...S.hide])); } catch(e){} };
   const RAGN = {G:'Green',A:'Amber',R:'Red',N:'N/A'};
   const r3 = (v,g,a) => v===null||v===undefined ? 'N' : v>=g ? 'G' : v>=a ? 'A' : 'R';
   const pill = (k, txt, tip) => '<span class="rg rg-'+k+'" title="'+tip+'">'+txt+'</span>';
@@ -35986,7 +36084,8 @@ REFGOV.ExportWorkbook = exportWorkbook;
     const chip = (l, v, cls, sub, key) => '<div class="ep-cs '+(cls||'')+'" data-s="'+key+'" title="Click to see the underlying records and export to Excel"><span>'+l+'</span><b>'+v+'</b>'+(sub ? '<i>'+esc(sub)+'</i>' : '')+'</div>';
     $('epChartStats').innerHTML = chip('Logged', c.A, 'lg', '', 'logged') + chip('Resolved', c.R, 'rs', '', 'resolved') + chip('Net', sgn(c.A-c.R), c.A-c.R>0?'bad':c.A-c.R<0?'good':'', '', 'net') +
       chip('Avg resolved / '+({daily:'day',weekly:'week',monthly:'month'}[S.period]), n ? fmtN(c.R/n) : 'N/A', '', '', 'avg') + (best && best.r>0 ? chip('Peak resolved', best.r, 'rs', best.label, 'peak') : '') +
-      chip('Open ≥ '+S.age+'d now', last.aged||0, 'ag', last.ref ? 'as of '+fD(new Date(last.ref)) : '', 'aged') + chip('Waiting on Customer', last.wfc||0, 'wf', last.ref ? 'as of '+fD(new Date(last.ref)) : '', 'wfc');
+      chip('Open ≥ '+S.age+'d now', last.aged||0, 'ag', last.ref ? 'as of '+fD(new Date(last.ref)) : '', 'aged') + chip('Waiting on Customer', last.wfc||0, 'wf', last.ref ? 'as of '+fD(new Date(last.ref)) : '', 'wfc') +
+      chip('Delegated L1 → L2', c.dl2, 'dg', 'in selected range', 'dl2') + chip('Delegated L1 → SME', c.dsme, 'dg', 'direct · in selected range', 'dsme');
     if(chart) chart.destroy(); if(typeof Chart==='undefined') return;
     $('epChartBox').style.minWidth = n > 45 ? (n*30)+'px' : '';
     const dense = n > 20, vdense = n > 45, nw = b => S.period==='daily' && !isWork(b.start), WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -36025,34 +36124,49 @@ REFGOV.ExportWorkbook = exportWorkbook;
   }
   function tableView(c){
     const q = S.q.toLowerCase(), k = S.sort.k, d = S.sort.dir, cnt = {G:0,A:0,R:0,N:0}; c.list.forEach(e => cnt[e.rag]++);
+    // SLA cards (overall compliance for the current filters; click = tickets + Excel)
+    $('epSla').innerHTML = SLA_DEFS.map(df => { const t = c.sla[df.k], pct = t.tot ? Math.round(t.ok/t.tot*1000)/10 : null, kk = slaK(pct);
+      return '<div class="ep-cs sla-'+kk+'" data-sla="'+df.k+'" title="'+esc(df.full)+' — click to see the tickets and export to Excel"><span>'+esc(df.short)+'</span><b>'+(pct===null?'N/A':pct+'%')+'</b><i>'+(t.tot ? t.ok+' of '+t.tot+' met' : 'no applicable tickets')+'</i></div>'; }).join('');
     $('epChips').innerHTML = '<span class="ep-chiplab">Target RAG</span>'+[['','All',c.list.length],['R','Red',cnt.R],['A','Amber',cnt.A],['G','Green',cnt.G]].map(x =>
       '<button class="ep-chip'+(S.rag===x[0]?' on':'')+' c-'+(x[0]||'all')+'" data-rag="'+x[0]+'">'+x[1]+' <b>'+x[2]+'</b></button>').join('')+
-      '<span class="ep-legend">Green ≥ 100% of target · Amber 80–99% · Red &lt; 80% &nbsp;|&nbsp; Net: red = backlog growing, green = shrinking &nbsp;|&nbsp; Rating 0–10: 50% target + 20% closure ratio + 20% consistency + 10% ageing (green ≥ 8, amber ≥ 6)</span>';
+      '<span class="ep-legend">Green ≥ 100% of target · Amber 80–99% · Red &lt; 80% &nbsp;|&nbsp; Net: red = backlog growing, green = shrinking &nbsp;|&nbsp; Rating 0–10: 50% target + 20% closure ratio + 20% consistency + 10% ageing (green ≥ 8, amber ≥ 6) &nbsp;|&nbsp; SLA %: green ≥ '+slaTarget()+'%, amber ≥ 90%, red below</span>';
     let rows = c.list.filter(e => (!S.rag || e.rag===S.rag) && (!q || (e.name+' '+e.team+' '+e.level).toLowerCase().includes(q)));
     rows.sort((x,y) => { const a = x[k], b = y[k]; if(a===null||a===undefined) return 1; if(b===null||b===undefined) return -1; return (typeof a==='string' ? a.localeCompare(b) : a-b)*d; });
-    const PS = 10, pages = Math.max(1, Math.ceil(rows.length/PS)); S.page = Math.min(S.page, pages);
-    const zl = Math.max(1, Math.round(c.wd*.1));
-    const head = '<thead><tr>'+COLSD.map(h=>'<th data-k="'+h[0]+'" class="'+(h[2]?'n':'')+(S.sort.k===h[0]?' sorted':'')+'">'+h[1]+(S.sort.k===h[0]?(S.sort.dir>0?' ▲':' ▼'):'')+'</th>').join('')+'<th></th></tr></thead>';
+    const PS = S.capAll ? 1e9 : 10, pages = Math.max(1, Math.ceil(rows.length/PS)); S.page = Math.min(S.page, pages);
+    const zl = Math.max(1, Math.round(c.wd*.1)), cols = COLSD.filter(colVisible), span = cols.length+1;
+    $('epTable').style.minWidth = Math.max(640, cols.length*108+80)+'px';
+    const head = '<thead><tr>'+cols.map(h=>'<th data-k="'+h[0]+'" class="'+(h[2]?'n':'')+(S.sort.k===h[0]?' sorted':'')+'" title="'+esc(h[3]||h[1])+'">'+h[1]+(S.sort.k===h[0]?(S.sort.dir>0?' ▲':' ▼'):'')+'</th>').join('')+'<th class="ep-act"></th></tr></thead>';
+    const link = (attrs, inner, tip) => '<a class="ep-w" '+attrs+' title="'+tip+'">'+inner+'</a>';
     const body = rows.slice((S.page-1)*PS, S.page*PS).map(e => {
       const open = S.open===e.name, avgT = S.target && e.avg!==null ? e.avg/S.target : null;
-      const netK = e.net>0?'R':e.net<0?'G':'A', zK = e.zero===0?'G':e.zero<=zl?'A':'R', trK = e.trend==='▲'?'G':e.trend==='▼'?'R':e.trend==='▬'?'A':'N', bK = !e.open?'N':e.old===0?'G':e.old<=3?'A':'R';
-      const achCell = e.ach===null ? pill('N','N/A','No target set') : '<span class="rg rg-bar rg-'+e.rag+'" style="--w:'+Math.min(100,Math.round(e.ach*100))+'%" title="'+e.r+' resolved vs target '+e.tgt+' ('+S.target+' × '+c.wd+' working days)">'+fmtP(e.ach)+'</span>';
-      let h = '<tr class="ep-er row-'+e.rag+(open?' open':'')+'" data-e="'+esc(e.name)+'"><td><b>'+(open?'▾ ':'▸ ')+esc(e.name)+'</b></td>'+
-        '<td class="n">'+(e.rating===null ? pill('N','N/A','No target set') : pill(e.rating>=8?'G':e.rating>=6?'A':'R', '<b>'+e.rating.toFixed(1)+'</b> / 10', 'Rating: 50% target ('+Math.round(e.rParts.t*100)+'%) + 20% closure ratio ('+Math.round(e.rParts.q*100)+'%) + 20% consistency ('+Math.round(e.rParts.k*100)+'%) + 10% ageing ('+Math.round(e.rParts.g*100)+'%)'))+'</td><td>'+esc(e.team)+' · '+esc(e.level)+'</td><td class="n">'+e.a+'</td><td class="n">'+e.r+'</td>'+
-        '<td class="n">'+pill(netK, sgn(e.net), e.net>0?'Backlog growing: more logged than resolved':e.net<0?'Backlog shrinking':'Balanced')+'</td>'+
-        '<td class="n">'+(e.ratio===null?pill('N','N/A','Nothing logged in range'):pill(r3(e.ratio,1,.8), fmtP(e.ratio), 'Resolved ÷ Logged'))+'</td>'+
-        '<td class="n">'+(avgT===null?pill('N',fmtN(e.avg),'No target'):pill(r3(avgT,1,.8), fmtN(e.avg), 'Target '+S.target+' per working day'))+'</td>'+
-        '<td class="n">'+(e.wavg===null ? pill('N','N/A','No working days') : pill(avgT===null?'N':r3(avgT,1,.8), fmtN(e.wavg), 'Resolved ÷ (eligible working days ÷ 6) · weekly target '+(S.target*6)))+'</td>'+
-        '<td class="n">'+achCell+'</td>'+
-        '<td class="n">'+pill(zK, e.zero, 'Working days with no resolutions (of '+c.wd+')')+'</td>'+
-        '<td>'+pill(trK, e.trend, 'Latest complete interval vs the one before')+'</td>'+
-        '<td class="n">'+(e.open ? pill(bK, e.open+' · '+e.old, 'Open tickets owned now · older than 7 days (current snapshot)') : pill('N','—','No open tickets'))+'</td>'+
-        '<td class="n">'+(e.wfcN ? '<a class="ep-w" data-w="'+esc(e.name)+'" title="Click to list tickets Waiting on Customer (current status)">'+pill('W', e.wfcN, 'Currently Waiting on Customer')+'</a>' : pill('N','0','No tickets waiting on the customer'))+'</td>'+
-        '<td><button class="ep-x" data-x="'+esc(e.name)+'" title="Export this engineer to Excel">⬇</button></td></tr>';
-      if(open) h += '<tr class="ep-exp"><td colspan="15">'+expand(e,c)+'</td></tr>';
+      const netK = e.net>0?'R':e.net<0?'G':'A', zK = e.zero===0?'G':e.zero<=zl?'A':'R', trK = e.trend==='▲'?'G':e.trend==='▼'?'R':e.trend==='▬'?'A':'N';
+      const nm = esc(e.name);
+      const CELL = {
+        name: () => '<td><b>'+(open?'▾ ':'▸ ')+nm+'</b></td>',
+        rating: () => '<td class="n">'+(e.rating===null ? pill('N','N/A','No target set') : pill(e.rating>=8?'G':e.rating>=6?'A':'R', '<b>'+e.rating.toFixed(1)+'</b> / 10', 'Rating: 50% target ('+Math.round(e.rParts.t*100)+'%) + 20% closure ratio ('+Math.round(e.rParts.q*100)+'%) + 20% consistency ('+Math.round(e.rParts.k*100)+'%) + 10% ageing ('+Math.round(e.rParts.g*100)+'%)'))+'</td>',
+        team: () => '<td>'+esc(e.team)+' · '+esc(e.level)+'</td>',
+        a: () => '<td class="n">'+e.a+'</td>', r: () => '<td class="n">'+e.r+'</td>',
+        open: () => '<td class="n">'+(e.open ? link('data-oc="'+nm+'"', pill('W', e.open, 'Open cases'), 'Open cases owned now (current snapshot, filters applied). Click to list them.') : pill('N','0','No open cases'))+'</td>',
+        net: () => '<td class="n">'+pill(netK, sgn(e.net), e.net>0?'Backlog growing: more logged than resolved':e.net<0?'Backlog shrinking':'Balanced')+'</td>',
+        ratio: () => '<td class="n">'+(e.ratio===null?pill('N','N/A','Nothing logged in range'):pill(r3(e.ratio,1,.8), fmtP(e.ratio), 'Resolved ÷ Logged'))+'</td>',
+        avg: () => '<td class="n">'+(avgT===null?pill('N',fmtN(e.avg),'No target'):pill(r3(avgT,1,.8), fmtN(e.avg), 'Target '+S.target+' per working day'))+'</td>',
+        wavg: () => '<td class="n">'+(e.wavg===null ? pill('N','N/A','No working days') : pill(avgT===null?'N':r3(avgT,1,.8), fmtN(e.wavg), 'Resolved ÷ (eligible working days ÷ 6) · weekly target '+(S.target*6)))+'</td>',
+        ach: () => '<td class="n">'+(e.ach===null ? pill('N','N/A','No target set') : '<span class="rg rg-bar rg-'+e.rag+'" style="--w:'+Math.min(100,Math.round(e.ach*100))+'%" title="'+e.r+' resolved vs target '+e.tgt+' ('+S.target+' × '+c.wd+' working days)">'+fmtP(e.ach)+'</span>')+'</td>',
+        zero: () => '<td class="n">'+pill(zK, e.zero, 'Working days with no resolutions (of '+c.wd+')')+'</td>',
+        trend: () => '<td>'+pill(trK, e.trend, 'Latest complete interval vs the one before')+'</td>',
+        wfcN: () => '<td class="n">'+(e.wfcN ? link('data-w="'+nm+'"', pill('W', e.wfcN, 'Currently Waiting on Customer'), 'Click to list tickets Waiting on Customer (current status)') : pill('N','0','No tickets waiting on the customer'))+'</td>',
+        dl2: () => '<td class="n">'+(e.dl2 ? link('data-dg="'+nm+'" data-dk="L2"', pill('D', e.dl2, 'Delegated L1 → L2'), 'Click to list tickets this L1 owner delegated to L2') : pill('N','0','None delegated to L2'))+'</td>',
+        dsme: () => '<td class="n">'+(e.dsme ? link('data-dg="'+nm+'" data-dk="SME"', pill('D', e.dsme, 'Delegated L1 → SME'), 'Click to list tickets this L1 owner delegated directly to SME') : pill('N','0','None delegated to SME'))+'</td>'
+      };
+      [[1,'G','0-7'],[2,'A','7-10'],[3,'R','10-15']].forEach(x => { CELL['b'+x[0]] = () => '<td class="n">'+(e['b'+x[0]] ? link('data-bk="'+nm+'" data-b="'+x[0]+'"', pill(x[1], e['b'+x[0]], 'Open '+x[2]+' days'), 'Open tickets owned now that are '+x[2]+' days old (current snapshot). Click to list them.') : pill('N','0','No open tickets in this age window'))+'</td>'; });
+      SLA_DEFS.forEach(df => { CELL[df.k] = () => { const y = e[df.k+'_n']; return '<td class="n">'+(y.tot ? link('data-sl="'+nm+'" data-sk="'+df.k+'"', pill(slaK(e[df.k]), e[df.k]+'%', df.full+': '+y.ok+' met of '+y.tot), 'Click to list the tickets behind this SLA') : pill('N','N/A','No applicable tickets in range'))+'</td>'; }; });
+      let h = '<tr class="ep-er row-'+e.rag+(open?' open':'')+'" data-e="'+nm+'">'+cols.map(x => CELL[x[0]]()).join('')+
+        '<td class="ep-act"><button class="ep-x" data-x="'+nm+'" title="Export this engineer to Excel">⬇</button></td></tr>';
+      if(open) h += '<tr class="ep-exp"><td colspan="'+span+'">'+expand(e,c)+'</td></tr>';
       return h; }).join('');
-    $('epTable').innerHTML = head + '<tbody>'+(body || '<tr><td colspan="15" class="empty">No engineers match the current filters.</td></tr>')+'</tbody>';
+    $('epTable').innerHTML = head + '<tbody>'+(body || '<tr><td colspan="'+span+'" class="empty">No engineers match the current filters.</td></tr>')+'</tbody>';
     $('epPager').innerHTML = rows.length+' engineers · <button data-pg="-1" '+(S.page<=1?'disabled':'')+'>‹ Prev</button> Page '+S.page+' / '+pages+' <button data-pg="1" '+(S.page>=pages?'disabled':'')+'>Next ›</button>';
+    $('epColSum').textContent = '☰ Columns ('+cols.length+'/'+COLSD.length+')';
   }
   function expand(e,c){
     const per = S.ePeriod || S.period, bs = buckets(c.from, c.to, per), idx = {}; bs.forEach(b=>idx[b.key]=b);
@@ -36070,6 +36184,20 @@ REFGOV.ExportWorkbook = exportWorkbook;
     $('epNo').style.display='none'; $('epWrap').style.display='block';
     const c = LAST = compute(); kpis(c); drawChart(c); tableView(c);
   }
+  // Image capture (html2canvas, already loaded by the dashboard): renders the WHOLE section - heading, cards, chart / every column and every filtered row -
+  // regardless of the horizontal scroll position. Controls, buttons and the paging bar are left out of the picture.
+  function capture(id, name){
+    const el = $(id); if(!el) return Promise.resolve();
+    if(!window.html2canvas){ alert('Image capture needs the html2canvas library, which could not be loaded (check your internet connection).'); return Promise.resolve(); }
+    const need = Math.max(el.scrollWidth, ...[...el.querySelectorAll('.ep-cscroll,.table-scroll')].map(x => x.scrollWidth + 34));
+    return window.html2canvas(el, {scale:2, backgroundColor:'#ffffff', width:need, windowWidth:Math.max(need+40, document.documentElement.clientWidth), useCORS:true,
+      onclone: doc => { const c = doc.getElementById(id); c.classList.add('ep-capturing'); c.style.width = need+'px';
+        c.querySelectorAll('.ep-cscroll,.table-scroll').forEach(x => { x.style.overflow = 'visible'; x.style.maxHeight = 'none'; });
+        c.querySelectorAll('th,td').forEach(x => { x.style.position = 'static'; }); }
+    }).then(canvas => canvas.toBlob(blob => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png'))
+      .catch(err => { console.error(err); alert('Could not create the image: '+(err && err.message || err)); });
+  }
+  const stamp = () => dk(LAST.from)+'_'+dk(LAST.to);
   function apply(){ readFilters(); S.page = 1; S.open = null; render(); syncInputs(); }
 
   function wire(){
@@ -36087,11 +36215,20 @@ REFGOV.ExportWorkbook = exportWorkbook;
     $('epCustList').addEventListener('input', e => { if(!e.target.classList.contains('ep-ddsearch')) return; const q = e.target.value.toLowerCase(); document.querySelectorAll('#epCustList label').forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? '' : 'none'); });
     $('epSearch').addEventListener('input', e => { clearTimeout(tq); tq = setTimeout(() => { S.q = e.target.value; S.page = 1; tableView(LAST); }, 250); });
     $('epExportAll').onclick = exportAll;
+    $('epColList').addEventListener('click', e => { const a = e.target.dataset.a; if(!a) return; S.hide = a==='all' ? new Set() : new Set(COLSD.filter(h => h[0]!=='name').map(h => h[0])); saveHide(); buildColMenu(); tableView(LAST); });
+    $('epColList').addEventListener('change', e => { const k = e.target.dataset.col; if(!k) return; e.target.checked ? S.hide.delete(k) : S.hide.add(k); saveHide(); $('epColSum').textContent = '☰ Columns ('+COLSD.filter(colVisible).length+'/'+COLSD.length+')'; tableView(LAST); });
+    $('epSla').addEventListener('click', e => { const k = e.target.closest('[data-sla]'); if(k) cardDrill('sla:'+k.dataset.sla, LAST); });
+    $('epShotTrend').onclick = () => capture('epTrendCard', 'EngProductivity_Trend_'+S.period+'_'+stamp()+'.png');
+    $('epShotEng').onclick = () => { S.capAll = true; tableView(LAST); capture('epEngCard', 'EngProductivity_EngineerSummary_'+stamp()+'.png').then(() => { S.capAll = false; tableView(LAST); }); };
     $('epKpis').addEventListener('click', e => { const k = e.target.closest('[data-k]'); if(k) cardDrill(k.dataset.k, LAST); });
     $('epChartStats').addEventListener('click', e => { const k = e.target.closest('[data-s]'); if(k) cardDrill(k.dataset.s, LAST); });
     $('epTable').addEventListener('click', e => { const c = LAST;
       const th = e.target.closest('th[data-k]'); if(th){ const k = th.dataset.k; S.sort = {k, dir: S.sort.k===k ? -S.sort.dir : (k==='name'||k==='team'?1:-1)}; tableView(c); return; }
       const x = e.target.closest('[data-x]'); if(x){ exportEng(x.dataset.x); return; }
+      const sl = e.target.closest('[data-sl]'); if(sl){ const df = SLA_DEFS.find(z => z.k===sl.dataset.sk); drillSla(df, slaRecs(c, df, {eng:sl.dataset.sl}), c, [['Engineer', sl.dataset.sl]]); return; }
+      const oc = e.target.closest('[data-oc]'); if(oc){ drill(oc.dataset.oc+' · Open cases', records(c,{type:'Open', eng:oc.dataset.oc}), c, [['Engineer', oc.dataset.oc],['Note','Current snapshot of open tickets, not limited by the date range']]); return; }
+      const bk = e.target.closest('[data-bk]'); if(bk){ const B = {1:[-1,7,'0-7'],2:[7,10,'7-10'],3:[10,15,'10-15']}[bk.dataset.b]; drill(bk.dataset.bk+' · Open '+B[2]+' days', records(c,{type:'Open', eng:bk.dataset.bk, amin:B[0], amax:B[1]}), c, [['Engineer', bk.dataset.bk],['Age window', B[2]+' days'],['Note','Current snapshot of open tickets, not limited by the date range']]); return; }
+      const dg = e.target.closest('[data-dg]'); if(dg){ const k = dg.dataset.dk; drillDeleg(dg.dataset.dg+' · Delegated L1 → '+k, delegRecs(c,k,{eng:dg.dataset.dg}), c, [['L1 owner', dg.dataset.dg]]); return; }
       const wv = e.target.closest('[data-w]'); if(wv){ drill(wv.dataset.w+' · Waiting on Customer', records(c,{eng:wv.dataset.w, type:'Waiting'}), c, [['Engineer', wv.dataset.w],['Note','Current snapshot: tickets whose status is Waiting on Customer now']]); return; }
       const dd = e.target.closest('[data-d]'); if(dd){ const en = S.open, eg = c.list.find(z=>z.name===en), b = eg._bs[+dd.dataset.d];
         drill(en+' · '+dd.dataset.t+' · '+b.label, records(c,{eng:en, type:dd.dataset.t, from:b.start<c.from?c.from:b.start, to:b.end>c.to?c.to:b.end}), c, [['Engineer', en],['Interval', b.label]]); return; }
@@ -36104,7 +36241,7 @@ REFGOV.ExportWorkbook = exportWorkbook;
   }
   window.renderEngProd = function(){
     const sec = $('view-engprod'); if(!sec) return;
-    if(!sec.dataset.built){ sec.dataset.built = '1'; sec.innerHTML = HTML; wire(); S.src = null; EV = null; }
+    if(!sec.dataset.built){ sec.dataset.built = '1'; try { S.hide = new Set(JSON.parse(localStorage.getItem(HK) || '[]')); } catch(e){ S.hide = new Set(); } sec.innerHTML = HTML; wire(); buildColMenu(); S.src = null; EV = null; }
     if(!(DATA && DATA.gov_rows)){ render(); return; }
     const fresh = !EV || S.src !== DATA.gov_rows; build();
     if(fresh || !S.from){ fillFilters(); defaults(); }
