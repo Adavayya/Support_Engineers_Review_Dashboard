@@ -2811,6 +2811,61 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
   #scoreOverlay .modal-body{padding:18px 22px;overflow:auto;}
   #scoreOverlay .modal-footer{border-top:1px solid var(--line);padding:14px 22px;display:flex;align-items:center;gap:10px;}
   .score-cell .score-info{font-family:var(--sans);}
+#view-engprod .ep-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+#view-engprod .ep-f{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--ink-dim)}
+#view-engprod .ep-f label{font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:9.5px;color:var(--ink-faint)}
+#view-engprod .ep-f select,#view-engprod .ep-f input,#view-engprod .ep-dd summary,#view-engprod #epSearch{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:12px;background:var(--panel);color:var(--ink);font-family:var(--sans)}
+#view-engprod .ep-btns{flex-direction:row;gap:8px;margin-left:auto}
+#view-engprod .ep-dd{position:relative}#view-engprod .ep-dd summary{cursor:pointer;min-width:130px;list-style:none}
+#view-engprod .ep-dd>div{position:absolute;z-index:30;top:100%;left:0;margin-top:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px rgba(43,39,51,.18);max-height:240px;overflow:auto;padding:6px;min-width:210px}
+#view-engprod .ep-dd label{display:flex;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink);font-weight:400;padding:3px 4px}
+#view-engprod .ep-ddact{padding:2px 4px 6px;font-size:11px}#view-engprod .ep-ddact a{cursor:pointer;color:var(--purple-soft)}
+#view-engprod .ep-note{font-size:11.5px;color:var(--ink-dim);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px;line-height:1.5}
+#view-engprod .ep-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
+#view-engprod .ep-kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:border-color .14s}
+#view-engprod .ep-kpi:hover{border-color:var(--purple-soft)}#view-engprod .ep-kpi .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}
+#view-engprod .ep-kpi .v{font-size:26px;font-weight:800;color:var(--purple);margin:2px 0}#view-engprod .ep-kpi .s{font-size:11px;color:var(--ink-dim)}
+#view-engprod .ep-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+#view-engprod .ep-card h3{margin:0;font-size:15px}#view-engprod .ep-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+#view-engprod .ep-hint{font-size:11px;color:var(--ink-faint);margin:2px 0 8px}#view-engprod .ep-chk{font-size:12px;display:flex;gap:5px;align-items:center}
+#view-engprod .ep-t{width:100%;border-collapse:collapse;font-size:12.5px}
+#view-engprod .ep-t th{text-align:left;padding:7px 8px;border-bottom:2px solid var(--line);font-size:11px;color:var(--ink-dim);white-space:nowrap;cursor:pointer;position:sticky;top:0;background:var(--panel)}
+#view-engprod .ep-t td{padding:7px 8px;border-bottom:1px solid var(--line)}#view-engprod .ep-t .n{text-align:right;font-variant-numeric:tabular-nums}
+#view-engprod .ep-t th.sorted{color:var(--purple)}#view-engprod .ep-er{cursor:pointer}#view-engprod .ep-er:hover,#view-engprod .ep-er.open{background:var(--panel-2)}
+#view-engprod .ep-exp td{background:var(--panel-2);padding:12px 14px}#view-engprod .ep-exh{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px}
+#view-engprod .ep-t a{color:var(--purple-soft);cursor:pointer;font-weight:700;text-decoration:underline}
+#view-engprod .good{color:var(--good)}#view-engprod .bad{color:var(--bad)}#view-engprod .empty{text-align:center;color:var(--ink-faint);padding:18px}
+#view-engprod .ep-x{border:1px solid var(--line);background:var(--panel);border-radius:6px;cursor:pointer;padding:2px 7px}
+#view-engprod .ep-pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;font-size:12px;margin-top:8px;color:var(--ink-dim)}
+#view-engprod .ep-pager button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:3px 9px;cursor:pointer}#view-engprod .ep-pager button:disabled{opacity:.4;cursor:default}
+
+#view-engprod .rg{display:inline-block;min-width:34px;text-align:center;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+#view-engprod .rg-G{--c:#a8e0c0;--bg:#e3f6ec;background:var(--bg);color:#146c43}
+#view-engprod .rg-A{--c:#f6d98e;--bg:#fdf1d8;background:var(--bg);color:#8a5a00}
+#view-engprod .rg-R{--c:#f2b1a9;--bg:#fbe4e1;background:var(--bg);color:#a8261a}
+#view-engprod .rg-N{background:#eeedf1;color:#7a7585;font-weight:600}
+#view-engprod .rg-bar{min-width:78px;background:linear-gradient(90deg,var(--c) 0 var(--w),var(--bg) var(--w) 100%);border:1px solid var(--c)}
+#view-engprod .ep-er td:first-child{border-left:4px solid transparent}
+#view-engprod .row-G td:first-child{border-left-color:#1f9d63}#view-engprod .row-A td:first-child{border-left-color:#e0a21a}#view-engprod .row-R td:first-child{border-left-color:#d6402f}
+#view-engprod .ep-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0}
+#view-engprod .ep-chiplab{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}
+#view-engprod .ep-chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:3px 12px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+#view-engprod .ep-chip.on{border-width:2px;font-weight:700}
+#view-engprod .ep-chip.c-R{background:#fbe4e1;color:#a8261a;border-color:#f2b1a9}#view-engprod .ep-chip.c-A{background:#fdf1d8;color:#8a5a00;border-color:#f6d98e}#view-engprod .ep-chip.c-G{background:#e3f6ec;color:#146c43;border-color:#a8e0c0}
+#view-engprod .ep-chip.c-all.on{border-color:var(--purple)}
+#view-engprod .ep-legend{font-size:11px;color:var(--ink-dim);margin-left:auto}
+#view-engprod .ep-kpi .sp{display:flex;gap:8px;margin:0 0 4px}#view-engprod .ep-kpi .sp span{font-size:11px;font-weight:600;color:var(--ink-dim);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:1px 9px}#view-engprod .ep-kpi .sp b{color:var(--purple)}
+#view-engprod .ep-ddsearch{width:100%;box-sizing:border-box;margin-bottom:6px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:12px}
+#view-engprod .ep-cstats{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
+#view-engprod .ep-cs{display:flex;flex-direction:column;gap:1px;min-width:104px;padding:7px 12px;border:1px solid var(--line);border-left:4px solid #b9b3c7;border-radius:9px;background:var(--panel-2)}
+#view-engprod .ep-cs span{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint)}
+#view-engprod .ep-cs b{font-size:19px;color:var(--ink);line-height:1.15}#view-engprod .ep-cs i{font-size:10.5px;color:var(--ink-dim);font-style:normal}
+#view-engprod .ep-cs.lg{border-left-color:#8b3fd1}#view-engprod .ep-cs.rs{border-left-color:#e2571f}#view-engprod .ep-cs.ag{border-left-color:#c0392b}#view-engprod .ep-cs.wf{border-left-color:#1565c0}
+#view-engprod .ep-cs.good{border-left-color:#1f9d63}#view-engprod .ep-cs.good b{color:#146c43}#view-engprod .ep-cs.bad{border-left-color:#d6402f}#view-engprod .ep-cs.bad b{color:#a8261a}
+#view-engprod .ep-cscroll{overflow-x:auto;padding-bottom:4px}
+#view-engprod .rg-W{background:#e3eefb;color:#0d47a1}#view-engprod a.ep-w{text-decoration:none;cursor:pointer}#view-engprod a.ep-w:hover .rg{box-shadow:0 0 0 2px #90b6ee}
+#view-engprod .ep-kpi .go{font-size:10.5px;font-weight:700;color:var(--ink-faint);margin-top:5px;letter-spacing:.02em}#view-engprod .ep-kpi:hover .go{color:var(--purple)}
+#view-engprod .ep-cs{cursor:pointer;transition:box-shadow .14s,border-color .14s}#view-engprod .ep-cs:hover{box-shadow:0 2px 10px rgba(86,10,145,.14);border-color:var(--purple-soft)}
 </style>
 </head>
 <body>
@@ -2866,6 +2921,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
         <a class="nav-item" data-view="teammetrics" title="Team Level Metrics"><i class="fa-solid fa-people-group"></i><span class="nav-label">Team Level Metrics</span></a>
         <a class="nav-item" data-view="engcompliance" title="Engineer Performance"><i class="fa-solid fa-chart-line"></i><span class="nav-label">Engineer Performance</span></a>
         <a class="nav-item" data-view="engdash" title="Engineer Dashboard"><i class="fa-solid fa-user-gear"></i><span class="nav-label">Engineer Dashboard</span></a>
+        <a class="nav-item" data-view="engprod" title="Engineer Productivity"><i class="fa-solid fa-gauge-simple-high"></i><span class="nav-label">Engineer Productivity</span></a>
         <a class="nav-item" data-view="custdash" title="Customer Dashboard"><i class="fa-solid fa-address-card"></i><span class="nav-label">Customer Dashboard</span></a>
       </div>
     </div>
@@ -3043,7 +3099,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             <!-- Add your Excel file names from the MSPData folder below.
                  Each option's value is the file's path relative to this
                  HTML file, and must be committed to the same repo. -->
-            <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
+            <option value="MSPData/CallDump_19Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
 
             <!-- Add more <option> entries here, following the same
                  MSPData/filename.xlsx pattern, e.g.:
@@ -3115,6 +3171,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
     <button data-view="teammetrics">Team Level Metrics</button>
     <button data-view="custdash">Customer Dashboard</button>
     <button data-view="engdash">Engineer Dashboard</button>
+    <button data-view="engprod">Engineer Productivity</button>
     <button data-view="stagetime">Stage-Time Breakdown</button>
     <button data-view="complexitycal">Complexity Calibration</button>
     <button data-view="delegoverview">Delegation Overview</button>
@@ -3943,6 +4000,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
         </div>
 </div>
   </section>
+  <section class="view sapp-view" id="view-engprod"></section>
   <section class="view sapp-view" id="view-stagetime"></section>
   <section class="view sapp-view" id="view-complexitycal"></section>
   <section class="view sapp-view" id="view-delegoverview"></section>
@@ -7860,7 +7918,7 @@ const SAPP_PAGE_CATALOG = [
     {v:'complexitycal', l:'Complexity Calibration', g:'complexitycal', icon:'fa-scale-balanced'}]},
   {section:'Performance', pages:[
     {v:'kpisnapshot', l:'KPI Snapshot', g:'refgov', icon:'fa-table-cells'}, {v:'teammetrics', l:'Team Level Metrics', g:'refgov', icon:'fa-people-group'},
-    {v:'engcompliance', l:'Engineer Performance', g:'engcompliance', icon:'fa-chart-line'}, {v:'engdash', l:'Engineer Dashboard', g:'refgov', icon:'fa-user-gear'},
+    {v:'engcompliance', l:'Engineer Performance', g:'engcompliance', icon:'fa-chart-line'}, {v:'engdash', l:'Engineer Dashboard', g:'refgov', icon:'fa-user-gear'}, {v:'engprod', l:'Engineer Productivity', g:'engprod', icon:'fa-gauge-simple-high'},
     {v:'custdash', l:'Customer Dashboard', g:'refgov', icon:'fa-address-card'}]},
   {section:'Delegation & Ownership', pages:[
     {v:'delegoverview', l:'Delegation Overview', g:'delegation', icon:'fa-diagram-project'}, {v:'delegtier', l:'L1 / L2 / SME Ownership', g:'delegation', icon:'fa-layer-group'},
@@ -7872,7 +7930,7 @@ const SAPP_PAGE_CATALOG = [
   {section:'Knowledge', pages:[
     {v:'kb', l:'Knowledge Base', g:'refgov', icon:'fa-book'}, {v:'selfservice', l:'Self-Service', g:'selfservice', icon:'fa-user-check'}, {v:'notes', l:'Notes', g:'notes', icon:'fa-note-sticky'}]},
 ];
-const SAPP_DEFAULT_PAGES = ['execsummary','dailyreview'];
+const SAPP_DEFAULT_PAGES = ['execsummary','dailyreview','engprod'];
 const SAPP_PAGE_STORE_KEY = 'sapp_enabled_pages_v1';
 const SAPP_ALL_OPTIONAL_VIEWS = [].concat.apply([], SAPP_PAGE_CATALOG.map(c=>c.pages.map(p=>p.v)));
 const SAPP_VIEW_GROUP = {}; SAPP_PAGE_CATALOG.forEach(c=>c.pages.forEach(p=>{ SAPP_VIEW_GROUP[p.v] = p.g; }));
@@ -7884,6 +7942,7 @@ function sappLoadEnabledPages(){
   try{ const raw = localStorage.getItem(SAPP_PAGE_STORE_KEY); if(raw) arr = JSON.parse(raw); }catch(e){}
   if(!Array.isArray(arr)) arr = SAPP_DEFAULT_PAGES.slice();
   SAPP_ENABLED_PAGES = new Set(arr.filter(v=>SAPP_ALL_OPTIONAL_VIEWS.includes(v)));
+  try{ if(!localStorage.getItem('sapp_engprod_seeded_v1')){ SAPP_ENABLED_PAGES.add('engprod'); sappSaveEnabledPages(); localStorage.setItem('sapp_engprod_seeded_v1','1'); } }catch(e){}
   // One-time: Self-Service sits right after Knowledge Base, so anyone who already has Knowledge Base enabled gets it too.
   try{
     if(!localStorage.getItem('sapp_selfservice_seeded_v1')){
@@ -8029,7 +8088,7 @@ function startDashboard(){
   // fresh on filter/period changes only while it stays enabled.
   PAGE_LOADED = {}; PAGE_STALE = {};
   PAGE_REGISTERED = {};
-  ['execsummary','dailyreview','overview','engineers','towercust','engcompliance','stagetime','complexitycal','delegoverview','delegtier','delegengineer','delegjourney','delegperf','sla','aging','escalation','selfservice','notes'].forEach(function(v){ const n = document.getElementById('view-'+v); if(n){ n.innerHTML = ''; delete n.dataset.built; } });
+  ['execsummary','dailyreview','engprod','overview','engineers','towercust','engcompliance','stagetime','complexitycal','delegoverview','delegtier','delegengineer','delegjourney','delegperf','sla','aging','escalation','selfservice','notes'].forEach(function(v){ const n = document.getElementById('view-'+v); if(n){ n.innerHTML = ''; delete n.dataset.built; } });
   PAGE_RENDERERS = {
     overview: function(){ renderOverview(); },
     engineers: function(){
@@ -8079,6 +8138,7 @@ function startDashboard(){
     complexitycal: function(){ if(DATA.complexitycal_rows) renderComplexityCalibration(); },
     execsummary: function(){ if(DATA.execsummary_rows) renderExecutiveSummary(); },
     dailyreview: function(){ if(DATA.gov_rows) renderDailyReviewModule(); },
+    engprod: function(){ if(DATA.gov_rows) renderEngProd(); },
     refgov: function(){
       if(!DATA.refgov_rows) return;
       // Faithful Team Level Metrics + KPI Snapshot + Customer/Engineer Dashboards + KB: reset
@@ -8506,7 +8566,8 @@ function barTopLabel(color){
   return Object.assign(dlInt(color, 'end'), {anchor:'end', align:'end', offset:3, clamp:true, clip:false, font:{size:10, weight:'700'},
     formatter: v => (v===null||v===undefined) ? '' : Number(v).toLocaleString()});
 }
-function volumeChart(canvasId, g){
+function volumeChart(canvasId, g, scopeFn){
+  const drillOn = typeof scopeFn === 'function';
   makeChart(canvasId, {type:'bar', data:{labels:labelsFor(SELECTED_MONTHS), datasets:[
     {label:'Logged', data:SELECTED_MONTHS.map(m=>g.logged[m].Total), backgroundColor:'#560a91', datalabels:barTopLabel('#560a91')},
     {label:'Resolved', data:SELECTED_MONTHS.map(m=>g.resolved[m].Total), backgroundColor:'#e2571f', datalabels:barTopLabel('#e2571f')},
@@ -8515,7 +8576,19 @@ function volumeChart(canvasId, g){
     scales:{
       x:{ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}},
       y:{ticks:{color:'#a29cb0', font:{size:11}}, grid:{color:'#f3eff9'}, beginAtZero:true, grace:'12%'}
-    }
+    },
+    onHover: drillOn ? ((evt, els) => { evt.native.target.style.cursor = els.length ? 'pointer' : 'default'; }) : undefined,
+    // Click a Logged / Resolved bar -> ticket list for that month/week (same population as the bar), with Excel export.
+    onClick: drillOn ? ((evt, els, chart) => {
+      const hit = chart.getElementsAtEventForMode(evt, 'nearest', {intersect:true}, false)[0]; if(!hit) return;
+      const m = SELECTED_MONTHS[hit.index], isLogged = hit.datasetIndex === 0, label = MONTH_LABEL_MAP[m];
+      const field = isLogged ? 'creation_month' : 'resolved_month', expected = (isLogged ? g.logged[m] : g.resolved[m]).Total;
+      const recs = DATA.ticket_volume_records.filter(r => r[field] === m && scopeFn(r));
+      if(!recs.length || recs.length !== expected) return;   // same self-verifying rule as the KPI cards
+      const im = recs.filter(r => r.service === 'Incident Management').length;
+      openDrilldown((isLogged ? 'Logged' : 'Resolved') + ' — ' + label, recs, isLogged ? KPI_LOGGED_DRILL_COLUMNS : KPI_RESOLVED_DRILL_COLUMNS,
+        'Volume_' + (isLogged ? 'Logged' : 'Resolved') + '_' + String(label).replace(/[^A-Za-z0-9]+/g, '_'), [['Records', recs.length], ['IM', im], ['SR', recs.length - im]]);
+    }) : undefined
   })});
 }
 function csatChart(canvasId, g){
@@ -9063,7 +9136,7 @@ function renderOverview(){
 
   el.innerHTML = html;
 
-  volumeChart('ov_volume', g);
+  volumeChart('ov_volume', g, () => true);
   csatChart('ov_csat', g);
   tatChart('ov_tat', g);
   effortHoursChart('ov_effort', g);
@@ -9366,7 +9439,7 @@ const SAPP_SECTION_LABELS = {
   delegoverview:'Delegation Overview', delegtier:'L1 / L2 / SME Ownership', delegengineer:'Engineer Ownership',
   delegperf:'Delegation Performance', delegjourney:'Ticket Journey & Aging',
   sla:'SLA Dashboard', escalation:'Escalation Analysis', aging:'Aging Analysis',
-  kb:'Knowledge Base', selfservice:'Self-Service', notes:'Notes', dailyreview:'Daily Review', settings:'Settings',
+  kb:'Knowledge Base', selfservice:'Self-Service', notes:'Notes', dailyreview:'Daily Review', engprod:'Engineer Productivity', settings:'Settings',
 };
 function sappPresetLabel(key){ const p = SAPP_TIMESCALE_PRESETS.find(x=>x.key===key); return p ? p.label : key; }
 function sappFmtFilterValues(vals, max){
@@ -10066,7 +10139,7 @@ function renderMetricsBlock(bodyEl, g, idPrefix, opts){
 
   bodyEl.innerHTML = html;
 
-  volumeChart(idPrefix+'_c_volume', g);
+  volumeChart(idPrefix+'_c_volume', g, kpiScopeFn || (() => true));
   csatChart(idPrefix+'_c_csat', g);
   tatChart(idPrefix+'_c_tat', g);
   effortHoursChart(idPrefix+'_c_effort', g);
@@ -35630,6 +35703,413 @@ REFGOV.ExportWorkbook = exportWorkbook;
     const container = document.getElementById('eksMultiFilters');
     if(container) container.innerHTML = '';
   });
+})();
+
+// ================= ENGINEER PRODUCTIVITY & CLOSURE TREND (unified Daily / Weekly / Monthly) =================
+// One page, one period selector. Built from DATA.gov_rows (ticket level, real timestamps). Aggregates are
+// computed first; ticket records are only materialised when the user drills down or exports.
+// Counting rules (identical to Team / Engineer -> Volume trend): LOGGED = ticket creation_time, one count per ticket, credited to the ticket's
+// current owner. RESOLVED = one count per ticket on its resolved date, credited to the current owner: Closed / Resolved-Pending / Customer Agreed
+// -> resolve_time; Cancel -> cancel_time; Deferred -> deferred_time. Duplicate tickets have no resolved date. Only Incident + Service Request rows.
+// Missing timestamps are never counted as zero.
+(function(){
+  const HOL = new Set(['2026-05-01','2026-05-28','2026-08-15','2026-09-14','2026-10-02','2026-11-10','2026-12-25']);
+  const CLOSED = new Set(['Closed','Resolved - Pending for Confirmation','Customer Agreed']);
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const $ = id => document.getElementById(id);
+  const P2 = n => String(n).padStart(2,'0');
+  const dk = d => d.getFullYear()+'-'+P2(d.getMonth()+1)+'-'+P2(d.getDate());
+  const sod = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addD = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const fD = d => P2(d.getDate())+' '+MON[d.getMonth()]+(d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():'');
+  const toD = v => { if(!v) return null; const d = v instanceof Date ? v : new Date(v); return isNaN(d) ? null : d; };
+  const isWork = d => d.getDay()!==0 && !HOL.has(dk(d));
+  const S = { period:'daily', from:null, to:null, team:'', level:'', engs:new Set(), prio:'', stat:new Set(), cust:new Set(), target:5, ws:1,
+              metric:'both', rag:'', net:true, aged:true, wfc:true, age:10, q:'', sort:{k:'resolved',dir:-1}, page:1, open:null, ePeriod:'', src:null };
+  let EV = null, OPEN = {}, LAST = null, chart = null, latest = null, tq = null;
+
+  function build(){
+    const rows = (DATA && DATA.gov_rows) || [];
+    if(EV && S.src === rows) return;
+    S.src = rows; EV = { A:[], R:[], O:[] }; OPEN = {}; let mx = 0; const now = +new Date();
+    const rdOf = r => { const st = r.current_status; return CLOSED.has(st) ? toD(r.resolve_time) : st==='Cancel' ? toD(r.cancel_time) : st==='Deferred' ? toD(r.deferred_time) : null; };
+    rows.forEach(r => {
+      if(r.service!=='Incident Management' && r.service!=='Service Request') return;
+      const st = r.current_status, owner = String(r.owner || r.assign_owner_name || '').trim() || 'Unlogged';
+      const tiers = [['L1',r.assign_l1_time,r.assign_to_l1_engineer],['L2',r.assign_l2_time,r.assign_to_l2_engineer],['SME',r.assign_sme_time,r.assign_to_sme]]
+        .map(t=>({tier:t[0], t:toD(t[1]), eng:t[2] && String(t[2]).trim()})).filter(t=>t.t && t.eng);
+      const own = tiers.filter(t=>t.eng===owner).sort((x,y)=>y.t-x.t)[0], tier = own ? own.tier : 'Unspecified';
+      const cr = toD(r.creation_time), rd = rdOf(r);
+      if(cr){ EV.A.push({t:cr, eng:owner, tier, cr, rd, r, dupe:st==='Duplicate', wfc:/^waiting (on|for) customer$/i.test(String(st).trim()), open:!CLOSED.has(st) && st!=='Cancel' && st!=='Deferred' && st!=='Duplicate'}); if(+cr>mx && +cr<=now) mx = +cr; }
+      if(rd){ EV.R.push({t:rd, eng:owner, tier, cr, rd, r}); if(+rd>mx && +rd<=now) mx = +rd; }
+      if(!CLOSED.has(st) && st!=='Cancel' && st!=='Deferred' && st!=='Duplicate' && owner!=='Unlogged'){
+        const o = OPEN[owner] || (OPEN[owner] = {n:0, old:0}); o.n++; if((r.age_days||0) > 7) o.old++;
+        EV.O.push({eng:owner, tier, cr, rd:null, r});
+      }
+    });
+    latest = mx ? sod(new Date(mx)) : sod(new Date());
+  }
+  const teamOf = e => (typeof OWNER_TEAM_MAP!=='undefined' && OWNER_TEAM_MAP[e]) || 'No Team';
+  function bkey(d, p){
+    if(p==='daily') return dk(d);
+    if(p==='monthly') return d.getFullYear()+'-'+P2(d.getMonth()+1);
+    return dk(addD(d, -((d.getDay()-S.ws+7)%7)));
+  }
+  function buckets(from, to, p){
+    const out = []; let c = sod(from);
+    if(p==='weekly') c = addD(c, -((c.getDay()-S.ws+7)%7)); if(p==='monthly') c = new Date(c.getFullYear(), c.getMonth(), 1);
+    while(c <= to && out.length < 800){
+      let end, label;
+      if(p==='daily'){ end = c; label = fD(c); } else if(p==='weekly'){ end = addD(c,6); label = 'Wk '+fD(c); } else { end = new Date(c.getFullYear(), c.getMonth()+1, 0); label = MON[c.getMonth()]+' '+c.getFullYear(); }
+      out.push({key:bkey(c,p), label, start:c, end, partial: end > latest, a:0, r:0});
+      c = p==='daily' ? addD(c,1) : p==='weekly' ? addD(c,7) : new Date(c.getFullYear(), c.getMonth()+1, 1);
+    }
+    return out;
+  }
+  function workDays(a, b){ let n = 0; for(let c = sod(a); c <= b; c = addD(c,1)) if(isWork(c)) n++; return n; }
+  const inRange = (ev, from, to) => ev.t >= from && ev.t < addD(to,1);
+  const pass = ev => (!S.team || teamOf(ev.eng)===S.team) && (!S.level || ev.tier===S.level) && (!S.engs.size || S.engs.has(ev.eng))
+    && (!S.prio || ev.r.priority===S.prio) && (!S.stat.size || S.stat.has(ev.r.current_status)) && (!S.cust.size || S.cust.has(ev.r.customer_name || 'Unassigned'));
+
+  function compute(){
+    build();
+    const from = sod(S.from), to = S.to > latest ? latest : sod(S.to);
+    const bs = buckets(from, to, S.period), bi = {}; bs.forEach(b => bi[b.key] = b);
+    // Open cases aged >= S.age days: ONLY tickets that are open now (Closed / Resolved-Pending / Customer Agreed / Cancel / Deferred / Duplicate are never counted).
+    // A currently-open ticket is counted in every interval whose end date is at least creation + age days (capped at the latest data date).
+    const refs = bs.map(b => +addD(b.end > latest ? latest : b.end, 1) - 1), ms = S.age*86400000, diff = new Array(bs.length+1).fill(0);
+    const lb = (arr,v) => { let lo = 0, hi = arr.length; while(lo < hi){ const mid = (lo+hi)>>1; if(arr[mid] < v) lo = mid+1; else hi = mid; } return lo; };
+    EV.A.forEach(ev => { if(!ev.open || !pass(ev)) return; const lo = lb(refs, +ev.cr+ms); if(bs.length > lo){ diff[lo]++; diff[bs.length]--; } });
+    let run = 0; bs.forEach((b,i) => { run += diff[i]; b.aged = run; b.ref = refs[i]; });
+    // Waiting on Customer: tickets whose CURRENT status is Waiting on / for Customer, counted in every interval ending on or after their creation date (no status history in the data).
+    const wd2 = new Array(bs.length+1).fill(0);
+    EV.A.forEach(ev => { if(!ev.wfc || !pass(ev)) return; const lo = lb(refs, +ev.cr); if(bs.length > lo){ wd2[lo]++; wd2[bs.length]--; } });
+    run = 0; bs.forEach((b,i) => { run += wd2[i]; b.wfc = run; });
+    const E = {}, wd = workDays(from, to);
+    const get = n => E[n] || (E[n] = {name:n, team:teamOf(n), a:0, r:0, tiers:{}, days:new Set(), byB:{}});
+    const eachB = (e, ev, f) => { [S.period].forEach(p => { const k = bkey(ev.t, p); (e.byB[k] || (e.byB[k] = {a:0,r:0}))[f]++; if(bi[k]) bi[k][f]++; }); };
+    EV.A.forEach(ev => { if(!inRange(ev,from,to) || !pass(ev)) return; const e = get(ev.eng); e.a++; e.tiers[ev.tier] = (e.tiers[ev.tier]||0)+1; eachB(e, ev, 'a'); });
+    EV.R.forEach(ev => { if(!inRange(ev,from,to) || !pass(ev)) return; const e = get(ev.eng); e.r++; e.tiers[ev.tier] = (e.tiers[ev.tier]||0)+1; e.days.add(dk(ev.t)); eachB(e, ev, 'r'); });
+    const isIM = r => r.service==='Incident Management', sp = {imA:0,srA:0,imR:0,srR:0,oN:0,oIM:0,oSR:0,oOld:0};
+    EV.A.forEach(ev => { if(inRange(ev,from,to) && pass(ev)) isIM(ev.r) ? sp.imA++ : sp.srA++; });
+    EV.R.forEach(ev => { if(inRange(ev,from,to) && pass(ev)) isIM(ev.r) ? sp.imR++ : sp.srR++; });
+    EV.O.forEach(ev => { if(!pass(ev)) return; sp.oN++; isIM(ev.r) ? sp.oIM++ : sp.oSR++; if((ev.r.age_days||0) > 7) sp.oOld++; });
+    const done = bs.filter(b => !b.partial), list = Object.values(E).map(e => {
+      const zero = (() => { let z = 0; for(let c = from; c <= to; c = addD(c,1)) if(isWork(c) && !e.days.has(dk(c))) z++; return z; })();
+      const tgt = S.target * wd, o = OPEN[e.name];
+      let tr = '—'; if(done.length >= 2){ const x = (e.byB[done[done.length-1].key]||{r:0}).r, y = (e.byB[done[done.length-2].key]||{r:0}).r; tr = x>y?'▲':x<y?'▼':'▬'; }
+      return Object.assign(e, { level:(Object.entries(e.tiers).sort((a,b)=>b[1]-a[1])[0]||['—'])[0], net:e.a-e.r, ratio:e.a ? e.r/e.a : null,
+        avg: wd ? e.r/wd : null, tgt, ach: tgt ? e.r/tgt : null, zero, trend:tr, open:o?o.n:0, old:o?o.old:0 });
+    });
+    const wmap = {}; EV.A.forEach(ev => { if(ev.wfc && pass(ev)) wmap[ev.eng] = (wmap[ev.eng]||0)+1; });
+    list.forEach(e => { e.wavg = wd ? e.r/(wd/6) : null; e.wfcN = wmap[e.name] || 0; });
+    list.forEach(e => { e.rag = e.ach===null ? 'N' : e.ach>=1 ? 'G' : e.ach>=.8 ? 'A' : 'R'; e.ragN = {R:0,A:1,G:2,N:3}[e.rag]; });
+    // Rating 0–10 = 50% target achievement (capped 100%) + 20% closure ratio (capped 100%) + 20% consistency (working days with a closure) + 10% ageing (open tickets not older than 7 days)
+    list.forEach(e => {
+      const t = e.ach===null ? null : Math.min(1,e.ach), q = e.ratio===null ? (e.r>0?1:0) : Math.min(1,e.ratio), k = wd ? Math.max(0,1-e.zero/wd) : 0, g = e.open ? 1-e.old/e.open : 1;
+      e.rParts = {t, q, k, g}; e.rating = t===null ? null : Math.round(10*(.5*t+.2*q+.2*k+.1*g)*10)/10;
+    });
+    const A = list.reduce((s,e)=>s+e.a,0), R = list.reduce((s,e)=>s+e.r,0);
+    return Object.assign({ from, to, bs, wd, list, A, R, below: list.filter(e => e.ach !== null && e.ach < 1).length }, sp);
+  }
+
+  // ---------- records (materialised only on demand) ----------
+  const COLS = [{key:'ticket_id',label:'Ticket ID'},{key:'title',label:'Subject'},{key:'engineer',label:'Owner / Engineer'},{key:'tier',label:'Level'},
+    {key:'event',label:'Event'},{key:'priority',label:'Priority'},{key:'status',label:'Status'},{key:'logged',label:'Logged (Created) Date'},
+    {key:'resolved',label:'Resolved / Closed Date'},{key:'age',label:'Ticket Age (days)'},{key:'service',label:'Service'},{key:'customer',label:'Customer'}];
+  const rec = (ev, type) => ({ ticket_id:String(ev.r.ticket_id||''), title:ev.r.title||'', engineer:ev.eng, tier:ev.tier, event:type, priority:ev.r.priority||'',
+    status:ev.r.current_status||'', logged:ev.cr, resolved:ev.rd, age: ev.r.age_days==null?'':ev.r.age_days, service: ev.r.service==='Incident Management'?'IM':'SR', customer: ev.r.customer_name || 'Unassigned' });
+  function records(c, opt){
+    opt = opt || {};
+    if(opt.type==='Waiting') return EV.A.filter(ev => ev.wfc && pass(ev) && (!opt.eng || ev.eng===opt.eng)).map(ev => rec(ev,'Waiting on Customer')).sort((x,y)=>(y.age||0)-(x.age||0));
+    if(opt.type==='Open') return EV.O.filter(ev => pass(ev) && (!opt.eng || ev.eng===opt.eng)).map(ev => rec(ev,'Open')).sort((x,y)=>(y.age||0)-(x.age||0));
+    const from = opt.from || c.from, to = opt.to || c.to, out = [];
+    const add = (arr, type) => arr.forEach(ev => { if(inRange(ev,from,to) && pass(ev) && (!opt.eng || ev.eng===opt.eng)) out.push(rec(ev,type)); });
+    if(opt.type!=='Resolved') add(EV.A,'Logged'); if(opt.type!=='Logged') add(EV.R,'Resolved');
+    return out.sort((a,b)=>(a.engineer>b.engineer)-(a.engineer<b.engineer) || (a.event>b.event)-(a.event<b.event));
+  }
+  function wfcRecs(c, b){
+    const out = [];
+    EV.A.forEach(ev => { if(!ev.wfc || !pass(ev) || +ev.cr > b.ref) return; const r = rec(ev, 'Waiting on Customer'); r.age = Math.floor((b.ref - ev.cr)/864e5); out.push(r); });
+    return out.sort((x,y)=>y.age-x.age);
+  }
+  function agedRecs(c, b){
+    const ms = S.age*86400000, out = [];
+    EV.A.forEach(ev => { if(!ev.open || !pass(ev)) return; if(+ev.cr+ms <= b.ref){
+      const r = rec(ev, 'Open ≥'+S.age+'d'); r.age = Math.floor((b.ref - ev.cr)/864e5); out.push(r); } });
+    return out.sort((x,y)=>y.age-x.age);
+  }
+  const crit = c => [['Reporting period', S.period[0].toUpperCase()+S.period.slice(1)],['Date range', fD(c.from)+' – '+fD(c.to)],['Team', S.team||'All'],['Support level', S.level||'All'],
+    ['Engineers', S.engs.size ? [...S.engs].join(', ') : 'All'],['Priority', S.prio||'All'],['Ticket status', S.stat.size ? [...S.stat].join(', ') : 'All'],['Customer', S.cust.size ? [...S.cust].join(', ') : 'All'],['Target (resolutions / working day)', S.target],['Ageing threshold (days)', S.age],['Waiting on Customer line','Tickets whose current status is Waiting on Customer, counted from their creation date'],
+    ['Week starts', ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][S.ws]],['Eligible working days (Mon–Sat excl. holidays)', c.wd],
+    ['Logged rule','Ticket creation date, once per ticket, credited to the current owner (same as Team / Engineer Volume trend)'],['Resolved rule','Resolve date (Closed / Resolved-Pending / Customer Agreed), cancel date (Cancel) or deferred date (Deferred), credited to the current owner; Duplicate excluded'],
+    ['Rating (0-10)','50% target achievement + 20% closure ratio + 20% consistency (working days with a closure) + 10% ageing (open tickets not older than 7 days); green >= 8, amber >= 6'],['Weekly Avg Closure','Resolved ÷ (eligible working days ÷ 6), i.e. average closures per Mon–Sat working week; coloured against target × 6'],['Waiting on Customer Cases','Tickets owned by the engineer whose current status is Waiting on Customer (snapshot, not limited by the date range)'],['Generated', new Date().toLocaleString()]];
+  function drill(title, recs, c, extra){
+    const pairs = [['Records', recs.length]].concat(crit(c).slice(0,7)).concat(extra||[]);
+    openDrilldown(title, recs, COLS, 'EngProductivity_'+title.replace(/[^A-Za-z0-9]+/g,'_').slice(0,50), pairs);
+  }
+  const ENG_COLS = [{key:'engineer',label:'Engineer'},{key:'team',label:'Team'},{key:'level',label:'Level'},{key:'logged',label:'Logged'},{key:'resolved',label:'Resolved'},{key:'net',label:'Net Movement'},
+    {key:'target',label:'Target (total)'},{key:'ach',label:'Target Achievement %'},{key:'avg',label:'Avg / Working Day'},{key:'wavg',label:'Weekly Avg Closure'},{key:'zero',label:'Zero-Closure Days'},
+    {key:'rating',label:'Rating (0-10)'},{key:'open',label:'Open Cases'},{key:'old',label:'Open > 7 days'},{key:'wfc',label:'Waiting on Customer'}];
+  function cardDrill(t, c){
+    const last = c.bs[c.bs.length-1], ex = (a, bb) => [['Interval', bb.label+' ('+fD(bb.start)+' – '+fD(bb.end)+')']].concat(a || []);
+    if(t==='logged') return drill('Logged tickets', records(c,{type:'Logged'}), c, [['Logged',c.A],['IM',c.imA],['SR',c.srA]]);
+    if(t==='resolved') return drill('Resolved tickets', records(c,{type:'Resolved'}), c, [['Resolved',c.R],['IM',c.imR],['SR',c.srR]]);
+    if(t==='net') return drill('Logged & Resolved tickets', records(c), c, [['Logged',c.A],['Resolved',c.R],['Net movement',sgn(c.A-c.R)]]);
+    if(t==='open') return drill('Current open cases', records(c,{type:'Open'}), c, [['Note','Current snapshot — not limited by the date range'],['IM',c.oIM],['SR',c.oSR]]);
+    if(t==='ratio') return drill('Closure : Logged · tickets behind the ratio', records(c), c, [['Logged',c.A],['Resolved',c.R],['Closure : Logged', fmtP(c.A ? c.R/c.A : null)]]);
+    if(t==='avg') return drill('Resolved tickets · average per working day', records(c,{type:'Resolved'}), c, [['Resolved',c.R],['Eligible working days',c.wd],['Avg / working day', fmtN(c.wd ? c.R/c.wd : null)]]);
+    if(t==='peak'){ const best = c.bs.reduce((mx,b) => (!mx || b.r > mx.r) ? b : mx, null); if(!best) return;
+      return drill('Peak resolved · '+best.label, records(c,{type:'Resolved', from:best.start<c.from?c.from:best.start, to:best.end>c.to?c.to:best.end}), c, ex([['Resolved',best.r]], best)); }
+    if(t==='aged' && last) return drill('Open cases aged ≥ '+S.age+' days · '+last.label, agedRecs(c,last), c, [['As of', fD(new Date(last.ref))],['Note','Currently open cases only']]);
+    if(t==='wfc' && last) return drill('Waiting on Customer · '+last.label, wfcRecs(c,last), c, [['As of', fD(new Date(last.ref))],['Note','Tickets whose current status is Waiting on Customer']]);
+    if(t==='below'){
+      let rows = c.list.filter(e => e.ach!==null && e.ach < 1), ttl = 'Engineers below target';
+      if(!rows.length){ rows = c.list.slice(); ttl = 'Engineer target achievement (none below target)'; }
+      rows.sort((x,y) => (x.ach===null)-(y.ach===null) || x.ach-y.ach);
+      const recs = rows.map(e => ({engineer:e.name, team:e.team, level:e.level, logged:e.a, resolved:e.r, net:e.net, target:e.tgt, ach:e.ach===null?'N/A':+(e.ach*100).toFixed(1), avg:e.avg===null?'N/A':+e.avg.toFixed(2),
+        wavg:e.wavg===null?'N/A':+e.wavg.toFixed(2), zero:e.zero, rating:e.rating===null?'N/A':e.rating, open:e.open, old:e.old, wfc:e.wfcN}));
+      return openDrilldown(ttl, recs, ENG_COLS, 'EngProductivity_'+ttl.replace(/[^A-Za-z0-9]+/g,'_'), [['Engineers', recs.length],['Target / working day', S.target],['Eligible working days', c.wd]].concat(crit(c).slice(1,7)));
+    }
+  }
+  const SUMH = ['Engineer','Team','Level','Logged','Resolved','Net Movement','Closure/Logged Ratio','Avg Resolutions / Working Day','Eligible Working Days','Target (total)','Target Achievement %','Zero-Closure Days','Trend','Open Tickets (current)','Open > 7 days (current)','Overall RAG (Target)','Rating (0-10)','Weekly Avg Closure','Waiting on Customer Cases (current)'];
+  const sumRow = (e,c) => [e.name,e.team,e.level,e.a,e.r,e.net,e.ratio===null?'N/A':+e.ratio.toFixed(3),e.avg===null?'N/A':+e.avg.toFixed(2),c.wd,e.tgt,e.ach===null?'N/A':+(e.ach*100).toFixed(1),e.zero,e.trend,e.open,e.old,{G:'Green',A:'Amber',R:'Red',N:'N/A'}[e.rag], e.rating===null?'N/A':e.rating, e.wavg===null?'N/A':+e.wavg.toFixed(2), e.wfcN];
+  const trendRows = (bs, byB) => bs.map(b => { const x = byB ? (byB[b.key]||{a:0,r:0}) : b; return [b.label+(b.partial?' (partial)':''), x.a, x.r, x.a-x.r].concat(!byB && b.aged!==undefined ? [b.aged, b.wfc] : []); });
+  const tickRows = recs => recs.map(r => COLS.map(c => r[c.key]));
+  // One complete workbook (RAG-coloured): Summary, Trend, Engineer Trend, Ticket Details (all filtered records), Filter Criteria.
+  const rag3 = (v, g, a) => v===null||v===undefined ? null : v>=g ? 'GREEN' : v>=a ? 'AMBER' : 'RED';
+  function exportAll(){
+    const c = LAST, per = S.period, tcol = [], sc = [], tc = [], ec = [];
+    const sRows = c.list.map(e => { const r = sumRow(e,c), avgT = S.target ? (e.avg===null?null:e.avg/S.target) : null;
+      sc.push([null,null,null,null,null, e.net>0?'RED':e.net<0?'GREEN':'AMBER', rag3(e.ratio,1,.8), rag3(avgT,1,.8), null,null, rag3(e.ach,1,.8),
+        e.zero===0?'GREEN':e.zero<=Math.max(1,Math.round(c.wd*.1))?'AMBER':'RED', e.trend==='▲'?'GREEN':e.trend==='▼'?'RED':e.trend==='▬'?'AMBER':null,
+        null, e.old===0?'GREEN':e.old<=3?'AMBER':'RED', {G:'GREEN',A:'AMBER',R:'RED'}[e.rag]||null, e.rating===null?null:e.rating>=8?'GREEN':e.rating>=6?'AMBER':'RED', rag3(avgT,1,.8), null]); return r; });
+    const trRows = trendRows(c.bs); trRows.forEach((r,i) => tc.push([null,null,null, r[3]>0?'RED':r[3]<0?'GREEN':'AMBER', r[4]>0?'RED':null, null]));
+    const etRows = []; c.list.forEach(e => c.bs.forEach(b => { const x = e.byB[b.key]||{a:0,r:0}; etRows.push([e.name, b.label+(b.partial?' (partial)':''), x.a, x.r, x.a-x.r]); ec.push([null,null,null,null, x.a-x.r>0?'RED':x.a-x.r<0?'GREEN':'AMBER']); }));
+    const recs = records(c), dRows = tickRows(recs), dc = recs.map(r => [undefined,undefined,undefined,undefined, r.event==='Resolved'?'GREEN':null, undefined,undefined,undefined,undefined,
+      r.age==='' ? null : r.age<=3?'GREEN':r.age<=7?'AMBER':'RED']);
+    exportWorkbookRAG([
+      {name:'Summary', headers:SUMH, rows:sRows, cellColors:sc},
+      {name:'Trend', headers:['Interval','Logged','Resolved','Net Movement','Open cases aged >= '+S.age+' days (as of interval end)','Waiting on Customer cases (as of interval end)'], rows:trRows, cellColors:tc},
+      {name:'Engineer Trend', headers:['Engineer','Interval ('+per+')','Logged','Resolved','Net Movement'], rows:etRows, cellColors:ec},
+      {name:'Ticket Details', headers:COLS.map(x=>x.label), rows:dRows, cellColors:dc},
+      {name:'Filter Criteria', headers:['Filter','Value'], rows:crit(c).concat([['RAG key','Net: red = backlog growing, green = shrinking · Ratio/Target: green ≥100%, amber ≥80%, red <80% · Age: green ≤3d, amber ≤7d, red >7d · Zero-closure days: green 0']])}],
+      'EngProductivity_Full_'+dk(c.from)+'_'+dk(c.to)); }
+  function exportEng(name){
+    const c = LAST, e = c.list.find(x=>x.name===name); if(!e) return; const recs = records(c,{eng:name}), per = S.ePeriod||S.period;
+    const bs = buckets(c.from, c.to, per), idx = {}; bs.forEach(b=>idx[b.key]=b);
+    const byB = {}; recs.forEach(r => { const d = r.event==='Logged'?r.logged:r.resolved; const k = bkey(d, per); (byB[k]||(byB[k]={a:0,r:0}))[r.event==='Logged'?'a':'r']++; });
+    exportWorkbookRAG([{name:'Summary', headers:SUMH, rows:[sumRow(e,c)]},{name:'Trend', headers:['Interval','Logged','Resolved','Net Movement'], rows:trendRows(bs,byB)},
+      {name:'Ticket Details', headers:COLS.map(x=>x.label), rows:tickRows(recs)},{name:'Filter Criteria', headers:['Filter','Value'], rows:crit(c)}],
+      'EngProductivity_'+name.replace(/[^A-Za-z0-9]+/g,'_')+'_'+dk(c.from)+'_'+dk(c.to)); }
+
+  // ---------- UI ----------
+  const HTML = `
+  <div class="section-header"><div><div class="eyebrow">Performance</div><h2>Engineer Productivity &amp; Closure Trend</h2>
+    <p>One page for Daily, Weekly and Monthly views. Counts come from ticket-level event timestamps; click any card, chart point or engineer to see the tickets behind it.</p></div></div>
+  <div id="epNo" class="no-data-hint" style="display:none"><i class="fa-solid fa-circle-info"></i> Load a data file to see Engineer Productivity.</div>
+  <div id="epWrap" style="display:none">
+   <div class="ep-bar">
+    <div class="ep-f"><label>Reporting period</label><div class="cust-toolbar" id="epPeriod" style="margin:0"><button class="seg-btn" data-p="daily">Daily</button><button class="seg-btn" data-p="weekly">Weekly</button><button class="seg-btn" data-p="monthly">Monthly</button></div></div>
+    <div class="ep-f"><label>From</label><input type="date" id="epFrom"></div><div class="ep-f"><label>To</label><input type="date" id="epTo"></div>
+    <div class="ep-f"><label>Team</label><select id="epTeam"></select></div>
+    <div class="ep-f"><label>Support level</label><select id="epLevel"><option value="">All</option><option>L1</option><option>L2</option><option>SME</option></select></div>
+    <div class="ep-f"><label>Engineer</label><details class="ep-dd" id="epEngDD"><summary id="epEngSum">All engineers</summary><div id="epEngList"></div></details></div>
+    <div class="ep-f"><label>Priority</label><select id="epPrio"></select></div><div class="ep-f"><label>Status</label><details class="ep-dd" id="epStatDD"><summary id="epStatSum">All statuses</summary><div id="epStatList"></div></details></div>
+    <div class="ep-f"><label>Customer</label><details class="ep-dd" id="epCustDD"><summary id="epCustSum">All customers</summary><div id="epCustList"></div></details></div>
+    <div class="ep-f"><label>Target / day</label><input type="number" id="epTarget" min="0" step="0.5" style="width:70px"></div>
+    <div class="ep-f"><label>Aged ≥ (days)</label><input type="number" id="epAge" min="1" step="1" style="width:70px"></div>
+    <div class="ep-f"><label>Week starts</label><select id="epWs"><option value="1">Mon</option><option value="0">Sun</option><option value="6">Sat</option></select></div>
+    <div class="ep-f ep-btns"><button class="btn-primary-gov" id="epApply">Apply Filters</button><button class="btn-ghost-gov" id="epReset">Reset</button></div>
+   </div>
+   <div class="ep-note"><b>How to read this:</b> <i>Logged</i> counts each ticket once, by its creation date, for the ticket’s current owner. <i>Resolved</i> counts each ticket once, by its resolve date (Closed / Resolved-Pending / Customer Agreed), cancel date (Cancel) or deferred date (Deferred). This is the same rule as Team / Engineer → Volume trend. They are independent datasets, so a ticket logged and resolved in the same period appears in both. Working days = Mon–Sat excluding holidays; future dates are excluded and the latest interval is marked partial.</div>
+   <div class="ep-kpis" id="epKpis"></div>
+   <div class="ep-card"><div class="ep-row"><h3 id="epChartTitle">Trend</h3><div class="ep-row"><div class="cust-toolbar" id="epMetric" style="margin:0"><button class="seg-btn" data-m="both">Both</button><button class="seg-btn" data-m="logged">Logged</button><button class="seg-btn" data-m="resolved">Resolved</button></div>
+     <label class="ep-chk"><input type="checkbox" id="epNet" checked> Net movement</label><label class="ep-chk"><input type="checkbox" id="epAged" checked> Open cases aged line</label><label class="ep-chk"><input type="checkbox" id="epWfc" checked> Waiting on Customer line</label></div></div><div class="ep-cstats" id="epChartStats"></div><div class="ep-hint">Select a bar or point to drill down · red date labels are non-working days (Sunday / holiday) and their bars are shaded lighter</div><div class="ep-cscroll"><div id="epChartBox" style="position:relative;height:410px"><canvas id="epChart"></canvas></div></div></div>
+   <div class="ep-card"><div class="ep-row"><h3>Engineer summary</h3><div class="ep-row"><input type="search" id="epSearch" placeholder="Search engineer / team…"><button class="export-btn" id="epExportAll" title="One workbook: summary, trends, every ticket, filters — with RAG colours">⬇ Export Excel (Full, RAG)</button></div></div>
+     <div class="ep-chips" id="epChips"></div><div class="ep-hint">Select an engineer to expand their trend and ticket details. Hover a coloured cell for its rule.</div><div class="table-scroll"><table class="ep-t" id="epTable"></table></div><div class="ep-pager" id="epPager"></div></div>
+  </div>`;
+  const COLSD = [['name','Engineer',0],['rating','Rating (0–10)',1],['team','Team / Level',0],['a','Logged',1],['r','Resolved',1],['net','Net',1],['ratio','Closure ratio',1],['avg','Avg / day',1],['wavg','Weekly avg closure',1],['ach','Target ach.',1],['zero','Zero-closure days',1],['trend','Trend',0],['open','Backlog (open · >7d)',1],['wfcN','Waiting on Customer',1]];
+  const RAGN = {G:'Green',A:'Amber',R:'Red',N:'N/A'};
+  const r3 = (v,g,a) => v===null||v===undefined ? 'N' : v>=g ? 'G' : v>=a ? 'A' : 'R';
+  const pill = (k, txt, tip) => '<span class="rg rg-'+k+'" title="'+tip+'">'+txt+'</span>';
+  const fmtP = v => v===null ? 'N/A' : Math.round(v*1000)/10+'%';
+  const fmtN = v => v===null ? 'N/A' : (Math.round(v*100)/100).toString();
+  const sgn = n => (n>0?'+':'')+n;
+
+  function readFilters(){
+    S.from = toD($('epFrom').value) || S.from; S.to = toD($('epTo').value) || S.to; if(S.from > S.to){ const t = S.from; S.from = S.to; S.to = t; }
+    S.team = $('epTeam').value; S.level = $('epLevel').value; S.prio = $('epPrio').value;
+    S.stat = new Set([...document.querySelectorAll('#epStatList input:checked')].map(i=>i.value));
+    S.cust = new Set([...document.querySelectorAll('#epCustList input:checked')].map(i=>i.value));
+    S.target = Math.max(0, parseFloat($('epTarget').value) || 0); S.age = Math.max(1, parseInt($('epAge').value, 10) || 10); S.ws = +$('epWs').value;
+    S.engs = new Set([...document.querySelectorAll('#epEngList input:checked')].map(i=>i.value));
+  }
+  function fillFilters(){
+    const teams = [...new Set(EV.A.concat(EV.R).map(e=>teamOf(e.eng)))].sort(), engs = [...new Set(EV.A.concat(EV.R).map(e=>e.eng))].sort();
+    const pr = [...new Set(EV.A.concat(EV.R).map(e=>e.r.priority).filter(Boolean))].sort(), st = [...new Set(EV.A.concat(EV.R).map(e=>e.r.current_status).filter(Boolean))].sort();
+    const opt = (a,all) => '<option value="">'+all+'</option>'+a.map(x=>'<option>'+esc(x)+'</option>').join('');
+    $('epTeam').innerHTML = opt(teams,'All'); $('epPrio').innerHTML = opt(pr,'All');
+    const cu = [...new Set(EV.A.map(e => e.r.customer_name || 'Unassigned'))].sort((x,y) => x.localeCompare(y));
+    $('epCustList').innerHTML = '<input type="search" class="ep-ddsearch" placeholder="Search customers…"><div class="ep-ddact"><a data-a="all">All</a> · <a data-a="none">Clear</a></div>'+cu.map(e=>'<label><input type="checkbox" value="'+esc(e)+'"> '+esc(e)+'</label>').join('');
+    $('epStatList').innerHTML = '<div class="ep-ddact"><a data-a="all">All</a> · <a data-a="none">Clear</a></div>'+st.map(e=>'<label><input type="checkbox" value="'+esc(e)+'"> '+esc(e)+'</label>').join('');
+    $('epEngList').innerHTML = '<div class="ep-ddact"><a data-a="all">All</a> · <a data-a="none">Clear</a></div>'+engs.map(e=>'<label><input type="checkbox" value="'+esc(e)+'"> '+esc(e)+'</label>').join('');
+  }
+  function syncInputs(){
+    $('epFrom').value = dk(S.from); $('epTo').value = dk(S.to); $('epTeam').value = S.team; $('epLevel').value = S.level; $('epPrio').value = S.prio;
+    document.querySelectorAll('#epStatList input').forEach(i => i.checked = S.stat.has(i.value)); $('epStatSum').textContent = S.stat.size ? S.stat.size+' selected' : 'All statuses';
+    document.querySelectorAll('#epCustList input[type=checkbox]').forEach(i => i.checked = S.cust.has(i.value)); $('epCustSum').textContent = S.cust.size ? S.cust.size+' selected' : 'All customers';
+    $('epTarget').value = S.target; $('epAge').value = S.age; $('epAged').checked = S.aged; $('epWfc').checked = S.wfc; $('epWs').value = S.ws;
+    document.querySelectorAll('#epEngList input').forEach(i => i.checked = S.engs.has(i.value)); $('epEngSum').textContent = S.engs.size ? S.engs.size+' selected' : 'All engineers';
+    document.querySelectorAll('#epPeriod .seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.p===S.period));
+    document.querySelectorAll('#epMetric .seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.m===S.metric));
+  }
+  function defaults(){ S.to = latest; S.from = new Date(latest.getFullYear(), latest.getMonth(), 1); S.team = S.level = S.prio = ''; S.stat = new Set(); S.cust = new Set(); S.rag = ''; S.engs = new Set(); S.period = 'daily'; S.target = 5; S.age = 10; S.ws = 1; S.open = null; S.page = 1; S.q = ''; $('epSearch').value = ''; }
+
+  function kpis(c){
+    const ratio = c.A ? c.R/c.A : null, avg = c.wd ? c.R/c.wd : null;
+    const k = [['Total Logged', c.A, 'logged','Tickets logged in range', [c.imA, c.srA]],['Total Resolved', c.R, 'resolved','Tickets resolved in range', [c.imR, c.srR]],
+      ['Net Movement', sgn(c.A-c.R), 'net','Logged − Resolved'],['Current Open Cases', c.oN, 'open','Snapshot as of '+fD(latest)+' · '+c.oOld+' older than 7 days', [c.oIM, c.oSR]],
+      ['Closure : Logged', fmtP(ratio), 'ratio','Resolved ÷ Logged'],
+      ['Avg Resolutions / Working Day', fmtN(avg), 'avg', c.wd+' eligible working days'],['Engineers Below Target', c.below+' / '+c.list.length, 'below','Target '+S.target+' / day']];
+    $('epKpis').innerHTML = k.map(x=>'<div class="ep-kpi" data-k="'+x[2]+'" title="Click to see the underlying records and export to Excel"><div class="l">'+x[0]+'</div><div class="v">'+esc(String(x[1]))+'</div>'+
+      (x[4] ? '<div class="sp"><span>IM <b>'+x[4][0]+'</b></span><span>SR <b>'+x[4][1]+'</b></span></div>' : '')+'<div class="s">'+esc(x[3])+'</div><div class="go">View &amp; export ›</div></div>').join('');
+  }
+  function scopeLabel(){
+    const n = [...S.engs]; if(n.length) return (n.length<=2 ? n.join(', ') : n.length+' engineers')+(S.cust.size ? ' · '+(S.cust.size<=2 ? [...S.cust].join(', ') : S.cust.size+' customers') : '');
+    const cn = [...S.cust], cl = cn.length ? (cn.length<=2 ? cn.join(', ') : cn.length+' customers') : '', lt = [S.level, S.team].filter(Boolean).join(' ');
+    return [lt, cl].filter(Boolean).join(' · ') || 'All teams';
+  }
+  function drawChart(c){
+    $('epChartTitle').textContent = scopeLabel()+' - '+{daily:'Daily',weekly:'Weekly',monthly:'Monthly'}[S.period]+' trend · '+fD(c.from)+' – '+fD(c.to);
+    const n = c.bs.length, last = c.bs[n-1] || {}, best = c.bs.reduce((mx,b) => (!mx || b.r > mx.r) ? b : mx, null);
+    const chip = (l, v, cls, sub, key) => '<div class="ep-cs '+(cls||'')+'" data-s="'+key+'" title="Click to see the underlying records and export to Excel"><span>'+l+'</span><b>'+v+'</b>'+(sub ? '<i>'+esc(sub)+'</i>' : '')+'</div>';
+    $('epChartStats').innerHTML = chip('Logged', c.A, 'lg', '', 'logged') + chip('Resolved', c.R, 'rs', '', 'resolved') + chip('Net', sgn(c.A-c.R), c.A-c.R>0?'bad':c.A-c.R<0?'good':'', '', 'net') +
+      chip('Avg resolved / '+({daily:'day',weekly:'week',monthly:'month'}[S.period]), n ? fmtN(c.R/n) : 'N/A', '', '', 'avg') + (best && best.r>0 ? chip('Peak resolved', best.r, 'rs', best.label, 'peak') : '') +
+      chip('Open ≥ '+S.age+'d now', last.aged||0, 'ag', last.ref ? 'as of '+fD(new Date(last.ref)) : '', 'aged') + chip('Waiting on Customer', last.wfc||0, 'wf', last.ref ? 'as of '+fD(new Date(last.ref)) : '', 'wfc');
+    if(chart) chart.destroy(); if(typeof Chart==='undefined') return;
+    $('epChartBox').style.minWidth = n > 45 ? (n*30)+'px' : '';
+    const dense = n > 20, vdense = n > 45, nw = b => S.period==='daily' && !isWork(b.start), WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const lb = c.bs.map(b => { if(S.period!=='daily') return b.label+(b.partial?'*':''); const d = b.start; return [P2(d.getDate())+(d.getDate()===1 || b===c.bs[0] ? ' '+MON[d.getMonth()] : '')+(b.partial?'*':''), WD[d.getDay()]]; });
+    const fs = dense ? 9 : 11;
+    const LBL = col => ({display:ctx=>!vdense && ctx.dataset.data[ctx.dataIndex]>0, anchor:'end', align:'end', color:col, rotation: n>26 ? -90 : 0, font:{weight:'700',size:fs}, formatter:v=>v, clamp:true});
+    const stepLbl = col => Object.assign(LBL(col), {display:ctx=>{ const d = ctx.dataset.data, i = ctx.dataIndex; return i===0 || i===d.length-1 || d[i]!==d[i-1]; }, rotation:0, font:{weight:'700',size:10}, backgroundColor:'rgba(255,255,255,.94)', borderColor:col, borderWidth:1, borderRadius:4, padding:{top:2,bottom:2,left:4,right:4}});
+    const barCol = (hex, light) => ctx => c.bs[ctx.dataIndex] && nw(c.bs[ctx.dataIndex]) ? light : hex;
+    const bar = { type:'bar', borderRadius:5, borderSkipped:false, maxBarThickness:36, categoryPercentage:.8, barPercentage:.92, order:3 };
+    const ds = [];
+    if(S.metric!=='resolved') ds.push(Object.assign({}, bar, {label:'Logged', data:c.bs.map(b=>b.a), backgroundColor:barCol('#8b3fd1','rgba(139,63,209,.32)'), datalabels:LBL('#560a91')}));
+    if(S.metric!=='logged') ds.push(Object.assign({}, bar, {label:'Resolved', data:c.bs.map(b=>b.r), backgroundColor:barCol('#e2571f','rgba(226,87,31,.32)'), datalabels:LBL('#b53f12')}));
+    if(S.net) ds.push({type:'line', label:'Net movement', data:c.bs.map(b=>b.a-b.r), borderColor:'#1f9d63', backgroundColor:'#1f9d63', borderWidth:2.5, tension:.3, pointRadius:dense?2.5:4, pointHoverRadius:6, order:2,
+      datalabels:Object.assign(LBL('#1f9d63'),{align:'top',offset:6,formatter:v=>sgn(v),backgroundColor:'rgba(255,255,255,.9)',borderRadius:3,padding:2,display:ctx=>!vdense, rotation:0})});
+    if(S.aged) ds.push({type:'line', label:'Open cases aged ≥ '+S.age+' days', data:c.bs.map(b=>b.aged), yAxisID:'y2', borderColor:'#c0392b', backgroundColor:'#c0392b', borderWidth:3.5, borderDash:[2,6], borderCapStyle:'round', tension:.2, pointRadius:5, pointHoverRadius:8, order:0,
+      datalabels:Object.assign(stepLbl('#c0392b'),{align:'top',offset:9})});
+    if(S.wfc) ds.push({type:'line', label:'Waiting on Customer cases', data:c.bs.map(b=>b.wfc), yAxisID:'y2', borderColor:'#1565c0', backgroundColor:'#1565c0', borderWidth:3.5, borderDash:[10,6], borderCapStyle:'round', tension:.2, pointStyle:'rectRot', pointRadius:6, pointHoverRadius:8, order:1,
+      datalabels:Object.assign(stepLbl('#1565c0'),{align:'bottom',offset:9})});
+    const both = S.aged && S.wfc, y2c = both ? '#6b6478' : S.wfc ? '#1565c0' : '#c0392b';
+    chart = new Chart($('epChart'), { data:{labels:lb, datasets:ds}, options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false}, layout:{padding:{top:28,right:6,bottom:2}},
+      onHover:(e, els) => { if(e.native && e.native.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default'; },
+      plugins:{ legend:{position:'top', align:'start', labels:{usePointStyle:true, boxWidth:9, boxHeight:9, padding:18, font:{size:12, weight:'600'}}},
+        tooltip:{ backgroundColor:'rgba(32,26,43,.96)', padding:12, titleFont:{size:13, weight:'700'}, bodySpacing:6, usePointStyle:true, boxPadding:4,
+          callbacks:{
+            title:it => { const b = c.bs[it[0].dataIndex]; return S.period==='daily' ? b.start.toLocaleDateString(undefined,{weekday:'long', day:'2-digit', month:'short', year:'numeric'}) : S.period==='weekly' ? 'Week '+fD(b.start)+' – '+fD(b.end) : b.label; },
+            afterBody:it => { const b = c.bs[it[0].dataIndex], o = []; o.push('Closure ratio: '+(b.a ? Math.round(b.r/b.a*1000)/10+'%' : 'N/A')); if(nw(b)) o.push('Non-working day'); return o; },
+            footer:i => { const b = c.bs[i[0].dataIndex]; return (S.aged||S.wfc ? 'Open-case counts are as of '+fD(new Date(b.ref))+'\n' : '')+(b.partial?'Partial interval (data not yet complete)':''); } } } },
+      scales:{ y:{beginAtZero:true, grace:'12%', border:{display:false}, grid:{color:'rgba(120,110,140,.16)', borderDash:[3,4]}, ticks:{precision:0, font:{size:11}}, title:{display:true,text:'Tickets logged / resolved',font:{size:11,weight:'600'}}},
+        x:{grid:{display:false}, ticks:{autoSkip:n>40, maxRotation:0, font:{size:11}, color:ctx => c.bs[ctx.index] && nw(c.bs[ctx.index]) ? '#c0392b' : '#6b6478'}},
+        y2:{display:S.aged||S.wfc, position:'right', beginAtZero:true, grace:'15%', border:{display:false}, grid:{drawOnChartArea:false}, title:{display:true,text:both ? 'Open cases (aged ≥ '+S.age+'d / Waiting on Customer)' : S.wfc ? 'Waiting on Customer cases' : 'Open cases aged ≥ '+S.age+' days', color:y2c, font:{size:11,weight:'600'}}, ticks:{color:y2c, precision:0}} },
+      onClick:(e, els)=>{ if(!els.length) return; const el = els[0], b = c.bs[el.index], lab = ds[el.datasetIndex].label;
+        if(lab.indexOf('Waiting on Customer')===0){ drill('Waiting on Customer · '+b.label, wfcRecs(c,b), c, [['As of', fD(new Date(b.ref))],['Note','Tickets whose current status is Waiting on Customer, created on or before this date']]); return; }
+        if(lab.indexOf('Open cases aged')===0){ drill('Open cases aged ≥ '+S.age+' days · '+b.label, agedRecs(c,b), c, [['As of', fD(new Date(b.ref))],['Note','Currently open cases only (closed, resolved, customer agreed, cancelled, deferred and duplicate tickets are excluded)']]); return; }
+        const t = lab==='Logged'?'Logged':lab==='Resolved'?'Resolved':undefined;
+        drill((t||'Logged & Resolved')+' · '+b.label, records(c,{from:b.start<c.from?c.from:b.start, to:b.end>c.to?c.to:b.end, type:t}), c, [['Interval', b.label+' ('+fD(b.start)+' – '+fD(b.end)+')'],['Logged', b.a],['Resolved', b.r]]); } } });
+  }
+  function tableView(c){
+    const q = S.q.toLowerCase(), k = S.sort.k, d = S.sort.dir, cnt = {G:0,A:0,R:0,N:0}; c.list.forEach(e => cnt[e.rag]++);
+    $('epChips').innerHTML = '<span class="ep-chiplab">Target RAG</span>'+[['','All',c.list.length],['R','Red',cnt.R],['A','Amber',cnt.A],['G','Green',cnt.G]].map(x =>
+      '<button class="ep-chip'+(S.rag===x[0]?' on':'')+' c-'+(x[0]||'all')+'" data-rag="'+x[0]+'">'+x[1]+' <b>'+x[2]+'</b></button>').join('')+
+      '<span class="ep-legend">Green ≥ 100% of target · Amber 80–99% · Red &lt; 80% &nbsp;|&nbsp; Net: red = backlog growing, green = shrinking &nbsp;|&nbsp; Rating 0–10: 50% target + 20% closure ratio + 20% consistency + 10% ageing (green ≥ 8, amber ≥ 6)</span>';
+    let rows = c.list.filter(e => (!S.rag || e.rag===S.rag) && (!q || (e.name+' '+e.team+' '+e.level).toLowerCase().includes(q)));
+    rows.sort((x,y) => { const a = x[k], b = y[k]; if(a===null||a===undefined) return 1; if(b===null||b===undefined) return -1; return (typeof a==='string' ? a.localeCompare(b) : a-b)*d; });
+    const PS = 10, pages = Math.max(1, Math.ceil(rows.length/PS)); S.page = Math.min(S.page, pages);
+    const zl = Math.max(1, Math.round(c.wd*.1));
+    const head = '<thead><tr>'+COLSD.map(h=>'<th data-k="'+h[0]+'" class="'+(h[2]?'n':'')+(S.sort.k===h[0]?' sorted':'')+'">'+h[1]+(S.sort.k===h[0]?(S.sort.dir>0?' ▲':' ▼'):'')+'</th>').join('')+'<th></th></tr></thead>';
+    const body = rows.slice((S.page-1)*PS, S.page*PS).map(e => {
+      const open = S.open===e.name, avgT = S.target && e.avg!==null ? e.avg/S.target : null;
+      const netK = e.net>0?'R':e.net<0?'G':'A', zK = e.zero===0?'G':e.zero<=zl?'A':'R', trK = e.trend==='▲'?'G':e.trend==='▼'?'R':e.trend==='▬'?'A':'N', bK = !e.open?'N':e.old===0?'G':e.old<=3?'A':'R';
+      const achCell = e.ach===null ? pill('N','N/A','No target set') : '<span class="rg rg-bar rg-'+e.rag+'" style="--w:'+Math.min(100,Math.round(e.ach*100))+'%" title="'+e.r+' resolved vs target '+e.tgt+' ('+S.target+' × '+c.wd+' working days)">'+fmtP(e.ach)+'</span>';
+      let h = '<tr class="ep-er row-'+e.rag+(open?' open':'')+'" data-e="'+esc(e.name)+'"><td><b>'+(open?'▾ ':'▸ ')+esc(e.name)+'</b></td>'+
+        '<td class="n">'+(e.rating===null ? pill('N','N/A','No target set') : pill(e.rating>=8?'G':e.rating>=6?'A':'R', '<b>'+e.rating.toFixed(1)+'</b> / 10', 'Rating: 50% target ('+Math.round(e.rParts.t*100)+'%) + 20% closure ratio ('+Math.round(e.rParts.q*100)+'%) + 20% consistency ('+Math.round(e.rParts.k*100)+'%) + 10% ageing ('+Math.round(e.rParts.g*100)+'%)'))+'</td><td>'+esc(e.team)+' · '+esc(e.level)+'</td><td class="n">'+e.a+'</td><td class="n">'+e.r+'</td>'+
+        '<td class="n">'+pill(netK, sgn(e.net), e.net>0?'Backlog growing: more logged than resolved':e.net<0?'Backlog shrinking':'Balanced')+'</td>'+
+        '<td class="n">'+(e.ratio===null?pill('N','N/A','Nothing logged in range'):pill(r3(e.ratio,1,.8), fmtP(e.ratio), 'Resolved ÷ Logged'))+'</td>'+
+        '<td class="n">'+(avgT===null?pill('N',fmtN(e.avg),'No target'):pill(r3(avgT,1,.8), fmtN(e.avg), 'Target '+S.target+' per working day'))+'</td>'+
+        '<td class="n">'+(e.wavg===null ? pill('N','N/A','No working days') : pill(avgT===null?'N':r3(avgT,1,.8), fmtN(e.wavg), 'Resolved ÷ (eligible working days ÷ 6) · weekly target '+(S.target*6)))+'</td>'+
+        '<td class="n">'+achCell+'</td>'+
+        '<td class="n">'+pill(zK, e.zero, 'Working days with no resolutions (of '+c.wd+')')+'</td>'+
+        '<td>'+pill(trK, e.trend, 'Latest complete interval vs the one before')+'</td>'+
+        '<td class="n">'+(e.open ? pill(bK, e.open+' · '+e.old, 'Open tickets owned now · older than 7 days (current snapshot)') : pill('N','—','No open tickets'))+'</td>'+
+        '<td class="n">'+(e.wfcN ? '<a class="ep-w" data-w="'+esc(e.name)+'" title="Click to list tickets Waiting on Customer (current status)">'+pill('W', e.wfcN, 'Currently Waiting on Customer')+'</a>' : pill('N','0','No tickets waiting on the customer'))+'</td>'+
+        '<td><button class="ep-x" data-x="'+esc(e.name)+'" title="Export this engineer to Excel">⬇</button></td></tr>';
+      if(open) h += '<tr class="ep-exp"><td colspan="15">'+expand(e,c)+'</td></tr>';
+      return h; }).join('');
+    $('epTable').innerHTML = head + '<tbody>'+(body || '<tr><td colspan="15" class="empty">No engineers match the current filters.</td></tr>')+'</tbody>';
+    $('epPager').innerHTML = rows.length+' engineers · <button data-pg="-1" '+(S.page<=1?'disabled':'')+'>‹ Prev</button> Page '+S.page+' / '+pages+' <button data-pg="1" '+(S.page>=pages?'disabled':'')+'>Next ›</button>';
+  }
+  function expand(e,c){
+    const per = S.ePeriod || S.period, bs = buckets(c.from, c.to, per), idx = {}; bs.forEach(b=>idx[b.key]=b);
+    EV.A.forEach(ev => { if(ev.eng===e.name && inRange(ev,c.from,c.to) && pass(ev)){ const b = idx[bkey(ev.t,per)]; if(b) b.a++; } });
+    EV.R.forEach(ev => { if(ev.eng===e.name && inRange(ev,c.from,c.to) && pass(ev)){ const b = idx[bkey(ev.t,per)]; if(b) b.r++; } });
+    const rows = bs.map((b,i) => '<tr><td>'+esc(b.label)+(b.partial?' <i>(partial)</i>':'')+'</td><td class="n"><a data-d="'+i+'" data-t="Logged">'+b.a+'</a></td><td class="n"><a data-d="'+i+'" data-t="Resolved">'+b.r+'</a></td><td class="n">'+sgn(b.a-b.r)+'</td><td class="n">'+(per==='daily'?(isWork(b.start)?b.r:'non-working'):fmtN(workDays(b.start<c.from?c.from:b.start,b.end>c.to?c.to:b.end)?b.r/workDays(b.start<c.from?c.from:b.start,b.end>c.to?c.to:b.end):null))+'</td></tr>').join('');
+    e._bs = bs;
+    return '<div class="ep-exh"><b>'+esc(e.name)+'</b> · '+esc(e.team)+' · '+esc(e.level)+' · zero-closure working days: <b>'+e.zero+'</b> · trend: '+e.trend+
+      '<span class="ep-row"><select id="epEP"><option value="">Interval: as page</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>'+
+      '<button class="btn-ghost-gov" data-all="Logged">Logged tickets</button><button class="btn-ghost-gov" data-all="Resolved">Resolved tickets</button><button class="btn-ghost-gov" data-all="">All tickets</button></span></div>'+
+      '<div class="table-scroll" style="max-height:260px"><table class="ep-t"><thead><tr><th>Interval</th><th class="n">Logged</th><th class="n">Resolved</th><th class="n">Net</th><th class="n">'+(per==='daily'?'Closures':'Avg / working day')+'</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  function render(){
+    if(!(DATA && DATA.gov_rows)){ $('epNo').style.display='flex'; $('epWrap').style.display='none'; return; }
+    $('epNo').style.display='none'; $('epWrap').style.display='block';
+    const c = LAST = compute(); kpis(c); drawChart(c); tableView(c);
+  }
+  function apply(){ readFilters(); S.page = 1; S.open = null; render(); syncInputs(); }
+
+  function wire(){
+    $('epPeriod').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if(b){ S.period = b.dataset.p; S.ePeriod = ''; apply(); } });
+    $('epMetric').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if(b){ S.metric = b.dataset.m; syncInputs(); drawChart(LAST); } });
+    $('epWfc').addEventListener('change', e => { S.wfc = e.target.checked; drawChart(LAST); });
+    $('epAged').addEventListener('change', e => { S.aged = e.target.checked; drawChart(LAST); });
+    $('epNet').addEventListener('change', e => { S.net = e.target.checked; drawChart(LAST); });
+    $('epApply').onclick = apply; $('epReset').onclick = () => { defaults(); syncInputs(); render(); };
+    [['epEngList','epEngSum','All engineers'],['epStatList','epStatSum','All statuses'],['epCustList','epCustSum','All customers']].forEach(d => {
+      const sum = () => { const n = document.querySelectorAll('#'+d[0]+' input[type=checkbox]:checked').length; $(d[1]).textContent = n ? n+' selected' : d[2]; };
+      $(d[0]).addEventListener('click', e => { const a = e.target.dataset.a; if(a){ document.querySelectorAll('#'+d[0]+' input[type=checkbox]').forEach(i=>i.checked = a==='all'); sum(); } });
+      $(d[0]).addEventListener('change', sum);
+    });
+    $('epCustList').addEventListener('input', e => { if(!e.target.classList.contains('ep-ddsearch')) return; const q = e.target.value.toLowerCase(); document.querySelectorAll('#epCustList label').forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? '' : 'none'); });
+    $('epSearch').addEventListener('input', e => { clearTimeout(tq); tq = setTimeout(() => { S.q = e.target.value; S.page = 1; tableView(LAST); }, 250); });
+    $('epExportAll').onclick = exportAll;
+    $('epKpis').addEventListener('click', e => { const k = e.target.closest('[data-k]'); if(k) cardDrill(k.dataset.k, LAST); });
+    $('epChartStats').addEventListener('click', e => { const k = e.target.closest('[data-s]'); if(k) cardDrill(k.dataset.s, LAST); });
+    $('epTable').addEventListener('click', e => { const c = LAST;
+      const th = e.target.closest('th[data-k]'); if(th){ const k = th.dataset.k; S.sort = {k, dir: S.sort.k===k ? -S.sort.dir : (k==='name'||k==='team'?1:-1)}; tableView(c); return; }
+      const x = e.target.closest('[data-x]'); if(x){ exportEng(x.dataset.x); return; }
+      const wv = e.target.closest('[data-w]'); if(wv){ drill(wv.dataset.w+' · Waiting on Customer', records(c,{eng:wv.dataset.w, type:'Waiting'}), c, [['Engineer', wv.dataset.w],['Note','Current snapshot: tickets whose status is Waiting on Customer now']]); return; }
+      const dd = e.target.closest('[data-d]'); if(dd){ const en = S.open, eg = c.list.find(z=>z.name===en), b = eg._bs[+dd.dataset.d];
+        drill(en+' · '+dd.dataset.t+' · '+b.label, records(c,{eng:en, type:dd.dataset.t, from:b.start<c.from?c.from:b.start, to:b.end>c.to?c.to:b.end}), c, [['Engineer', en],['Interval', b.label]]); return; }
+      const al = e.target.closest('[data-all]'); if(al){ const t = al.dataset.all; drill(S.open+' · '+(t||'All tickets'), records(c,{eng:S.open, type:t||undefined}), c, [['Engineer', S.open]]); return; }
+      if(e.target.closest('select')) return;
+      const tr = e.target.closest('.ep-er'); if(tr){ S.open = S.open===tr.dataset.e ? null : tr.dataset.e; tableView(c); } });
+    $('epTable').addEventListener('change', e => { if(e.target.id==='epEP'){ S.ePeriod = e.target.value; tableView(LAST); const s = $('epEP'); if(s) s.value = S.ePeriod; } });
+    $('epChips').addEventListener('click', e => { const b = e.target.closest('[data-rag]'); if(b){ S.rag = b.dataset.rag; S.page = 1; tableView(LAST); } });
+    $('epPager').addEventListener('click', e => { const b = e.target.closest('[data-pg]'); if(b){ S.page += +b.dataset.pg; tableView(LAST); } });
+  }
+  window.renderEngProd = function(){
+    const sec = $('view-engprod'); if(!sec) return;
+    if(!sec.dataset.built){ sec.dataset.built = '1'; sec.innerHTML = HTML; wire(); S.src = null; EV = null; }
+    if(!(DATA && DATA.gov_rows)){ render(); return; }
+    const fresh = !EV || S.src !== DATA.gov_rows; build();
+    if(fresh || !S.from){ fillFilters(); defaults(); }
+    syncInputs(); render();
+  };
 })();
 
 </script>
