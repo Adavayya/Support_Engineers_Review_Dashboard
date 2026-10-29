@@ -2884,6 +2884,19 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
 #view-engprod #epCustTable .ep-cr:hover td{background:var(--panel-2)}#view-engprod #epCustTable .ep-tot td{background:var(--panel-2);border-top:2px solid var(--line)}
 #view-engprod .ep-capturing #epCustTable th,#view-engprod .ep-capturing #epCustTable td{position:static}
 #view-engprod #epCustCard select,#view-engprod #epCustCard input[type=number]{border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:12px;background:var(--panel);color:var(--ink);font-family:var(--sans)}
+
+  /* Overview (new build): bottom-right corner indicator on a KPI card - vs-average and open-call aging */
+  .kpi.has-corner{position:relative;padding-bottom:34px;}
+  .kpi .corner{position:absolute;right:16px;bottom:9px;font-size:11.5px;font-weight:600;white-space:nowrap;color:var(--purple);}
+  .kpi .corner.up{color:#1f9d63;} .kpi .corner.down{color:#d0453f;} .kpi .corner.warn{color:#c2410c;}
+  .kpi .corner.muted{font-weight:400;color:var(--ink-faint);}
+  .kpi .corner.link{cursor:pointer;} .kpi .corner.link:hover{text-decoration:underline;}
+  #tabFilters_overview{gap:12px;}
+  .ov-filter-note{font-size:12px;color:var(--ink-dim);margin:-6px 0 12px;}
+  #tabFilters_overview .msdrop-btn{min-width:80px;}
+  .ov-aging-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .ov-aging-pick{font-size:12px;color:var(--ink-dim);display:flex;align-items:center;gap:8px;}
+  .ov-aging-pick select{font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer;}
 </style>
 </head>
 <body>
@@ -3117,7 +3130,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
             <!-- Add your Excel file names from the MSPData folder below.
                  Each option's value is the file's path relative to this
                  HTML file, and must be committed to the same repo. -->
-            <option value="MSPData/CallDump_26Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
+            <option value="MSPData/CallDump_06Oct26.xlsx">SupportCalls_April_TO_Oct-2026</option>
 
             <!-- Add more <option> entries here, following the same
                  MSPData/filename.xlsx pattern, e.g.:
@@ -3206,6 +3219,7 @@ td.dataTables_empty{ text-align:center; color:var(--text-muted); padding:18px !i
     <button data-view="settings">Settings</button>
   </nav>
   <div class="filterbar-tabfilters" id="tabFiltersRoot">
+    <div class="filterbar-tabfilters" id="tabFilters_overview" style="display:none;"></div>
     <div class="filterbar-tabfilters" id="tabFilters_engineers" style="display:none;"></div>
     <div class="filterbar-tabfilters" id="tabFilters_towercust" style="display:none;"></div>
     <div class="filterbar-tabfilters" id="tabFilters_engcompliance" style="display:none;"></div>
@@ -5389,15 +5403,16 @@ function ageBucketOf(days){
   for(const [lo,hi,label] of AGE_BUCKETS){ if(days>=lo && days<hi) return label; }
   return null;
 }
-const OPEN_BUCKET_CUSTOMER = new Set(['Waiting on Customer','Under Observation','Pending for Effort Approval','Information Provided','Customer Accept','Customer Reject']);
+const OPEN_BUCKET_CUSTOMER = new Set(['Waiting on Customer','Under Observation','Pending for Effort Approval']);   // Information Provided / Customer Accept / Customer Reject: the customer has replied, so the ball is with the Engineer
 const OPEN_BUCKET_SALES = new Set(['Under Sales Discussion']);
 function openBucketOf(row){
+  // Checked in this order (new build): Customer, Sales, Internal (CPE/Apps), then Engineer for every other open call.
+  if(OPEN_BUCKET_CUSTOMER.has(row.current_status)) return 'Customer';
+  if(OPEN_BUCKET_SALES.has(row.current_status)) return 'Sales';
   if((row.resolution_type==='pendingWithCpe' || row.resolution_type==='pendingWithApps') &&
      row.internal_reference_id!==null && row.internal_reference_id!==undefined && row.internal_reference_id!==''){
     return 'Internal Team (CPE/Apps)';
   }
-  if(OPEN_BUCKET_CUSTOMER.has(row.current_status)) return 'Customer';
-  if(OPEN_BUCKET_SALES.has(row.current_status)) return 'Sales';
   return 'Engineer';
 }
 
@@ -5475,6 +5490,7 @@ function buildCustomerTicketRecords(rows, now){
       add_to_kb: (r.add_to_kb===undefined?null:r.add_to_kb),
       escalation_type: (r.escalation_type===undefined?null:r.escalation_type),
       tat_24x7: tat24, tat_sla: r.tat_sla_raw===undefined?null:r.tat_sla_raw,
+      service_rating: (r.service_rating===undefined?null:r.service_rating),
     };
   });
 }
@@ -5779,8 +5795,17 @@ function buildFullDataset(callDumpRows, ownerTeamMap, customerTowerMap, now){
   const nOwnerUnassignedKept = clean.filter(r=>!r.owner).length;
   const nCustomerUnassignedKept = clean.filter(r=>!r.customer_name).length;
 
+  // Business days (Mon-Sat minus holidays) in every period, counted up to the last data date - used by the Overview's "vs average" indicators.
+  const bucket_bdays = (function(){
+    const out = {}; MONTHS.forEach(m => { out[m] = 0; }); if(!MONTHS.length) return out;
+    const fp = String(MONTHS[0]).split('-').map(Number); let d = new Date(fp[0], fp[1]-1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    while(d <= end){ if(isBusinessDay(d, false)){ const b = bucketOf(d); if(Object.prototype.hasOwnProperty.call(out, b)) out[b]++; } d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1); }
+    return out;
+  })();
   const meta = {
     months: MONTHS,
+    bucket_bdays,
     n_service_excluded: rows.length - clean.length,
     total_rows_after_service_exclusion: clean.length,
     last_data_date: now.toISOString(),
@@ -6810,7 +6835,7 @@ return { delegationDueDate, cdaLookup, buildFullDataset, normYesNo, buildSapphir
   // customer/tower/team and the Overview-only escalation panel's data from a `clean` row
   // population, exposed so the filter-refresh path can call them again on a filtered
   // subset without duplicating any of their logic.
-  buildDimensionsBundle, buildEscalation };
+  buildDimensionsBundle, buildEscalation, buildGroupEntry };
 })();
 
 // ================= BAKED-IN DEFAULT ROSTERS (Owner->Team, Customer->Tower) =================
@@ -8543,7 +8568,8 @@ function renderSeverityTable(tableId, sev, scopedRecords){
 // pattern as maybeDrillCell/renderSlaTableAllMonths: a card only becomes clickable when the
 // independently-filtered record count exactly equals the number already printed on the card,
 // so the displayed KPI numbers themselves never change, only whether a card is clickable.
-function kpiRowHtml(g, scopeFn, idPrefix){
+function kpiRowHtml(g, scopeFn, idPrefix, corners){
+  corners = corners || {};
   const period = periodLabel();
   const c = collapseMonths(g, SELECTED_MONTHS);
   const logL = c.logged, resL = c.resolved, openL = g.open_current, csatL = c.csat;
@@ -8556,11 +8582,11 @@ function kpiRowHtml(g, scopeFn, idPrefix){
   const csatRecs = DATA.ticket_volume_records.filter(r => r.resolved_month && SELECTED_MONTHS.includes(r.resolved_month) && r.service_rating!==null && r.service_rating!==undefined && inScope(r));
 
   const loggedCell = kpiCardCell(`Logged — ${period}`, `${logL.Total}<span class="frac">IM ${logL.IM} / SR ${logL.SR}</span>`,
-    logL.Total, loggedRecs, logL.Total, `Logged — ${period}`, KPI_LOGGED_DRILL_COLUMNS, `KPI_Logged_${base}`);
+    logL.Total, loggedRecs, logL.Total, `Logged — ${period}`, KPI_LOGGED_DRILL_COLUMNS, `KPI_Logged_${base}`, corners.logged);
   const resolvedCell = kpiCardCell(`Resolved — ${period}`, `${resL.Total}<span class="frac">IM ${resL.IM} / SR ${resL.SR}</span>`,
-    resL.Total, resolvedRecs, resL.Total, `Resolved — ${period}`, KPI_RESOLVED_DRILL_COLUMNS, `KPI_Resolved_${base}`);
+    resL.Total, resolvedRecs, resL.Total, `Resolved — ${period}`, KPI_RESOLVED_DRILL_COLUMNS, `KPI_Resolved_${base}`, corners.resolved);
   const openCell = kpiCardCell(`Open — current`, `${openL.Total}<span class="frac">IM ${openL.IM} / SR ${openL.SR}</span>`,
-    openL.Total, openRecs, openL.Total, `Open — current`, KPI_OPEN_DRILL_COLUMNS, `KPI_Open_${base}`);
+    openL.Total, openRecs, openL.Total, `Open — current`, KPI_OPEN_DRILL_COLUMNS, `KPI_Open_${base}`, corners.open);
   const csatCell = kpiCardCell(`CSAT — ${period}`, `${csatL.mean===null?'NA':csatL.mean}<span class="frac">${csatL.count} surveys</span>`,
     csatL.count, csatRecs, csatL.count, `CSAT surveys — ${period}`, KPI_CSAT_DRILL_COLUMNS, `KPI_CSAT_${base}`);
 
@@ -8570,12 +8596,13 @@ function kpiRowHtml(g, scopeFn, idPrefix){
 // Renders one KPI "card" - drillable only when the independently-filtered `recs` exactly
 // matches `expectedCount` (and is non-zero), same safety contract as maybeDrillCell. Falls
 // back to the original plain, non-clickable card otherwise.
-function kpiCardCell(labelText, valueHtml, count, recs, expectedCount, drillTitle, columns, filenameBase){
+function kpiCardCell(labelText, valueHtml, count, recs, expectedCount, drillTitle, columns, filenameBase, corner){
+  const hc = corner ? ' has-corner' : '', ch = corner || '';
   if(!count || !recs || recs.length !== expectedCount){
-    return `<div class="kpi"><div class="label">${labelText}</div><div class="value">${valueHtml}</div></div>`;
+    return `<div class="kpi${hc}"><div class="label">${labelText}</div><div class="value">${valueHtml}</div>${ch}</div>`;
   }
   const id = registerDrilldown(drillTitle, recs, columns, filenameBase);
-  return `<div class="kpi drillable" data-drill-id="${id}" title="Click to view underlying tickets"><div class="label">${labelText}</div><div class="value">${valueHtml}</div></div>`;
+  return `<div class="kpi drillable${hc}" data-drill-id="${id}" title="Click to view underlying tickets"><div class="label">${labelText}</div><div class="value">${valueHtml}</div>${ch}</div>`;
 }
 
 // Value label for a bar: sits just ABOVE the bar's top edge (anchor 'end' + align 'end'), so it is never drawn on
@@ -9046,11 +9073,12 @@ function renderDelegationSection(selectedEngineers){
 
 
 
-function renderEscalationPanel(monthTableId, towerTableId){
-  // Overview-only panel (always the full, unscoped ticket population), so no owner/customer
-  // filter is needed here beyond the escalation type and month/tower themselves.
-  const allRecs = DATA.ticket_volume_records;
-  const byMonth = DATA.escalation.by_month;
+function renderEscalationPanel(monthTableId, towerTableId, escData, scopeFn){
+  // Overview-only panel. By default the full ticket population; the Overview's own Team / Engineer / Tower / Customer
+  // filters pass their own escalation data and a scope function so the numbers and the drill-downs stay in step.
+  const allRecs = scopeFn ? DATA.ticket_volume_records.filter(scopeFn) : DATA.ticket_volume_records;
+  const escSrc = escData || DATA.escalation;
+  const byMonth = escSrc.by_month;
   const escLabels = {potentialEscalation:'Potential Escalation', salesEscalation:'Sales Escalation', businessEscalation:'Business Escalation'};
   let rows = '<tr><th>Month</th><th>Potential</th><th>Sales</th><th>Business</th></tr>';
   SELECTED_MONTHS.forEach(m=>{
@@ -9066,7 +9094,7 @@ function renderEscalationPanel(monthTableId, towerTableId){
   document.getElementById(monthTableId).innerHTML = rows;
 
   // Tower breakdown summed across the selected months only (uses the month×tower structure).
-  const byMonthTower = DATA.escalation.by_month_tower;
+  const byMonthTower = escSrc.by_month_tower;
   const towerAgg = {};
   SELECTED_MONTHS.forEach(m=>{
     Object.entries(byMonthTower[m]).forEach(([tw,v])=>{
@@ -9089,14 +9117,246 @@ function renderEscalationPanel(monthTableId, towerTableId){
   document.getElementById(towerTableId).innerHTML = rows2;
 }
 
-// ================= OVERVIEW =================
+// ================= OVERVIEW (new build): filters, open-call aging, MTTR, "vs average" =================
+// Ported from the new Call Dump Analytics build. Differences kept on purpose: the per-ticket records are derived from the dashboard's own cleaned ticket
+// set (so every number comes from the same pipeline functions as the rest of the dashboard) and every card / table keeps its ticket drill-down.
+const OV_PENDING = [['Engineer', 'Pending — Engineer'], ['Customer', 'Pending — Customer'], ['Internal Team (CPE/Apps)', 'Pending — Internal (CPE/Apps)'], ['Sales', 'Pending — Sales']];
+const OV_AGING_COLUMNS = [
+  {key:'external_id', label:'External ID', nowrap:true}, {key:'customer_name', label:'Customer'}, {key:'owner', label:'Owner'},
+  {key:'severity', label:'Severity', nowrap:true}, {key:'service', label:'Service'}, {key:'current_status', label:'Status'},
+  {key:'open_bucket', label:'Pending With'}, {key:'internal_reference_id', label:'Internal Reference ID'}, {key:'resolution_type', label:'Resolution Type', nowrap:true},
+  {key:'age_days', label:'Age (days)', nowrap:true},
+];
+const OV_AGING_CHOICES = [10, 15, 30, 45, 60, 90];
+const OV_AGING = {days: 30};
+const OV_AVG_EXCLUDE = ['2026-04'];      // period holding records migrated from the previous system: left out of the averages and of MTTR (edit here if your data differs)
+const MTTR_GROUPS = [['Incident Management', 'IM'], ['Service Request', 'SR'], ['All tickets', null]];
+const MTTR_EXCLUDE_CREATED = OV_AVG_EXCLUDE;
+const MTTR_DRILL_COLUMNS = [
+  {key:'external_id', label:'External ID', nowrap:true}, {key:'customer_name', label:'Customer'}, {key:'owner', label:'Owner'},
+  {key:'severity', label:'Severity', nowrap:true}, {key:'service', label:'Service'}, {key:'current_status', label:'Status'},
+  {key:'resolved_in', label:'Resolved in', nowrap:true}, {key:'elapsed_days', label:'Elapsed (days)', nowrap:true}, {key:'sla_days', label:'SLA clock (days)', nowrap:true},
+];
+const OV = {team: null, engineer: null, tower: null, customer: null, engOptions: [], custOptions: [], src: null};
+let OV_LAST = null;       // the Overview data of the last full render, reused when only the aging threshold changes
+let OV_RECS = null, OV_RECS_SRC = null;
+const ovAgeLabel = () => `>${OV_AGING.days} days`;
+const ovHas = v => v !== null && v !== undefined;
+const ovR2 = v => Math.round(v * 100) / 100;
+const ovSum = a => a.reduce((x, y) => x + y, 0);
+const ovTeamOf = o => OWNER_TEAM_MAP[o] || 'No Team';
+const ovTowerOf = c => CUSTOMER_TOWER_MAP[c] || customerTowerOf(c);
+
+// One compact record per ticket (the cleaned population, narrowed to whatever the Global Filter currently allows).
+function ovRecords(){
+  const tv = DATA.ticket_volume_records, clean = DATA.__sapp_clean_rows;
+  if(!clean || !tv) return null;
+  if(OV_RECS && OV_RECS_SRC === tv) return OV_RECS;
+  const pristine = (DATA.__sapp_pristine_original_tabs || DATA).ticket_volume_records || tv, byId = new Map();
+  pristine.forEach(r => byId.set(r.external_id, r));
+  const allowed = new Set(tv.map(r => r.external_id));
+  OV_RECS = clean.filter(r => allowed.has(r.external_id)).map(r => {
+    const t = byId.get(r.external_id) || {}, created = r.creation_time, resolved = r.resolved_date;
+    return {row:r, id:r.external_id, o:r.owner || 'Unassigned', c:r.customer_name || 'Unassigned', sv:(r.service === 'Incident Management' ? 'IM' : 'SR'), st:r.current_status, sev:r.severity,
+      cm:r.creation_month, rm:r.resolved_month, rc:!!r.resolved_month, op:!!t.is_open,
+      ag:(t.is_open && created) ? Math.floor((new Date(DATA.meta.last_data_date) - created) / 86400000) : null, ob:t.open_bucket || null, ir:r.internal_reference_id || null, rtp:r.resolution_type || null,
+      tat:(resolved && created) ? (resolved - created) / 86400000 : null, ts:(r.tat_sla_raw === undefined || r.tat_sla_raw === null) ? null : r.tat_sla_raw};
+  });
+  OV_RECS_SRC = tv; return OV_RECS;
+}
+
+function ovEnsureFilters(){
+  const root = document.getElementById('tabFilters_overview');
+  if(!root || !DATA.__sapp_clean_rows) return;
+  if(OV.team && OV.src === DATA.meta) return;
+  OV.src = DATA.meta;
+  root.innerHTML = `<div class="picker-group"><label>Team</label><div id="ov_team_root"></div></div>
+    <div class="picker-group"><label>Engineer</label><div id="ov_engineer_root"></div></div>
+    <div class="picker-group"><label>Tower</label><div id="ov_tower_root"></div></div>
+    <div class="picker-group"><label>Customer</label><div id="ov_customer_root"></div></div>`;
+  const v = document.getElementById('view-overview'); if(v && v.classList.contains('active')) root.style.display = 'flex';
+  OV.engOptions = ALL_OWNERS.slice(); OV.custOptions = ALL_CUSTOMERS.slice();
+  OV.team = createMultiSelectDropdown(document.getElementById('ov_team_root'), {options: ALL_TEAMS, selected: new Set(ALL_TEAMS), searchable: false, onChange: ovTeamChange});
+  OV.engineer = createMultiSelectDropdown(document.getElementById('ov_engineer_root'), {options: OV.engOptions, selected: new Set(OV.engOptions), searchable: true, onChange: () => renderOverview()});
+  OV.tower = createMultiSelectDropdown(document.getElementById('ov_tower_root'), {options: ALL_TOWERS, selected: new Set(ALL_TOWERS), searchable: false, onChange: ovTowerChange});
+  OV.customer = createMultiSelectDropdown(document.getElementById('ov_customer_root'), {options: OV.custOptions, selected: new Set(OV.custOptions), searchable: true, onChange: () => renderOverview()});
+}
+
+function ovTeamChange(){
+  const prevAll = OV.engineer.getSelected().length === OV.engOptions.length;
+  const sel = OV.team.getSelected(), active = sel.length ? sel : ALL_TEAMS;
+  OV.engOptions = ALL_OWNERS.filter(o => active.includes(ovTeamOf(o)));
+  const still = OV.engineer.getSelected().filter(o => OV.engOptions.includes(o));
+  OV.engineer.setOptions(OV.engOptions, (prevAll || !still.length) ? OV.engOptions : still);
+  renderOverview();
+}
+function ovTowerChange(){
+  const prevAll = OV.customer.getSelected().length === OV.custOptions.length;
+  const sel = OV.tower.getSelected(), active = sel.length ? sel : ALL_TOWERS;
+  OV.custOptions = ALL_CUSTOMERS.filter(c => active.includes(ovTowerOf(c)));
+  const still = OV.customer.getSelected().filter(c => OV.custOptions.includes(c));
+  OV.customer.setOptions(OV.custOptions, (prevAll || !still.length) ? OV.custOptions : still);
+  renderOverview();
+}
+function ovSelection(){
+  if(!OV.team) return null;
+  const nar = (w, opts) => { const s = w.getSelected(); return (s.length && s.length < opts.length) ? s : null; };
+  const sel = {teams: nar(OV.team, ALL_TEAMS), engineers: nar(OV.engineer, OV.engOptions), towers: nar(OV.tower, ALL_TOWERS), customers: nar(OV.customer, OV.custOptions)};
+  return (sel.teams || sel.engineers || sel.towers || sel.customers) ? sel : null;
+}
+function ovFilteredRecords(sel){
+  const tm = sel.teams ? new Set(sel.teams) : null, en = sel.engineers ? new Set(sel.engineers) : null;
+  return ovRecords().filter(r => (!tm || tm.has(ovTeamOf(r.o))) && (!en || en.has(r.o)) && matchesSlice(r.c, sel.towers, sel.customers));
+}
+function overviewData(){
+  const all = DATA.dimensions.overall['All'], recs = ovRecords();
+  const sel = recs ? ovSelection() : null;
+  if(!sel) return {g: all, esc: DATA.escalation, recs: recs, narrowed: false, ids: null, total: recs ? recs.length : 0};
+  const fr = ovFilteredRecords(sel), rows = fr.map(x => x.row);
+  // the same pipeline functions that built the unfiltered Overview, run on the selected tickets only
+  const g = CDAPipeline.buildGroupEntry(rows, MONTHS);
+  // SR hour pools are customer-level and all-time: show the customers in the selection (for a Team/Engineer filter, the customers those tickets belong to)
+  const srCust = (sel.teams || sel.engineers) ? new Set(fr.filter(r => r.sv === 'SR').map(r => r.c)) : null;
+  const by = {};
+  Object.entries(all.sr_hours.by_customer).forEach(([name, v]) => { if(matchesSlice(name, sel.towers, sel.customers) && (!srCust || srCust.has(name))) by[name] = v; });
+  g.sr_hours = {by_customer: by, junk_excluded: all.sr_hours.junk_excluded};
+  return {g, esc: CDAPipeline.buildEscalation(rows, MONTHS), recs: fr, narrowed: true, ids: new Set(fr.map(r => r.id)), total: recs.length};
+}
+function ovAgedRecs(od){ return od.recs ? od.recs.filter(r => r.op && r.ag !== null && r.ag !== undefined && r.ag >= OV_AGING.days) : []; }
+function ovDrillRec(r){
+  return {external_id: r.id, customer_name: r.c, owner: r.o === null ? 'Unassigned' : r.o, severity: r.sev,
+    service: r.sv === 'IM' ? 'Incident Management' : (r.sv === 'SR' ? 'Service Request' : r.sv), current_status: r.st, open_bucket: r.ob, internal_reference_id: r.ir, resolution_type: r.rtp, age_days: r.ag};
+}
+function ovVsAvg(g, key){
+  const bd = DATA.meta.bucket_bdays; if(!bd) return null;
+  const base = MONTHS.filter(m => !OV_AVG_EXCLUDE.includes(m)), sel = SELECTED_MONTHS.filter(m => !OV_AVG_EXCLUDE.includes(m));
+  const skipped = MONTHS.filter(m => OV_AVG_EXCLUDE.includes(m));
+  if(!sel.length) return {onlyExcluded: true, skipped};
+  const total = base.reduce((s, m) => s + g[key][m].Total, 0), daysAll = base.reduce((s, m) => s + (bd[m] || 0), 0);
+  const selDays = sel.reduce((s, m) => s + (bd[m] || 0), 0), actual = sel.reduce((s, m) => s + g[key][m].Total, 0);
+  if(!daysAll || !selDays) return null;
+  const perDay = total / daysAll, expected = perDay * selDays;
+  return {actual, expected, diff: actual - expected, perDay, selDays, daysAll, total, nBase: base.length, skipped,
+    allSelected: sel.length === base.length, droppedFromSelection: SELECTED_MONTHS.length !== sel.length};
+}
+function ovCorner(v, key){
+  if(!v) return '';
+  const word = key === 'logged' ? 'logged' : 'resolved';
+  const why = v.skipped.length ? ` ${v.skipped.map(m => MONTH_LABEL_MAP[m]).join(', ')} is left out of the average (it holds records migrated from the previous system).` : '';
+  if(v.onlyExcluded) return `<div class="corner muted" title="${esc('Only a migrated-records period is selected, so there is no like-for-like average to compare with.' + why)}">no comparison (migrated records)</div>`;
+  const tip = `Average ${v.perDay.toFixed(1)} ${word} per business day over ${v.nBase} periods (${v.total.toLocaleString()} in ${v.daysAll} business days).` + why +
+    ` The selected period has ${v.selDays} business days, so the average would be ${Math.round(v.expected).toLocaleString()}; actual ${v.actual.toLocaleString()}.` +
+    (v.droppedFromSelection ? ' The excluded period is also left out of this comparison.' : '');
+  if(v.allSelected) return `<div class="corner muted" title="${esc(tip)}">all periods = the average</div>`;
+  const d = Math.round(v.diff);
+  if(d === 0) return `<div class="corner muted" title="${esc(tip)}">in line with average</div>`;
+  const up = d > 0;
+  const cls = key === 'resolved' ? (up ? 'up' : 'down') : '';        // more resolved is good; more logged is just more load
+  return `<div class="corner ${cls}" title="${esc(tip)}">${up ? '▲' : '▼'} ${Math.abs(d).toLocaleString()} ${up ? 'above' : 'below'} average</div>`;
+}
+function ovCorners(od){
+  const out = {};
+  if(DATA.meta.bucket_bdays){ out.logged = ovCorner(ovVsAvg(od.g, 'logged'), 'logged'); out.resolved = ovCorner(ovVsAvg(od.g, 'resolved'), 'resolved'); }
+  if(od.recs) out.open = ovAgingCorner(od);
+  return out;
+}
+function ovAgingCorner(od){
+  const aged = ovAgedRecs(od), lab = ovAgeLabel();
+  const tip = `Open calls older than ${OV_AGING.days} days since creation (whole days). Change the threshold in the aging panel below.`;
+  if(!aged.length) return `<div id="ov_aging_corner" class="corner muted" title="${esc(tip)}">0 aging ${lab}</div>`;
+  const id = registerDrilldown(`Open calls aging ${lab}`, aged.map(ovDrillRec), OV_AGING_COLUMNS, `Overview_Open_Aging_gt${OV_AGING.days}`);
+  return `<div id="ov_aging_corner" class="corner warn link" data-drill-id="${id}" title="${esc(tip + ' Click to see them.')}">${aged.length.toLocaleString()} aging ${lab}</div>`;
+}
+function ovAgingSubText(){
+  return `Calls still open that are older than ${OV_AGING.days} days since creation (whole days), split by who they are pending with. Always the live snapshot — not affected by the Time period filter — but it follows the Team / Engineer / Tower / Customer filters, and the Open card above uses the same threshold. Click a number to see the tickets.`;
+}
+function ovSetAging(days){
+  OV_AGING.days = days; if(!OV_LAST) return;
+  const od = OV_LAST, lab = ovAgeLabel();
+  const t = document.getElementById('ov_aging_title'); if(t) t.textContent = `Open calls aging ${lab} — by engineer`;
+  const sub = document.getElementById('ov_aging_sub'); if(sub) sub.textContent = ovAgingSubText();
+  const ex = document.getElementById('ov_aging_export'); if(ex) ex.innerHTML = exportButtonHtml('ov_aging_table', `Overview_Aging_gt${days}`);
+  if(document.getElementById('ov_aging_table')) renderOverviewAging('ov_aging_table', od);
+  const c = document.getElementById('ov_aging_corner'); if(c) c.outerHTML = ovAgingCorner(od);
+}
+function ovMedian(a){ const s = a.slice().sort((x, y) => x - y), n = s.length, m = n >> 1; return n % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+function ovMttrStats(arr){
+  const t = arr.map(r => r.tat).filter(ovHas), sl = arr.map(r => r.ts).filter(ovHas);
+  return {n: arr.length, mean: t.length ? ovR2(ovSum(t) / t.length) : null, median: t.length ? ovR2(ovMedian(t)) : null,
+          nS: sl.length, meanS: sl.length ? ovR2(ovSum(sl) / sl.length) : null};
+}
+function ovMttrModel(recs){
+  const skip = new Set(MTTR_EXCLUDE_CREATED), sel = new Set(SELECTED_MONTHS);
+  const resolvedSel = recs.filter(r => r.rc && sel.has(r.rm));
+  const pop = resolvedSel.filter(r => !skip.has(r.cm));
+  const cols = SELECTED_MONTHS.concat(['ALL']), cells = {};
+  MTTR_GROUPS.forEach(([label, code]) => {
+    const inGroup = pop.filter(r => !code || r.sv === code); cells[label] = {};
+    cols.forEach(c => { const rs = c === 'ALL' ? inGroup : inGroup.filter(r => r.rm === c); cells[label][c] = {stats: ovMttrStats(rs), recs: rs}; });
+  });
+  return {cols, cells, left: resolvedSel.length - pop.length};
+}
+function ovMttrDrillRec(r){
+  return {external_id: r.id, customer_name: r.c, owner: r.o === null ? 'Unassigned' : r.o, severity: r.sev, service: r.sv === 'IM' ? 'Incident Management' : (r.sv === 'SR' ? 'Service Request' : r.sv),
+    current_status: r.st, resolved_in: MONTH_LABEL_MAP[r.rm] || r.rm, elapsed_days: ovHas(r.tat) ? ovR2(r.tat) : null, sla_days: ovHas(r.ts) ? ovR2(r.ts) : null};
+}
+function renderMttrTable(tableId, od){
+  const mdl = ovMttrModel(od.recs), nCols = mdl.cols.length + 1;
+  const head = '<tr><th>MTTR (days)</th>' + labelsFor(SELECTED_MONTHS).map(m => `<th>${m}</th>`).join('') + '<th>All selected</th></tr>';
+  let rows = head, anyStar = false;
+  MTTR_GROUPS.forEach(([label]) => {
+    rows += `<tr><td colspan="${nCols}" style="font-weight:700;background:rgba(86,10,145,0.06);">${esc(label)}</td></tr>`;
+    const drill = {};
+    mdl.cols.forEach(c => { const cell = mdl.cells[label][c]; if(cell.stats.n){ const rs = cell.recs.slice().sort((a, b) => (b.tat || 0) - (a.tat || 0));
+      const per = c === 'ALL' ? periodLabel() : (MONTH_LABEL_MAP[c] || c);
+      drill[c] = registerDrilldown(`MTTR — ${label}, resolved ${per} (${rs.length} tickets, longest first)`, rs.map(ovMttrDrillRec), MTTR_DRILL_COLUMNS, `Overview_MTTR_${label.replace(/\W+/g, '_')}_${c}`); } });
+    const pickMean = st => st.mean;
+    const line = (name, pick, tip, kind, bold, mark) => {
+      rows += `<tr><td>${esc(name)}</td>` + mdl.cols.map(c => {
+        const st = mdl.cells[label][c].stats, v = pick(st), star = v !== null && mark && mark(st), body = v === null ? '—' : (kind === 'dec' ? v.toFixed(2) : String(v)) + (star ? '*' : ''), t = esc(tip(st, c));
+        if(star) anyStar = true;
+        const sty = (bold && v !== null ? 'font-weight:700;' : '') + (star ? 'opacity:0.6;' : ''), styA = sty ? ` style="${sty}"` : '';
+        return (drill[c] && v !== null) ? `<td class="mono drillable" data-drill-id="${drill[c]}" title="${t}"${styA}>${body}</td>` : `<td class="mono" title="${t}"${styA}>${body}</td>`;
+      }).join('') + '</tr>';
+    };
+    line('MTTR — elapsed (calendar days)', pickMean, (st, c) => st.n ? `${st.n} resolved tickets; mean of resolution time minus creation time` : (MTTR_EXCLUDE_CREATED.includes(c) ? 'Tickets created in this period are left out (migrated records)' : 'No resolved tickets'), 'dec', true);
+    line('Median — elapsed (calendar days)', st => st.median, st => `${st.n} resolved tickets; the middle ticket, not pulled up by a few very long ones`, 'dec', false);
+    line('MTTR — SLA clock (business days)', st => st.meanS, st => st.nS ? `${st.nS} of ${st.n} tickets have the platform SLA time (customer wait excluded)` : 'The platform SLA-time field is not populated for these tickets (it starts in June 2026)', 'dec', false, st => st.nS < st.n * 0.5);
+    line('Resolved tickets (n)', st => st.n, () => 'Tickets resolved in the period (excluding April-created migrated records)', 'int', false);
+  });
+  document.getElementById(tableId).innerHTML = rows;
+  const note = document.getElementById('ov_mttr_note');
+  if(note) note.textContent = (anyStar ? '* SLA clock is based on fewer than half of that period’s tickets (the platform field is only populated from June 2026) - read it with care. ' : '') + (mdl.left ? `${mdl.left.toLocaleString()} resolved ticket${mdl.left === 1 ? '' : 's'} created in ${MTTR_EXCLUDE_CREATED.map(m => MONTH_LABEL_MAP[m] || m).join(', ')} left out (records migrated from the previous system carry that creation date, so their elapsed times are not real).` : '');
+}
+function renderOverviewAging(tableId, od){
+  const aged = ovAgedRecs(od), by = {};
+  aged.forEach(r => { const k = r.o === null ? 'Unassigned' : r.o; (by[k] = by[k] || []).push(r); });
+  const rowsData = Object.entries(by).map(([eng, rs]) => ({eng, rs})).sort((a, b) => b.rs.length - a.rs.length || a.eng.localeCompare(b.eng));
+  const cell = (title, rs, fname) => rs.length
+    ? `<td class="mono drillable" data-drill-id="${registerDrilldown(title, rs.map(ovDrillRec), OV_AGING_COLUMNS, fname)}" title="Click to view underlying tickets">${rs.length}</td>` : '<td class="mono">0</td>';
+  let head = `<tr><th>Engineer</th><th>Team</th><th>Aging ${ovAgeLabel()}</th>` + OV_PENDING.map(b => `<th>${b[1]}</th>`).join('') + '</tr>';
+  let rows = '';
+  rowsData.forEach(({eng, rs}) => {
+    rows += `<tr><td>${esc(eng)}</td><td class="dim">${esc(OWNER_TEAM_MAP[eng] || '—')}</td>` + cell(`Aging ${ovAgeLabel()} — ${eng}`, rs, `Overview_Aging_gt${OV_AGING.days}_${eng}`) +
+      OV_PENDING.map(b => cell(`Aging ${ovAgeLabel()}, ${b[1].toLowerCase()} — ${eng}`, rs.filter(r => r.ob === b[0]), `Overview_Aging_gt${OV_AGING.days}_${b[0]}_${eng}`)).join('') + '</tr>';
+  });
+  if(rowsData.length > 1){
+    rows += '<tr style="font-weight:700;border-top:2px solid var(--line);"><td>All engineers</td><td></td>' + cell(`Aging ${ovAgeLabel()} — all engineers`, aged, `Overview_Aging_gt${OV_AGING.days}_All`) +
+      OV_PENDING.map(b => cell(`Aging ${ovAgeLabel()}, ${b[1].toLowerCase()} — all engineers`, aged.filter(r => r.ob === b[0]), `Overview_Aging_gt${OV_AGING.days}_${b[0]}_All`)).join('') + '</tr>';
+  }
+  document.getElementById(tableId).innerHTML = rowsData.length ? head + rows : `<tr><td class="empty">No open calls older than ${OV_AGING.days} days for the current filters.</td></tr>`;
+}
 function renderOverview(){
-  const g = DATA.dimensions.overall['All'];
+  ovEnsureFilters();
+  const od = overviewData(), g = od.g;
   const el = document.getElementById('view-overview');
   const period = periodLabel();
   const c = collapseMonths(g, SELECTED_MONTHS);
+  const scope = od.narrowed ? (r => od.ids.has(r.external_id)) : (() => true);
+  const scoped = od.narrowed ? DATA.ticket_volume_records.filter(scope) : DATA.ticket_volume_records;
 
-  let html = kpiRowHtml(g, null, 'ov');
+  let html = od.narrowed ? `<div id="ov_count" class="ov-filter-note">Filtered view: <b>${od.recs.length.toLocaleString()}</b> of ${od.total.toLocaleString()} tickets match the Team / Engineer / Tower / Customer filters above — every number on this page follows them (except the all-time SR hour pools, which show the matching customers).</div>` : '';
+  html += kpiRowHtml(g, scope, 'ov', ovCorners(od));
 
   html += `<div class="grid2">
     <div class="panel"><h2>Volume — Logged vs Resolved</h2><div class="panel-sub">Incident Management + Service Request combined</div>
@@ -9113,10 +9373,28 @@ function renderOverview(){
     <div class="chart-wrap"><canvas id="ov_sla"></canvas></div>
   </div>`;
 
+  if(od.recs){
+    html += `<div class="panel"><div class="ov-aging-head"><h2 id="ov_aging_title">Open calls aging ${ovAgeLabel()} — by engineer</h2>
+      <label class="ov-aging-pick">Aging threshold <select id="ov_aging_select" title="Show open calls older than this many days since creation">${OV_AGING_CHOICES.map(n => `<option value="${n}"${n === OV_AGING.days ? ' selected' : ''}>&gt;${n} days</option>`).join('')}</select></label></div>
+      <div class="panel-sub" id="ov_aging_sub">${ovAgingSubText()}</div>
+      <div class="table-scroll"><table id="ov_aging_table"></table></div>
+      <div id="ov_aging_export">${exportButtonHtml('ov_aging_table', `Overview_Aging_gt${OV_AGING.days}`)}</div>
+    </div>`;
+  }
+
   html += `<div class="panel"><h2>SLA compliance — ${period}</h2>
     <div class="panel-sub">Target: ${SLA_TARGET}% — shown green only at or above target</div>
     <div class="table-scroll"><table id="ov_sla_table"></table></div>
   </div>`;
+
+  if(od.recs){
+    html += `<div class="panel"><h2>MTTR — mean time to resolve — ${period}</h2>
+      <div class="panel-sub">Average time from creation to resolution of the tickets resolved in each period. <b>Elapsed</b> = calendar days including time waiting on the customer; <b>SLA clock</b> = the platform's business-day count with customer wait excluded (only available from June 2026). The median is shown because a few very long tickets pull the mean up. Follows the Team / Engineer / Tower / Customer filters. Click a number for the tickets, longest first.</div>
+      <div class="table-scroll"><table id="ov_mttr_table"></table></div>
+      <div class="excl-note" id="ov_mttr_note"></div>
+      ${exportButtonHtml('ov_mttr_table', 'Overview_MTTR')}
+    </div>`;
+  }
 
   html += `<div class="panel"><h2>First Call Resolution (≤2 business days)</h2>
     <div class="panel-sub">Shown separately from the SLA table above — resolved-not-cancelled tickets, split IM/SR</div>
@@ -9146,7 +9424,7 @@ function renderOverview(){
   </div>`;
 
   html += `<div class="panel"><h2>SR Hour Utilization — top consumption (all-time, 60h pool/customer)</h2>
-      <div class="panel-sub">Always all-time — not affected by the month filter above (it's a lifetime pool, not a monthly figure)</div>
+      <div class="panel-sub">Always all-time — not affected by the Time period filter (it's a lifetime pool, not a monthly figure). Customer-level: with a Team/Engineer filter it lists the customers those tickets belong to, with each customer's full all-time hours.</div>
       <div class="table-scroll"><table id="ov_srhours"></table></div>
       <div class="excl-note">${DATA.meta.sr_hours_junk_excluded} tickets excluded (non-numeric sr_hours_deducted values)</div>
       ${exportButtonHtml('ov_srhours', 'SR_Hour_Utilization')}
@@ -9154,23 +9432,28 @@ function renderOverview(){
 
   el.innerHTML = html;
 
-  volumeChart('ov_volume', g, () => true);
+  volumeChart('ov_volume', g, scope);
   csatChart('ov_csat', g);
   tatChart('ov_tat', g);
   effortHoursChart('ov_effort', g);
   fcrChart('ov_fcr', g);
+  OV_LAST = od;
 
   const pick = document.getElementById('ov_sla_pick');
   pick.innerHTML = SLA_META.map(s=>`<option value="${s.key}">${esc(s.label)}</option>`).join('');
   pick.onchange = () => renderOverviewSlaChart(g);
   renderOverviewSlaChart(g);
 
-  // Overview is always the full, unscoped population, so every cell can try to attach a
-  // drill-down without any owner/customer filter - see renderSlaTableAllMonths/maybeDrillCell.
-  renderSlaTableAllMonths('ov_sla_table', g, () => true);
-  renderSeverityTable('ov_severity', c.severity, DATA.ticket_volume_records);
-  kbTable('ov_kb', c.kb_referred, c.kb_added, DATA.ticket_volume_records);
-  renderEscalationPanel('ov_esc_month', 'ov_esc_tower');
+  if(od.recs){
+    renderOverviewAging('ov_aging_table', od);
+    document.getElementById('ov_aging_select').addEventListener('change', e => ovSetAging(parseInt(e.target.value, 10)));
+  }
+
+  renderSlaTableAllMonths('ov_sla_table', g, scope);
+  if(od.recs) renderMttrTable('ov_mttr_table', od);
+  renderSeverityTable('ov_severity', c.severity, scoped);
+  kbTable('ov_kb', c.kb_referred, c.kb_added, scoped);
+  renderEscalationPanel('ov_esc_month', 'ov_esc_tower', od.esc, od.narrowed ? scope : null);
   srHoursTable('ov_srhours', g, 12);
 }
 
@@ -9232,6 +9515,7 @@ function renderCascadingTab(cfg){
       attributedEngineers: viewId==='engineers' ? selB : null,
       customerEffortNames: viewId==='towercust' ? selB : null,
       showTop25: viewId==='towercust',
+      drillNames: viewId==='towercust' ? selB : null,
     });
     if(viewId==='engineers' && DATA.delegation_touches) renderDelegationSection(selB);
   }
@@ -10075,6 +10359,110 @@ function aggregateCustomers(names){
   agg.sr_hours = { by_customer: byCust, junk_excluded: junk };
   return agg;
 }
+// ================= TOWER / CUSTOMER: clickable charts (ported from the new build) =================
+// CSAT, First Call Resolution, TAT and Effort charts open the tickets behind a bar / point, with Excel export.
+const TC_RESOLVED_STATUSES = new Set(['Closed', 'Resolved', 'Resolved - Pending for Confirmation', 'Cancel', 'Deferred', 'Customer Agreed']);
+const TC_FCR_STATUSES = new Set(['Resolved - Pending for Confirmation', 'Closed', 'Customer Agreed']);
+const TC_SERVICE = {IM: 'Incident Management', SR: 'Service Request'};
+const TC_DRILL_COLUMNS = [
+  {key: 'external_id', label: 'External ID', text: true}, {key: 'customer_name', label: 'Customer', text: true}, {key: 'title', label: 'Title', text: true},
+  {key: 'service', label: 'Service', text: true}, {key: 'severity', label: 'Severity', text: true}, {key: 'current_status', label: 'Status', text: true},
+  {key: 'logged_in', label: 'Logged in'}, {key: 'resolved_in', label: 'Resolved in'}, {key: 'owner', label: 'Owner', text: true},
+  {key: 'support_feature', label: 'Support feature', text: true}, {key: 'resolution_code', label: 'Resolution type', text: true},
+  {key: 'tat_24x7', label: 'TAT 24/7 (days)'}, {key: 'tat_sla', label: 'TAT SLA (days)'},
+  {key: 'total_effort_spent_hrs', label: 'Effort (hrs)'}, {key: 'service_rating', label: 'CSAT rating'},
+];
+const TC_DRILL_COLUMNS_FCR = TC_DRILL_COLUMNS.slice(0, 6).concat([{key: 'fcr_met', label: 'Within 2 business days'}], TC_DRILL_COLUMNS.slice(6));
+const tcHas = v => v !== null && v !== undefined;
+function makeTcDrill(names){
+  const sel = new Set(names);
+  const base = DATA.customer_ticket_records.filter(r => sel.has(r.customer_name));
+  const resolvedPop = base.filter(r => TC_RESOLVED_STATUSES.has(r.current_status) && r.resolved_month);
+  const resolvedIn = (m, svc) => resolvedPop.filter(r => r.resolved_month === m && (!svc || r.service === TC_SERVICE[svc]));
+  return {
+    scope: names.length === 1 ? names[0] : names.length + ' customers',
+    logged: m => base.filter(r => r.current_status !== 'Duplicate' && r.creation_month === m),
+    resolved: (m, svc) => resolvedIn(m, svc),
+    surveys: m => resolvedIn(m).filter(r => tcHas(r.service_rating)),
+    fcr: (m, svc) => resolvedIn(m, svc).filter(r => TC_FCR_STATUSES.has(r.current_status) && tcHas(r.tat_sla)),
+    withValue: (m, svc, field) => resolvedIn(m, svc).filter(r => tcHas(r[field])),
+  };
+}
+function tcOpenDrill(title, recs, columns, filename, decorate){
+  if(!recs.length) return;
+  const rows = recs.map(r => Object.assign({}, r, {
+    logged_in: MONTH_LABEL_MAP[r.creation_month] || r.creation_month,
+    resolved_in: r.resolved_month ? (MONTH_LABEL_MAP[r.resolved_month] || r.resolved_month) : null,
+  }, decorate ? decorate(r) : {}));
+  const id = registerDrilldown(title, rows, columns, String(filename).replace(/[^A-Za-z0-9_-]+/g, '_'));
+  triggerDrilldown(id);
+}
+function tcChartClick(fn, nearLine){
+  return (evt, _els, chart) => {
+    let hit = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, true);
+    if(!hit.length && nearLine){
+      hit = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: false}, true);
+      if(hit.length && hit[0].element && Math.hypot(evt.x - hit[0].element.x, evt.y - hit[0].element.y) > 24) hit = [];
+    }
+    if(hit.length) fn(hit[0].datasetIndex, hit[0].index);
+  };
+}
+function tcChartHover(nearLine){
+  return (evt, _els, chart) => {
+    let hit = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: true}, false);
+    if(!hit.length && nearLine){
+      hit = chart.getElementsAtEventForMode(evt, 'nearest', {intersect: false}, false);
+      if(hit.length && hit[0].element && Math.hypot(evt.x - hit[0].element.x, evt.y - hit[0].element.y) > 24) hit = [];
+    }
+    if(evt.native && evt.native.target) evt.native.target.style.cursor = hit.length ? 'pointer' : 'default';
+  };
+}
+function attachTcDrill(idPrefix, drill){
+  const ml = m => MONTH_LABEL_MAP[m] || m;
+  const avg = (rs, f) => rs.length ? rs.reduce((a, r) => a + r[f], 0) / rs.length : null;
+  const f2 = v => v === null ? '\u2014' : v.toFixed(2);
+  const wire = (suffix, fn, nearLine) => {
+    const ch = charts[idPrefix + suffix]; if(!ch) return;
+    [ch.options, ch.config && ch.config.options].filter(Boolean).forEach(o => { o.onClick = tcChartClick(fn, nearLine); o.onHover = tcChartHover(nearLine); });
+  };
+  const by = (rs, f, dir) => rs.slice().sort((a, b) => dir * (a[f] - b[f]));
+
+  // (the Logged / Resolved volume chart keeps its own click handler - see volumeChart)
+
+  wire('_c_csat', (di, i) => {
+    const m = SELECTED_MONTHS[i], rs = by(drill.surveys(m), 'service_rating', 1);
+    tcOpenDrill(`${ml(m)} \u2014 CSAT: ${rs.length} survey(s), average rating ${f2(avg(rs, 'service_rating'))} (lowest first) \u00b7 ${drill.scope}`, rs, TC_DRILL_COLUMNS, `TowerCustomer_CSAT_${m}`);
+  }, true);
+
+  wire('_c_fcr', (di, i) => {
+    const m = SELECTED_MONTHS[i], svc = ['IM', 'SR'][di], rs = by(drill.fcr(m, svc), 'tat_sla', -1);
+    const ok = rs.filter(r => r.tat_sla <= 2).length;
+    tcOpenDrill(`${ml(m)} \u2014 First Call Resolution (${svc}): ${ok} of ${rs.length} resolved calls within 2 business days (slowest first) \u00b7 ${drill.scope}`, rs,
+      TC_DRILL_COLUMNS_FCR, `TowerCustomer_FCR_${svc}_${m}`, r => ({fcr_met: r.tat_sla <= 2}));
+  }, true);
+
+  wire('_c_tat', (di, i) => {
+    const m = SELECTED_MONTHS[i], svc = ['IM', 'SR', 'IM', 'SR'][di], field = di < 2 ? 'tat_24x7' : 'tat_sla';
+    const rs = by(drill.withValue(m, svc, field), field, -1);
+    tcOpenDrill(`${ml(m)} \u2014 Avg TAT ${field === 'tat_24x7' ? '24/7' : 'SLA'} (${svc}): ${f2(avg(rs, field))} days across ${rs.length} resolved calls (slowest first) \u00b7 ${drill.scope}`, rs,
+      TC_DRILL_COLUMNS, `TowerCustomer_TAT_${field}_${svc}_${m}`);
+  }, true);
+
+  wire('_c_effort', (di, i) => {
+    const m = SELECTED_MONTHS[i], svc = ['IM', 'SR'][di], rs = by(drill.withValue(m, svc, 'total_effort_spent_hrs'), 'total_effort_spent_hrs', -1);
+    const total = rs.reduce((a, r) => a + r.total_effort_spent_hrs, 0);
+    tcOpenDrill(`${ml(m)} \u2014 Effort hours (${svc}): average ${f2(avg(rs, 'total_effort_spent_hrs'))} h, total ${total.toFixed(1)} h across ${rs.length} calls (most hours first) \u00b7 ${drill.scope}`, rs,
+      TC_DRILL_COLUMNS, `TowerCustomer_Effort_${svc}_${m}`);
+  }, true);
+
+  // tell people the charts are clickable
+  ['_c_volume', '_c_csat', '_c_fcr', '_c_tat', '_c_effort'].forEach(suffix => {
+    const cv = document.getElementById(idPrefix + suffix);
+    const wrap = cv && cv.closest('.chart-wrap');
+    if(wrap) wrap.insertAdjacentHTML('beforebegin', '<div class="panel-sub" style="margin-bottom:6px;">Click a bar or point to see the tickets behind it (with Excel export).</div>');
+  });
+}
+
 function renderMetricsBlock(bodyEl, g, idPrefix, opts){
   opts = opts || {};
   const showSrHours = !!opts.showSrHours;
@@ -10162,6 +10550,7 @@ function renderMetricsBlock(bodyEl, g, idPrefix, opts){
   tatChart(idPrefix+'_c_tat', g);
   effortHoursChart(idPrefix+'_c_effort', g);
   fcrChart(idPrefix+'_c_fcr', g);
+  if(opts.drillNames && DATA.customer_ticket_records) attachTcDrill(idPrefix, makeTcDrill(opts.drillNames));
   if(attributedEngineers && DATA.sla_attributed){
     const teamRoot = document.getElementById(idPrefix+'_slatable_team_root');
     const rerenderSlaTable = (sel) => renderAttributedSlaTable(idPrefix+'_c_slatable', attributedEngineers, sel.length ? sel : ALL_TEAMS);
@@ -12004,7 +12393,7 @@ function renderEngineerComplianceTab(){
       <div class="picker-group"><label>Customer</label><div id="${viewId}_customer_root"></div></div>
       <span class="picker-hint" id="${viewId}_count"></span>`;
   el.innerHTML = `<div class="panel"><h2>Engineer Performance</h2>
-      <div class="panel-sub">Ranked top to bottom, every engineer included regardless of ticket count. Score = 35% SLA Compliance + 20% Delegation Compliance + 35% Resolution Score (complexity-weighted resolved calls) + 10% CSAT (fully weighted on survey collection rate, with a penalty if the average rating drops below 4.0 — see Notes). Resolution Score is <b>relative to the top scorer currently in view</b> — it shifts if you change the filters below. Use "Score components" to redesign: pick any subset of the 6 SLA categories, Delegation, Resolution, and CSAT — whichever you keep still blends via the 35/20/35/10 group split, renormalized across only the groups you've kept. Click any cell to view (and export) the underlying raw tickets. Ticket volume (Logged) is intentionally not part of the score (see Notes) but is shown separately below for context.</div>
+      <div class="panel-sub">Ranked top to bottom, every engineer included regardless of ticket count. <b>Click any Score to see exactly how it was calculated.</b> Score = 35% SLA Compliance + 20% Delegation Compliance + 35% Resolution Score (complexity-weighted resolved calls) + 10% CSAT (fully weighted on survey collection rate, with a penalty if the average rating drops below 4.0 — see Notes). Resolution Score is <b>relative to the top scorer currently in view</b> — it shifts if you change the filters below. Use "Score components" to redesign: pick any subset of the 6 SLA categories, Delegation, Resolution, and CSAT — whichever you keep still blends via the 35/20/35/10 group split, renormalized across only the groups you've kept. Click any cell to view (and export) the underlying raw tickets. Ticket volume (Logged) is intentionally not part of the score (see Notes) but is shown separately below for context.</div>
       <div class="picker-row" style="margin-bottom:10px;margin-top:14px;">
         <div class="picker-group"><label>Score components</label><div id="${viewId}_perf_components_root"></div></div>
       </div>
@@ -12028,7 +12417,7 @@ function renderEngineerComplianceTab(){
       ${exportButtonHtml(viewId+'_volume_trend_table', 'Volume_Month_on_Month')}
     </div>
     <div class="panel"><h2>Ticket Volume by Engineer</h2>
-      <div class="panel-sub">Logged = tickets where this engineer was assigned as L1/L2/SME, counted by their own assignment month (not creation month) — a ticket touching two tiers counts once for each engineer, possibly in different months (see Notes). Resolved uses the correct status-specific timestamp (resolve/cancel/deferred); Open is always the current live count, like Tickets Open elsewhere. The 4 "Pending" columns break Open down by WHO the ball is currently with: Engineer (actively being worked), Customer (Waiting on Customer, Under Observation, Pending for Effort Approval, Information Provided, Customer Accept/Reject), Internal Team (CPE/Apps involvement confirmed the same way as the Delegation SLA rules — see Notes), and Sales (Under Sales Discussion). Click any number to view (and export) the underlying raw tickets.</div>
+      <div class="panel-sub">Logged = tickets where this engineer was assigned as L1/L2/SME, counted by their own assignment month (not creation month) — a ticket touching two tiers counts once for each engineer, possibly in different months (see Notes). Resolved uses the correct status-specific timestamp (resolve/cancel/deferred); Open is always the current live count, like Tickets Open elsewhere. The 4 "Pending" columns break Open down by WHO the ball is currently with: Engineer (any other open call - being worked on, or the customer has replied, e.g. Information Provided), Customer (Waiting on Customer, Under Observation, Pending for Effort Approval), Internal Team (CPE/Apps involvement confirmed the same way as the Delegation SLA rules — see Notes), and Sales (Under Sales Discussion). Click any number to view (and export) the underlying raw tickets.</div>
       <div class="table-scroll"><table id="${viewId}_volume_table"></table></div>
       ${exportButtonHtml(viewId+'_volume_table', 'Engineer_Volume')}
     </div>
@@ -12297,7 +12686,10 @@ function renderNotes(){
       <li><b>EDOC Shared within 3 Business Days (v4b)</b>: now uses the platform's <code>edoc_sla_minutes</code> field (1620-minute / 3-business-day threshold) rather than an independently computed business-day count. Its tier-wise columns (<code>l1_/l2_/sme_edoc_sla_minutes</code>) are <i>not</i> additive segments the way <code>tat_sla_minutes</code> is — each measures elapsed time from that tier's own start to the same single endpoint (EDOC first shared). Each tier's true exclusive segment is derived by subtracting the next tier's value; a negative derived segment (data noise) is floored at zero rather than excluded or flagged. The same multi-tier cumulative-crossing violator logic is then applied to these derived segments, on the reasoning that EDOC-sharing responsibility can be delegated onward exactly like a resolution.</li>
       <li><b>Delegation SLA — Incident Management, Medium/Low (v4b)</b>: cutoff changed from 2 to 3 business days, for L1, L2 and SME alike.</li>
       <li><b>Fixed (v4b)</b>: the By Tower/Customer view's Standard-tower Customer picker was empty. Root cause: the map that tells the front-end which customer belongs to which tower was built directly from Tower_Master.xlsx's explicit rows only, which excludes the "(all other customers)" catch-all row — but Standard is the default tower, so most Standard customers are never individually named in that file at all. Rebuilt from the actual resolved data instead of the raw master file (the same fix already applied earlier to the equivalent Team filter issue).</li>
-      <li><b>Open-call breakdown (v4b)</b>: every currently-open ticket is now categorized by who it's actually pending with, shown alongside the existing Open count in Ticket Volume by Engineer. CPE/Apps involvement is checked first and takes priority over the raw status (the same detection rule used throughout Delegation SLA: resolution_type = pendingWithCpe/pendingWithApps AND internal_reference_id populated). Every other open ticket is bucketed by its current_status: <b>Engineer</b> (Work In Progress, Assign, Re-Open, Acknowledged, Classified, New, Classification, Issue Resurfaced), <b>Customer</b> (Waiting on Customer, Under Observation, Pending for Effort Approval, Information Provided, Customer Accept, Customer Reject), <b>Sales</b> (Under Sales Discussion). Any future open status not in this list defaults to Engineer rather than being silently dropped.</li>
+      <li><b>Open-call breakdown (v4b, revised v6.4b)</b>: every currently-open ticket is categorized by who it is actually pending with. The rules are checked in this order: 1. Customer (status Waiting on Customer, Under Observation or Pending for Effort Approval only), 2. Sales (Under Sales Discussion), 3. Internal Team (CPE/Apps) (resolution_type = pendingWithCpe/pendingWithApps AND internal_reference_id populated &mdash; the detection rule used for the Delegation SLA), and 4. Engineer for every other open call (Work In Progress, Assign, Re-Open, Acknowledged, Classified, New, Classification, Issue Resurfaced, Information Provided, Customer Accept, Customer Reject). So a call with CPE/Apps involvement that is Waiting on Customer or Under Observation counts as Customer. Any future open status defaults to Engineer. Revised in v6.4b: Information Provided, Customer Accept and Customer Reject used to count as Customer, and CPE/Apps used to be checked first.</li>
+      <li><b>Overview changes (new build)</b>: (1) the Logged and Resolved cards show, bottom right, whether the selected period is above or below the average and by how many &mdash; the average is per business day (Mon&ndash;Sat, minus public holidays) over all periods except April (April holds the records migrated from the previous system; the list is OV_AVG_EXCLUDE), applied to the business days of the selected period, so a short month or a part-week is compared fairly. (2) The Open card shows how many open calls are older than the aging threshold. (3) A new Open calls aging panel, by engineer, laid out like Ticket Volume by Engineer, with an Aging threshold picker (10, 15, 30, 45, 60 or 90 days, default 30; whole days, rounded down). It follows the Team / Engineer / Tower / Customer filters, is not affected by the Time period filter and is kept when you change period or tab. (4) The Overview has Team, Engineer, Tower and Customer filters: with none narrowed it shows exactly the figures it always did; narrowing any of them re-runs the dashboard's own pipeline functions on the selected tickets, so every figure follows the same rules. The SLA compliance trend chart is kept below the cards.</li>
+      <li><b>MTTR panel (new build)</b>: a new MTTR &mdash; mean time to resolve table sits after the SLA compliance table on the Overview, one column per selected period plus All selected, for Incident Management, Service Request and all tickets. Rows: MTTR elapsed (resolution time minus creation time, calendar days, includes waiting on the customer), the median, MTTR on the SLA clock (the platform's business-day count, customer wait excluded) and the number of tickets. A ticket belongs to the period it was resolved in. Tickets created in April 2026 are left out because they are records migrated from the previous system. Every number opens its tickets, longest first.</li>
+      <li><b>Tower/Customer chart drill-down (new build)</b>: on the Tower/Customer tab, clicking a bar or point in the CSAT trend, First Call Resolution, Avg TAT and Effort hours charts opens the tickets behind it, with an Excel export (the Volume chart opens its tickets as before). The list is for the customers currently selected: CSAT lists the surveyed tickets (lowest rating first); FCR lists the resolved Closed / Resolved-Pending / Customer Agreed calls that have a TAT, with a &quot;Within 2 business days&quot; column; TAT and Effort list the calls that have that value (largest first). A chart's average can differ from the average of the listed tickets by a hundredth because the stored TAT and effort values are rounded.</li>
       <li><b>Open-call aging (v4b)</b>: two new tables — Engineer-wise (Engineer Performance tab, respects the Team filter above it) and Account-wise for the same Top 25 Accounts already shown in By Tower/Customer. Both bucket currently-open tickets by age since creation_time, measured against the latest date in the data: under 15 days, 15–30, 30–60, 60–90, and 90+. Always the live snapshot — not affected by the Time period filter, the same as Open elsewhere.</li>
       <li><b>Sticky filters (v4b)</b>: the Tower/Customer, Team/Engineer, and Engineer Performance filter rows now stay fixed at the top of the screen while scrolling, directly under the tab bar and Time period filter (which were already fixed). The pinned height is measured live from the page itself rather than hardcoded, so it stays correctly positioned even if the header wraps differently at different screen widths.</li>
       <li><b>Subsequent Response SLA</b> (Incident Management only): blank <code>subsequent_response_miss_count</code> counts as compliant (0 misses), per definition.</li>
@@ -18540,7 +18932,7 @@ if(!engDropdownOutsideCloseBound){
 }
 
 // ================= TAB WIRING =================
-const TAB_FILTER_IDS = ['tabFilters_engineers', 'tabFilters_towercust', 'tabFilters_engcompliance', 'tabFilters_selfservice'];
+const TAB_FILTER_IDS = ['tabFilters_overview', 'tabFilters_engineers', 'tabFilters_towercust', 'tabFilters_engcompliance', 'tabFilters_selfservice'];
 // The 4 original tabs whose own filter row (Time period, plus whichever of
 // Team/Engineer/Tower/Customer applies) should show inline in #controlBar, right above
 // the page - per explicit request, even though the same fields are also reachable
@@ -20037,7 +20429,7 @@ function renderExsCharts(rows){
   // ---- Monthly ticket trend (line) — no drill-down/export per spec ----
   (function(){
     const counts = {};
-    rows.forEach(r=>{ if(r._month_key) counts[r._month_key] = (counts[r._month_key]||0)+1; });
+    rows.forEach(r=>{ const bk = exsPeriodKey(exsBasisDate(r), 'monthly'); if(bk) counts[bk] = (counts[bk]||0)+1; });
     const months = Object.keys(counts).sort();
     const labels = months.map(m=>{ const p=m.split('-'); return new Date(+p[0],+p[1]-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'}); });
     makeChart('chartMonthlyTrend', {
@@ -20230,10 +20622,35 @@ function exsPeriodLabel(key, mode){
   }
   return new Date(+parts[0],+parts[1]-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'});
 }
+// ---- Time basis of the Executive Summary's trend / period views --------------------------------
+// The tickets shown already follow every active global time scale (sappApplyGlobalFilters). The *axis* used to be
+// the ticket CREATION date no matter which scale was selected, so a Resolution / Last Modified selection (e.g. "Current
+// month") listed tickets resolved this month under their old creation months. The axis now follows the active scale:
+// Creation (if set) -> Resolution (if set) -> Last Modified (if set) -> Creation.
+function exsBasis(){
+  let rg = null; try { rg = sappFilterRanges(); } catch(e){ rg = null; }
+  if(rg && rg.c) return {kind:'creation', range:rg.c};
+  if(rg && rg.r) return {kind:'resolution', range:rg.r};
+  if(rg && rg.m) return {kind:'modified', range:rg.m};
+  return {kind:'creation', range:null};
+}
+function exsBasisDate(r){
+  const k = exsBasis().kind;
+  const v = k==='resolution' ? (r._resolved_date || r.resolve_time) : k==='modified' ? r.last_modified_time : (r._creation_date || r.creation_time);
+  if(!v) return null; const d = v instanceof Date ? v : new Date(v); return isNaN(d.getTime()) ? null : d;
+}
+const EXS_BASIS_TEXT = {creation:'Creation date', resolution:'Resolution date', modified:'Last Modified date'};
+// does a period key (month 'YYYY-MM' or week-start 'YYYY-MM-DD') overlap the selected range?
+function exsKeyInRange(key, mode, range){
+  if(!range) return true; const p = key.split('-').map(Number); let a, b;
+  if(mode==='weekly'){ a = new Date(p[0],p[1]-1,p[2]); b = new Date(p[0],p[1]-1,p[2]+6,23,59,59,999); }
+  else { a = new Date(p[0],p[1]-1,1); b = new Date(p[0],p[1],0,23,59,59,999); }
+  return b >= range[0] && a <= range[1];
+}
 function exsGroupByPeriod(rows, mode, dateField){
   const groups = {};
   rows.forEach(r=>{
-    const key = exsPeriodKey(r[dateField], mode);
+    const key = exsPeriodKey(dateField==='@basis' ? exsBasisDate(r) : r[dateField], mode);
     if(!key) return;
     (groups[key]=groups[key]||[]).push(r);
   });
@@ -20298,7 +20715,7 @@ function exsComputePeriodMetrics(periodRows){
 }
 
 function exsPeriodTableRows(rows, mode){
-  const groups = exsGroupByPeriod(rows, mode, '_creation_date');
+  const groups = exsGroupByPeriod(rows, mode, '@basis');
   return Object.keys(groups).sort().map(key=>({ key, label: exsPeriodLabel(key, mode), metrics: exsComputePeriodMetrics(groups[key]) }));
 }
 
@@ -20351,6 +20768,7 @@ function renderExsComplianceTrends(rows){
     const allKeys = entries.map(e=>e.key);
     Object.keys(closedGroups).forEach(k=>{ if(allKeys.indexOf(k)===-1) allKeys.push(k); });
     allKeys.sort();
+    const bs = exsBasis(); if(bs.kind!=='creation' && bs.range){ for(let i=allKeys.length-1;i>=0;i--) if(!exsKeyInRange(allKeys[i], EXS_PERIOD_MODE, bs.range)) allKeys.splice(i,1); }
     const loggedGroups = exsGroupByPeriod(rows, EXS_PERIOD_MODE, '_creation_date');
     makeChart('chartLoggedClosed', {
       type:'bar',
@@ -20574,7 +20992,7 @@ function renderExecutiveSummary(){
     section.dataset.built = '1';
     section.innerHTML = `
       <div class="section-header">
-        <div><div class="eyebrow">Overview</div><h2>Executive Summary</h2><p>23 governance KPIs and top-level trend charts, all live against the active filter selection.</p></div>
+        <div><div class="eyebrow">Overview</div><h2>Executive Summary</h2><p>23 governance KPIs and top-level trend charts, all live against the active filter selection. <span id="execBasisNote" style="font-weight:600;color:var(--purple);"></span></p></div>
       </div>
 
       <div id="execGroupVolume">
@@ -20768,6 +21186,7 @@ function renderExecutiveSummary(){
     document.getElementById('cdaDownloadPdfBtn').addEventListener('click', ()=>{ window.print(); });
   }
 
+  { const bn = document.getElementById('execBasisNote'); if(bn){ const bs = exsBasis(); bn.textContent = '· Trend charts and period tables are grouped by '+EXS_BASIS_TEXT[bs.kind]+(bs.kind==='creation' ? '' : ' (follows the active '+(bs.kind==='resolution'?'Resolution':'Last Modified')+' Time Scale)'); } }
   const k = exsComputeKPIs(rows);
   renderExsKPIs(rows, k);
   renderExsSrIncKPIs(rows);
@@ -21504,6 +21923,8 @@ function renderExsCallDumpOverview(rows){
     return;
   }
   const g = cdaComputeCda(rows);
+  { const bs = exsBasis();
+    if(bs.kind!=='creation' && bs.range){ g.months = g.months.filter(k => exsKeyInRange(k.slice(0,7), 'monthly', bs.range)); } }
   if(!g.months.length){
     wrap.innerHTML = '<div class="empty" style="padding:30px 20px;">No creation-time data available for this selection.</div>';
     return;
